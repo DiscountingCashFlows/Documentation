@@ -117,6 +117,16 @@ $.when(
     }
     fillHistoricUsingList(y_values, 'dividends', parseInt(flows[0]['date']) + chartProjectionYears + 1);
     
+    // Dividend Table
+    var rows = ['Dividends'];
+    var columns = [];
+    var data = [y_values];
+    for(var i=1; i<=chartProjectionYears + INPUT.HISTORIC_YEARS; i++){
+      columns.push(lastYearDate - INPUT.HISTORIC_YEARS + i);
+    }
+    contextItem = {name:'Historic and Projected Dividends (' + currency + ')', display:'table', rows:rows, columns:columns, data:data};
+    context.push(contextItem);
+    
     renderChart('Historic and Projected Dividends(In Mill. of ' + currency + ')');
     monitor(context);
 });
