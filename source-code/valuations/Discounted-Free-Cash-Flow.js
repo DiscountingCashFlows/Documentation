@@ -3,7 +3,7 @@
 // | Copyright: https://discountingcashflows.com, 2022			|
 // +------------------------------------------------------------+
 
-var INPUT = Input({_REQUIRED_RATE_OF_RETURN: 7.5,
+var INPUT = Input({_DISCOUNT_RATE: 7.5,
                    _GROWTH_IN_PERPETUITY: '',
                    PROJECTION_YEARS: 5, 			
                    HISTORIC_YEARS: 10,
@@ -92,20 +92,20 @@ $.when(
     }
     forecastedFreeCashFlow = forecast(forecastedFreeCashFlow, 'freeCashFlow');
     for(var i=0; i<INPUT.PROJECTION_YEARS; i++){
-      discountedFreeCashFlow.push(forecastedFreeCashFlow[i] / Math.pow(1 + INPUT._REQUIRED_RATE_OF_RETURN, i + 1));
+      discountedFreeCashFlow.push(forecastedFreeCashFlow[i] / Math.pow(1 + INPUT._DISCOUNT_RATE, i + 1));
     }
     // Calculating the Terminal Value
     // TV = FCF * (1 + Growth in Perpetuity) / (Required Rate of Return - Growth in Perpetuity)
     // The FCF is already discounted so we can calculate the Discounted Terminal Value
-    var discountedTerminalValue = discountedFreeCashFlow[discountedFreeCashFlow.length - 1] * (1 + INPUT._GROWTH_IN_PERPETUITY) / (INPUT._REQUIRED_RATE_OF_RETURN - INPUT._GROWTH_IN_PERPETUITY );
-    var terminalValue = forecastedFreeCashFlow[forecastedFreeCashFlow.length - 1] * (1 + INPUT._GROWTH_IN_PERPETUITY) / (INPUT._REQUIRED_RATE_OF_RETURN - INPUT._GROWTH_IN_PERPETUITY )
+    var discountedTerminalValue = discountedFreeCashFlow[discountedFreeCashFlow.length - 1] * (1 + INPUT._GROWTH_IN_PERPETUITY) / (INPUT._DISCOUNT_RATE - INPUT._GROWTH_IN_PERPETUITY );
+    var terminalValue = forecastedFreeCashFlow[forecastedFreeCashFlow.length - 1] * (1 + INPUT._GROWTH_IN_PERPETUITY) / (INPUT._DISCOUNT_RATE - INPUT._GROWTH_IN_PERPETUITY )
     // Add all FCF and Terminal Value to calculate the Projected Enterprise Value
 	var projectedEnterpriseValue = discountedTerminalValue;
     for(var i = 0; i < discountedFreeCashFlow.length; i++){
       projectedEnterpriseValue += discountedFreeCashFlow[i];
     }
-    var equityValue = 1000000 * projectedEnterpriseValue + balance_quarterly[0]['cashAndCashEquivalents'] - balance_quarterly[0]['totalDebt'];
-    var valuePerShare = equityValue/income[0]['weightedAverageShsOutDil'];
+    var equityValue = 1000000 * projectedEnterpriseValue + balance_quarterly[0]['cashAndShortTermInvestments'] - balance_quarterly[0]['totalDebt'];
+    var valuePerShare = equityValue/income[0]['weightedAverageShsOut'];
     
 	var currency = '';
 	if('convertedCurrency' in income[0]){
@@ -124,11 +124,11 @@ $.when(
     print(terminalValue, 'Terminal Value (mil. ' + currency + ')', '#');
     print(discountedTerminalValue, 'Discounted Terminal Value (mil. ' + currency + ')', '#');
     print(projectedEnterpriseValue-discountedTerminalValue, 'Sum of Estimated Discounted Free Cash Flows (mil. ' + currency + ')', '#');
-    print(projectedEnterpriseValue, 'Total Equity Value (mil. ' + currency + ')', '#');
-    print(toM(balance_quarterly[0]['cashAndCashEquivalents']), 'Cash and Equivalents (mil. ' + currency + ')', '#');
+    print(projectedEnterpriseValue, 'Equity Value (mil. ' + currency + ')', '#');
+    print(toM(balance_quarterly[0]['cashAndShortTermInvestments']), 'Cash and Equivalents (mil. ' + currency + ')', '#');
     print(toM(balance_quarterly[0]['totalDebt']), 'Total Debt (mil ' + currency + ')', '#');
-    print(toM(equityValue), 'Equity Value (mil. ' + currency + ')', '#');
-    print(toM(income[0]['weightedAverageShsOutDil']), 'Diluted Shares Outstanding (mil.)','#');
+    print(toM(equityValue), 'Total Equity Value (mil. ' + currency + ')', '#');
+    print(toM(income[0]['weightedAverageShsOut']), 'Shares Outstanding (mil.)','#');
 
     // Free Cash Flow Table
     var rows = ['Free Cash Flow', 'Discounted Free Cash Flow'];
@@ -195,7 +195,7 @@ var DESCRIPTION = Description(`<h5>Discounted Free Cash Flow Model</h5>
                               <p>User Inputs Description:</p>
                               <ul>
                                 <li><b>Required Rate Of Return:</b> The estimated stock value will be calculated based on this annual rate of return</li>
-                                <li><b>Growth In Perpetuity:</b> Rate at which the company is assumed to grow in perpetuity (usually 1-3%)</li>
+                                <li><b>Growth In Perpetuity:</b> Rate at which the company is assumed to grow in perpetuity. By default, this is the 10 year treasury yield.</li>
                                 <li><b>Projection Years:</b> Amount of years projecting into the future</li>
                                 <li><b>Historic Years:</b> Past years used to calculate the average margins</li>
                                 <li><b>Projected Revenue Slope:</b> '> 1' for steeper revenue curve, '0' for flat, '< 0' for inverse slope</li>
