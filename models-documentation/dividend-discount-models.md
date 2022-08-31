@@ -12,6 +12,8 @@ Used to estimate the value of companies that have reached maturity and pay stabl
 
 `[Estimated Value] = [Expected Dividend] / ([Discount Rate(%)] - [Growth In Perpetuity(%)])`
 
+> This model was inspired by prof. Aswath Damodaran's spreadsheet [ddmst.xls](https://pages.stern.nyu.edu/~adamodar/pc/ddmst.xls)
+
 This is also known as the Gordon Growth formula, which assumes that the expected growth rate in perpetuity in dividends is constant forever.
 
 `[Expected Dividend]`
@@ -37,7 +39,7 @@ Used to estimate the value of companies based on two stages of growth. An initia
 
 `[Estimated Value] = [Sum of Discounted Dividends] + [Discounted Terminal Value]`
 
-This model was inspired by prof. Aswath Damodaran's spreadsheet [ddm2st.xls](https://pages.stern.nyu.edu/~adamodar/pc/ddm2st.xls)
+> This model was inspired by prof. Aswath Damodaran's spreadsheet [ddm2st.xls](https://pages.stern.nyu.edu/~adamodar/pc/ddm2st.xls)
 
 ### The first stage (High growth period):
 In the first stage, we estimate the future high growth period dividends, calculated as a percentage of future EPS(Earnings Per Share), and then discount them to present value.
