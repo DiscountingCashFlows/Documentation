@@ -100,7 +100,7 @@ By default, it is equal to the current yield of the U.S. 10 Year Treasury Bond.
 
 Using the average U.S. market premium of 5.5%. This is the average return of the U.S. market - average risk free rate.
 
-## Calculating historic figures table values
+## Calculating historic table values
 `[Calculated preferred stock dividends & premiums](t) = [Total dividends paid](t) - [Dividends paid to common shareholders](t)`
 Because some companies have preferred shares outstanding that receive dividends, we need to take them into account when calculating the common shareholders net income and dividends.
 
