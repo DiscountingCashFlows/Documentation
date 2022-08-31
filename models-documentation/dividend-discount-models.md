@@ -31,11 +31,13 @@ This rate represents how much will the `[Expected Dividend]` be affected by the 
 * 0% means the `[Expected Dividend]` will be equal to the `[LTM Dividend]`.
 * By default it is set to 50%.
 
-## Two-Stage Dividend Discount Model
+## Two-Stage Dividend Discount Model ([Source Code]())
 
 Used to estimate the value of companies based on two stages of growth. An initial [period of high growth](#the-first-stage-high-growth-period), represented by `[Sum of Discounted Dividends]`, followed by a [period of stable growth](#the-second-stage-stable-period), represented by `[Discounted Terminal Value]`.
 
 `[Estimated Value] = [Sum of Discounted Dividends] + [Discounted Terminal Value]`
+
+This model was inspired by prof. Aswath Damodaran's spreadsheet [ddm2st.xls](https://pages.stern.nyu.edu/~adamodar/pc/ddm2st.xls)
 
 ### The first stage (High growth period):
 In the first stage, we estimate the future high growth period dividends, calculated as a percentage of future EPS(Earnings Per Share), and then discount them to present value.
