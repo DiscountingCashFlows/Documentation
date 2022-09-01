@@ -1,10 +1,10 @@
 # Dividend Discount Models
 Used to predict the value of a company's stock based on the theory that its present-day value is worth the sum of all of its future dividend payments when discounted back to their present value.
 
-* For stable and mature companies, use [Simple Dividend Discount Model](#simple-dividend-discount-model)
-* For high growth companies, use the [Two-Stage Dividend Discount Model](#two-stage-dividend-discount-model)
+* For stable and mature companies, use [Simple Dividend Discount Model](#simple-dividend-discount-model-source-code)
+* For high growth companies, use the [Two-Stage Dividend Discount Model](#two-stage-dividend-discount-model-source-code)
 * Discount rate calculation [Discount Rate (Cost of Equity)](#discount-rate-cost-of-equity)
-* Table values calculation [Calculating historic figures table values](#calculating-historic-figures-table-values)
+* Table values calculation [Calculating historic table values](#calculating-historic-table-values)
 
 ## Simple Dividend Discount Model ([Source Code](https://github.com/DiscountingCashFlows/Documentation/blob/main/source-code/valuations/simple-dividend-discount-model.js))
 
