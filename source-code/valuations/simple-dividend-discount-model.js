@@ -410,5 +410,5 @@ $.when(
 var DESCRIPTION = Description(`
 								<h5>Simple Dividend Discount Model</h5>
 								<p>Used to estimate the value of companies that have reached maturity and pay stable dividends as a significant percentage of their Free Cashflow to Equity with little to no high growth chance.</p>
-								<p class='text-center'>Read more: <a href='https://github.com/bogdanimbrea/test/blob/master/models-documentation/dividend-discount-models.md#simple-dividend-discount-model-source-code' target='_blank'><i class="fab fa-github"></i> GitHub Documentation</a></p>
+								<p class='text-center'>Read more: <a href='https://github.com/DiscountingCashFlows/Documentation/blob/main/models-documentation/dividend-discount-models.md#simple-dividend-discount-model-source-code' target='_blank'><i class="fab fa-github"></i> GitHub Documentation</a></p>
                                 `);
