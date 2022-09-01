@@ -6,7 +6,7 @@ Used to predict the value of a company's stock based on the theory that its pres
 * Discount rate calculation [Discount Rate (Cost of Equity)](#discount-rate-cost-of-equity)
 * Table values calculation [Calculating historic figures table values](#calculating-historic-figures-table-values)
 
-## Simple Dividend Discount Model ([Source Code](https://github.com/DiscountingCashFlows/Documentation/blob/main/source-code/valuations/Simple-Dividend-Discount-Model.js))
+## Simple Dividend Discount Model ([Source Code](https://github.com/DiscountingCashFlows/Documentation/blob/main/source-code/valuations/simple-dividend-discount-model.js))
 
 Used to estimate the value of companies that have reached maturity and pay stable dividends as a significant percentage of their Free Cashflow to Equity with little to no high growth chance.
 
