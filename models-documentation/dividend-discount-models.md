@@ -12,9 +12,9 @@ Used to estimate the value of companies that have reached maturity and pay stabl
 
 `[Estimated Value] = [Expected Dividend] / ([Discount Rate(%)] - [Growth In Perpetuity(%)])`
 
-> This model was inspired by prof. Aswath Damodaran's spreadsheet [ddmst.xls](https://pages.stern.nyu.edu/~adamodar/pc/ddmst.xls)
-
 This is also known as the Gordon Growth formula, which assumes that the expected growth rate in perpetuity in dividends is constant forever.
+
+> This model was inspired by prof. Aswath Damodaran's spreadsheet [ddmst.xls](https://pages.stern.nyu.edu/~adamodar/pc/ddmst.xls)
 
 `[Expected Dividend]`
 
