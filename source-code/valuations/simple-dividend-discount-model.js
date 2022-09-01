@@ -9,7 +9,7 @@ var INPUT = Input({_DISCOUNT_RATE: '',
                    _LINEAR_REGRESSION_WEIGHT: 50,
                    BETA:'',
                    _RISK_FREE_RATE: '',
-                   _MARKET_PREMIUM: 5,
+                   _MARKET_PREMIUM: 5.5,
                    HISTORIC_YEARS: ''});  
 
 function getGrowthRateList(values, mode){
@@ -116,13 +116,60 @@ $.when(
     
     // price is the Current Last Price of a Share on the Stock Market
     var price = profile['price'];
+    var sensitivity = 0.05;
+    var prefDividendsRatio = Math.abs((Math.abs(flows[0].dividendsPaid) - dividends[1].adjDividend * income[0].weightedAverageShsOut) / flows[0].dividendsPaid);
+    
+    var payoutRatioList = [];
+    var averagePayoutRatio = 0;
+    var payoutRatio = 0;
+    
+    var returnOnEquityList = [];
+    var averageReturnOnEquity = 0;
+    var returnOnEquity = 0;
+    
+    var commonIncome = 0;
+    // ------ LTM - Payout Ratio, Return on Equity ------
+    if( prefDividendsRatio > sensitivity ){
+      commonIncome = (income_ltm.netIncome - (Math.abs(flows_ltm.dividendsPaid) - dividends[0].adjDividend * income_ltm.weightedAverageShsOut));
+      payoutRatio = dividends[0].adjDividend * income_ltm.weightedAverageShsOut / commonIncome;
+    }
+    else{
+      commonIncome = income_ltm.netIncome;
+      payoutRatio = Math.abs(flows_ltm.dividendsPaid) / commonIncome;
+    }
+    payoutRatioList.push(payoutRatio);
+    averagePayoutRatio += payoutRatio;
+
+    returnOnEquity = commonIncome / balance[0].totalStockholdersEquity; // ltm income / last year equity
+    returnOnEquityList.push(returnOnEquity);
+    averageReturnOnEquity += returnOnEquity;
+    // ------ End LTM - Payout Ratio, Return on Equity ------
+    for(var i=0; i<income.length; i++){
+      if( prefDividendsRatio > sensitivity ){
+        commonIncome = (income[i].netIncome - (Math.abs(flows[i].dividendsPaid) - dividends[i + 1].adjDividend * income[i].weightedAverageShsOut));
+        payoutRatio = dividends[i + 1].adjDividend * income[i].weightedAverageShsOut / commonIncome;
+      }
+      else{
+        commonIncome = income[i].netIncome;
+        payoutRatio = Math.abs(flows[i].dividendsPaid) / commonIncome;
+      }
+      payoutRatioList.push(payoutRatio);
+      averagePayoutRatio += payoutRatio;
+      if(i<balance.length - 1){
+      	returnOnEquity = commonIncome / balance[i + 1].totalStockholdersEquity;
+        returnOnEquityList.push(returnOnEquity);
+        averageReturnOnEquity += returnOnEquity;
+      }
+    }
+    averagePayoutRatio /= income.length + 1;
+    averageReturnOnEquity /= income.length;
 
     // dgr stores the Historic Dividend Growth Rate
     var dgr = 0;
     // d1 stores the previous period Dividend
     var d1 = 0;
     // d0 stores the current period Dividend
-    var d0 = dividends[0].adjDividend;
+    var d0 = dividends[1].adjDividend;
     if(d0 == 0){
         warning("A zero dividend was encountered!");
       	_StopIfWatch(0, currency);
@@ -130,7 +177,7 @@ $.when(
     }
     var growthRates = [];
     // Calculate the Average Annual Dividend Growth Rate for the last HISTORIC_YEARS
-    for(var i=1; i<dividends.length; i++){
+    for(var i=2; i<dividends.length; i++){
       d1 = dividends[i].adjDividend;
       if(d1 == 0){
         warning("A zero dividend was encountered!");
@@ -141,7 +188,7 @@ $.when(
       growthRates.push(Number((100*(d0 - d1) / d1).toFixed(2)));
       d0 = d1;
     }
-	dgr = dgr/( dividends.length - 1 );
+	dgr = dgr/( dividends.length - 2 );
     var expectedDividend = INPUT._LINEAR_REGRESSION_WEIGHT * linDividends[dividends.length - 1] + (1-INPUT._LINEAR_REGRESSION_WEIGHT) * dividends[0].adjDividend
     setInputDefault('EXPECTED_DIVIDEND', expectedDividend);
     
@@ -152,14 +199,15 @@ $.when(
     if(_StopIfWatch(valueOfStock, currency)){
       return;
     }
-    
+    var stringCurrency = ' ('+currency+')';
     _SetEstimatedValue(valueOfStock, currency);
-    print(dividends[0].adjDividend, "LTM Dividend(" + currency + ")", '#');
-    print(linDividends[dividends.length - 1], "Next Linear Regression Dividend(" + currency + ")", '#');
-    print(INPUT.EXPECTED_DIVIDEND, "Next Year's Expected Dividend(" + currency + ")", '#');
-    print(dgr, "Average Historic Dividend Growth Rate", '%');
-    print(valueOfStock, "Value of Stock (" + currency + ")", '#');
-    print(price, "Current Price (" + currency + ")");
+    print(valueOfStock, "Estimated value" + stringCurrency, '#');
+    print(dividends[0].adjDividend, "LTM dividend" + stringCurrency, '#');
+    print(linDividends[dividends.length - 1], "Next linear regression dividend" + stringCurrency, '#');
+    print(INPUT.EXPECTED_DIVIDEND, "Next year's expected dividend" + stringCurrency, '#');
+    print(dgr, "Average historic dividend growth rate", '%');
+    print(averagePayoutRatio, "Average historic Payout Ratio", '%');
+    print(averageReturnOnEquity, "Average historic Return on Equity", '%');
     
     var result = '';
     
@@ -187,13 +235,11 @@ $.when(
     contextItem = {name:'Historic and Projected Dividends (' + currency + ')', display:'table', rows:rows, columns:columns, data:data};
     context.push(contextItem);
     
-    var sensitivity = 0.05;
-    var prefDividendsRatio = Math.abs((Math.abs(flows[0].dividendsPaid) - dividends[1].adjDividend * income[0].weightedAverageShsOut) / flows[0].dividendsPaid);
     // if the last period has considerable preferred dividends (meaning that the company has pref. stock issued)
     if( prefDividendsRatio > sensitivity ){
       var rows = ['Net income','Calculated preferred stock dividends & premiums','Net income available to common shareholders', 'Equity', 'Return on equity', 'Dividends paid to common shareholders', 
-                  'Payout ratio (common)', 'Shares outstanding', 'Reference market share price', 'Earnings per share(EPS)',
-                  'Dividends per share', 'Dividend yield'];
+                  'Total dividends paid', 'Payout ratio (common)', 'Common shares outstanding', 'Reference market share price', 'Earnings per share(EPS)',
+                  'Dividends per common share', 'Dividend yield'];
       var columns = [];
       var data = [];
       for(var i=0; i<rows.length; i++){
@@ -224,13 +270,18 @@ $.when(
         data[col++].push( toM(income[i_inverse].netIncome - preferredStockDividends).toFixed(2) );
         // Equity
         data[col++].push( toM(balance[i_inverse].totalStockholdersEquity) );
-        // Return on Equity
-        data[col++].push( (100 * (flows[i_inverse].netIncome/balance[i_inverse].totalStockholdersEquity)).toFixed(2) + '%' );
+        // Common Return on Equity
+        if(i_inverse < balance.length - 1){
+        	data[col++].push( (100 * returnOnEquityList[i_inverse + 1]).toFixed(2) + '%' );
+        }else{
+          	data[col++].push('');
+        }
         // Dividends paid to common
         data[col++].push( toM(dividends[i_inverse + 1].adjDividend * income[i_inverse].weightedAverageShsOut).toFixed(2) ); 
+        // Total Dividends
+        data[col++].push( toM(Math.abs(flows[i_inverse].dividendsPaid)) );
         // Common stock payout Ratio
-        data[col++].push( (100 * dividends[i_inverse + 1].adjDividend * income[i_inverse].weightedAverageShsOut /(income[i_inverse].netIncome - preferredStockDividends) ).toFixed(2) + '%' );
-        // data[col++].push( (100 * dividends[i_inverse + 1].adjDividend/income[i_inverse].eps).toFixed(2) + '%' );
+        data[col++].push( (100 * payoutRatioList[i_inverse + 1]).toFixed(2) + '%' );
         // Shares Outstanding
         data[col++].push( toM(income[i_inverse].weightedAverageShsOut).toFixed(2) );
         // Market Price per Share
@@ -254,13 +305,14 @@ $.when(
       data[col++].push( toM(income_ltm.netIncome - preferredStockDividends).toFixed(2) );
       // Equity
       data[col++].push( toM(balance_quarterly.totalStockholdersEquity) );
-      // Return on Equity
-      data[col++].push( (100 * income_ltm.netIncome / balance_quarterly.totalStockholdersEquity).toFixed(2) + '%' );
+      // Common Return on Equity
+      data[col++].push( (100 * returnOnEquityList[0]).toFixed(2) + '%' );
       // Dividends paid to common
       data[col++].push( toM(dividends[0].adjDividend * income_ltm.weightedAverageShsOut).toFixed(2) ); 
+      // Total Dividends
+      data[col++].push( toM(Math.abs(flows_ltm.dividendsPaid)) );
       // Common stock payout Ratio
-      data[col++].push( (100 * dividends[0].adjDividend * income_ltm.weightedAverageShsOut /(income_ltm.netIncome - preferredStockDividends) ).toFixed(2) + '%' );
-      // data[col++].push( (100 * dividends[i_inverse + 1].adjDividend/income[i_inverse].eps).toFixed(2) + '%' );
+      data[col++].push( (100 * payoutRatioList[0]).toFixed(2) + '%' );
       // Shares Outstanding
       data[col++].push( toM(income_ltm.weightedAverageShsOut).toFixed(2) );
       // Market Price per Share
@@ -278,7 +330,7 @@ $.when(
     else{
       var rows = ['Net income', 'Equity', 'Return on equity', 'Dividends paid', 
                   'Payout ratio', 'Shares outstanding', 'Reference market share price', 'Earnings per share(EPS)',
-                  'Dividends per share', 'Dividend yield'];
+                  'Dividends per common share', 'Dividend yield'];
       var columns = [];
       var data = [];
       for(var i=0; i<rows.length; i++){
@@ -302,12 +354,15 @@ $.when(
         // Equity
         data[col++].push( toM(balance[i_inverse].totalStockholdersEquity) );
         // Return on Equity
-        data[col++].push( (100 * (flows[i_inverse].netIncome/balance[i_inverse].totalStockholdersEquity)).toFixed(2) + '%' );
+        if(i_inverse < balance.length - 1){
+        	data[col++].push( (100 * returnOnEquityList[i_inverse + 1]).toFixed(2) + '%' );
+        }else{
+          	data[col++].push('');
+        }
         // Dividends paid
         data[col++].push( toM(dividends[i_inverse + 1].adjDividend * income[i_inverse].weightedAverageShsOut) ); 
-        // Common stock payout Ratio
-        data[col++].push( (100 * dividends[i_inverse + 1].adjDividend * income[i_inverse].weightedAverageShsOut /income[i_inverse].netIncome ).toFixed(2) + '%' );
-        // data[col++].push( (100 * dividends[i_inverse + 1].adjDividend/income[i_inverse].eps).toFixed(2) + '%' );
+        // All dividends payout Ratio
+        data[col++].push( (100 * payoutRatioList[i_inverse + 1]).toFixed(2) + '%' );
         // Shares Outstanding
         data[col++].push( toM(income[i_inverse].weightedAverageShsOut).toFixed(2) );
         // Market Price per Share
@@ -327,12 +382,11 @@ $.when(
       // Equity
       data[col++].push( toM(balance_quarterly.totalStockholdersEquity) );
       // Return on Equity
-      data[col++].push( (100 * income_ltm.netIncome / balance_quarterly.totalStockholdersEquity).toFixed(2) + '%' );
+      data[col++].push( (100 * returnOnEquityList[0]).toFixed(2) + '%' );
       // Dividends paid to common
       data[col++].push( toM(dividends[0].adjDividend * income_ltm.weightedAverageShsOut) ); 
-      // Common stock payout Ratio
-      data[col++].push( (100 * dividends[0].adjDividend * income_ltm.weightedAverageShsOut /(income_ltm.netIncome) ).toFixed(2) + '%' );
-      // data[col++].push( (100 * dividends[i_inverse + 1].adjDividend/income[i_inverse].eps).toFixed(2) + '%' );
+      // All dividends payout Ratio
+      data[col++].push( (100 * payoutRatioList[0]).toFixed(2) + '%' );
       // Shares Outstanding
       data[col++].push( toM(income_ltm.weightedAverageShsOut).toFixed(2) );
       // Market Price per Share
@@ -355,30 +409,6 @@ $.when(
 
 var DESCRIPTION = Description(`
 								<h5>Simple Dividend Discount Model</h5>
-								Used to estimate the value of a company's stock based on the theory that it is worth the sum of all of its future dividend payments when discounted back to their present value. 
-								<p>Reference: <a href='https://www.investopedia.com/terms/d/ddm.asp' target='_blank'>www.investopedia.com</a></p>
-                                `, `
-                                <p>User Inputs Description:</p>
-                                <ul>
-                                  <li><b>Discount Rate:</b> By default, the discount rate is the cost of equity. Calculated using the formula:</li>
-                                </ul>
-                                <div class="d-block text-center my-2">
-                                \\( Discount Rate = Cost Of Equity = \\) \\( RiskFreeRate + Beta * MarketPremium \\)
-                                </div>
-                                <ul>
-                                  <li><b>Expected Dividend:</b> The estimated sum dividend that the company will pay up until next year, influenced by the linear regression of dividends and LTM dividend. Calculated using: </li>
-                                </ul>
-                                <div class="d-block text-center my-2">
-                                \\( Expected Dividend = LinearRegressionWeight * NextLinearRegressionDividend \\) \\( + (1 - LinearRegressionWeight) * LTMDividend  \\)
-                                </div>
-                                <ul>
-                                  <li><b>Growth in Perpetuity:</b> Growth rate at which the dividends are expected to grow in perpetuity</li>
-                                  <li><b>Linear Regression Weight:</b> Used to calculate the expected dividend.</li>
-                                  <li><b>Beta, Risk Free Rate, Market Premium:</b> Used to calculate the Cost of equity.</li>
-                                  <li><b>Historic Years:</b> Past years used to calculate the average dividend growth rate</li>
-                                </ul>
-                                <p>Formula used to calculate Value of Stock:</p>
-                                <div class="d-block text-center my-2">
-                                \\( ValueOfStock = \\) \\( ExpectedDividendPerShare \\over (DiscountRate - GrowthInPerpetuity) \\)
-                                </div>
-`);
+								<p>Used to estimate the value of companies that have reached maturity and pay stable dividends as a significant percentage of their Free Cashflow to Equity with little to no high growth chance.</p>
+								<p class='text-center'>Read more: <a href='https://github.com/bogdanimbrea/test/blob/master/models-documentation/dividend-discount-models.md#simple-dividend-discount-model-source-code' target='_blank'><i class="fab fa-github"></i> GitHub Documentation</a></p>
+                                `);
