@@ -438,5 +438,5 @@ $.when(
 var DESCRIPTION = Description(`
 								<h5>Two-Stage Dividend Discount Model</h5>
                                 <p>Used to estimate the value of companies based on two stages of growth. An initial period of high growth, calculated using <b>[Sum of Discounted Dividends]</b>, followed by a period of stable growth, calculated using <b>[Discounted Terminal Value]</b>.</p>
-                                <p class='text-center'>Read more: <a href='https://github.com/DiscountingCashFlows/Documentation/blob/main/models-documentation/dividend-discount-models.md#two-stage-dividend-discount-model' target='_blank'><i class="fab fa-github"></i> GitHub Documentation</a></p>
+                                <p class='text-center'>Read more: <a href='https://github.com/DiscountingCashFlows/Documentation/blob/main/models-documentation/dividend-discount-models.md#two-stage-dividend-discount-model-source-code' target='_blank'><i class="fab fa-github"></i> GitHub Documentation</a></p>
                                 `);
