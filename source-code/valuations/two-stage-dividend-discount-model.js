@@ -102,8 +102,10 @@ $.when(
 	}else{
 		currency = flows[0]['reportedCurrency'];
 	}
+    
     if( currencyProfile != currency ){
     	warning("The market price currency(" + currencyProfile + ") and the financial report's currency(" + currency + ") do not match! Please select a curreny from the top right menu.");
+      	return;
     }
     
     if(profile.beta){
@@ -138,6 +140,10 @@ $.when(
       commonIncome = income_ltm.netIncome;
       payoutRatio = Math.abs(flows_ltm.dividendsPaid) / commonIncome;
     }
+    if(commonIncome <= 0){
+      // if commonIncome is 0
+      payoutRatio = 0;
+    }
     payoutRatioList.push(payoutRatio);
     averagePayoutRatio += payoutRatio;
 
@@ -153,6 +159,10 @@ $.when(
       else{
         commonIncome = income[i].netIncome;
         payoutRatio = Math.abs(flows[i].dividendsPaid) / commonIncome;
+      }
+      if(commonIncome <= 0){
+        // if commonIncome is 0
+        payoutRatio = 0;
       }
       payoutRatioList.push(payoutRatio);
       averagePayoutRatio += payoutRatio;
@@ -290,7 +300,7 @@ $.when(
         data[col++].push( toM(income[i_inverse].netIncome) );
         var preferredStockDividends = Math.abs(flows[i_inverse].dividendsPaid) - dividends[i_inverse + 1].adjDividend * income[i_inverse].weightedAverageShsOut;
         if(preferredStockDividends < 0){
-          warning("Preferred stock dividends for year " + (lastYearDate - i_inverse) + " are negative! Shares outstanding may not be inline with the ones reported. Please submit this using the feedback menu. Thanks!");
+          warning("Preferred stock dividends for year " + (lastYearDate - i_inverse) + " are negative! Shares outstanding may not be inline with the ones reported.");
         }
         // Preferred stock dividends
         data[col++].push( toM(preferredStockDividends).toFixed(2) );
