@@ -5,10 +5,10 @@ Models recommended to use when valuing a financial service firm:
 * Two-Stage Dividend Discount Model ([Example](https://discountingcashflows.com/company/GS/valuation/default/1/))
 * Discounted Cash Flow to Equity (To be implemented...)
 
+> This article was inspired by prof. Aswath Damodaran's paper, read more: https://pages.stern.nyu.edu/~adamodar/pdfiles/papers/finfirm09.pdf
+
 Financial service firms are different from other firms in the market and are best valued using equity valuation models, rather than enterprise valuation models (such as the Discounted Free Cash Flow Model).
 Why do we tend to avoid enterprise valuation models for financial service firms?
-
-> This article was inspired by prof. Aswath Damodaran's paper, read more: https://pages.stern.nyu.edu/~adamodar/pdfiles/papers/finfirm09.pdf
 
 `Mark to Market`
 
