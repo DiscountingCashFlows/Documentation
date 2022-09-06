@@ -181,7 +181,7 @@ $.when(
     averagePayoutRatio /= income.length + 1;
     // If the payout is higher than 100%, set it equal to the stable payout
     if(averagePayoutRatio > 1){
-      averagePayoutRatio = INPUT._STABLE_PAYOUT;
+      setInputDefault('_HIGH_GROWTH_PAYOUT', INPUT._STABLE_PAYOUT*100);
     }
     setInputDefault('_HIGH_GROWTH_PAYOUT', averagePayoutRatio*100);
     
