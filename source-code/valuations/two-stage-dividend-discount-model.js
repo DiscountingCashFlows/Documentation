@@ -183,7 +183,9 @@ $.when(
     if(averagePayoutRatio > 1){
       setInputDefault('_HIGH_GROWTH_PAYOUT', INPUT._STABLE_PAYOUT*100);
     }
-    setInputDefault('_HIGH_GROWTH_PAYOUT', averagePayoutRatio*100);
+    else{
+      setInputDefault('_HIGH_GROWTH_PAYOUT', averagePayoutRatio*100);
+    }
     
     // dgr stores the Historic Dividend Growth Rate
     var dgr = 0;
