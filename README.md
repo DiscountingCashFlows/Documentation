@@ -1,4 +1,4 @@
-# Documentation and Source Code of [Discounting Cash Flows Website](https://discountingcashflows.com/)
+### Documentation and Source Code of [Discounting Cash Flows Website](https://discountingcashflows.com/)
 The source code and documentation behind our website's valuation models, functions and more.
 
 The source code for our models is stored in [source-code](https://github.com/DiscountingCashFlows/Documentation/tree/main/source-code)
