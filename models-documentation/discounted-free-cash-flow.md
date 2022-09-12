@@ -68,7 +68,7 @@ The margin of future Operating Cash Flow (or Cash From Operating Activities). Th
 `[Discount Rate]`
 
 The discount rate is used to discount all future free cash flow during the high growth period as well as the terminal value, in the stable phase. 
-This is calculated by default using the Weighted Average Cost of Capital (WACC) formula, available also at [risk-analysis/weighted-average-cost-of-capital.js](https://github.com/DiscountingCashFlows/Documentation/blob/main/source-code/risk-analysis/Weighted-Average-Cost-of-Capital.js)
+This is calculated by default using the Weighted Average Cost of Capital (WACC) formula (also available at [risk-analysis/weighted-average-cost-of-capital.js](https://github.com/DiscountingCashFlows/Documentation/blob/main/source-code/risk-analysis/weighted-average-cost-of-capital.js))
 
 > `[Discount Rate] = [Debt Weight] * [Cost of Debt] * (1 - [Tax Rate]) + [Equity Weight] * [Cost of Equity]`
 
