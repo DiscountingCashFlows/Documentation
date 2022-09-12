@@ -1,4 +1,4 @@
-## Discounted Free Cash Flow Model ([Source Code](https://github.com/DiscountingCashFlows/Documentation/blob/main/source-code/valuations/Discounted-Free-Cash-Flow.js))
+## Discounted Free Cash Flow Model ([Source Code](https://github.com/DiscountingCashFlows/Documentation/blob/main/source-code/valuations/discounted-free-cash-flow.js))
 Discounted Free Cash Flow calculates the value of a share based on the company's estimated future Free Cash Flow figures.
 
 > This model is not recommended for valuing financial service firms(banks, insurance companies and investment banks). Check out [Valuing financial service firms](https://github.com/DiscountingCashFlows/Documentation/blob/main/models-documentation/valuing-financial-firms.md#valuing-financial-service-firms-banks-insurance-companies-and-investment-banks)
