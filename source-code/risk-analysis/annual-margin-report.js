@@ -184,6 +184,6 @@ $.when(
 });
 
 var DESCRIPTION = Description(`<h5>Annual Margin Analysis Report</h5>
-                                Margins are the differences between the price of a good or service and the amount of money required to produce it.
+                                Margins refer to the ratio between a financial report item and the revenue (Example: Net Margin = Net Income / Revenue).
                                 This analysis provides a report of the company's key margins, which could be further used in a valuation model.
                                 `);
