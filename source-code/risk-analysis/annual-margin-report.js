@@ -1,6 +1,6 @@
 // +------------------------------------------------------------+
-// | Model: Annual Margin Report								|
-// | Copyright: https://discountingcashflows.com, 2022			|
+//   Model: Annual Margin Report				
+//   Copyright: https://discountingcashflows.com, 2022		
 // +------------------------------------------------------------+
 var INPUT = Input({YEARS: 10}); 
 
@@ -186,6 +186,4 @@ $.when(
 var DESCRIPTION = Description(`<h5>Annual Margin Analysis Report</h5>
                                 Margins are the differences between the price of a good or service and the amount of money required to produce it.
                                 This analysis provides a report of the company's key margins, which could be further used in a valuation model.
-                                <br>
-                                Read more here: <a href='https://www.indeed.com/career-advice/career-development/what-are-margins-in-business' target='_blank'>www.indeed.com</a>
-							  `);
+                                `);
