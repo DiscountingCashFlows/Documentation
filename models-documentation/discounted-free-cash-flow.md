@@ -29,7 +29,7 @@ We need to discount the terminal value to the present
 
 > `[Discounted Terminal Value]` = `[Terminal Value]` / (1 + `[Discount Rate]`)<sup>`[Projection Years]`</sup>
 
-### Calculating the Estimated Value per Share
+### Calculating the Value per Share
 `[Enterprise value]` is calculated by summing up all `[Discounted Free Cash Flow]` (for years 1 to `[Projection Years]`) and adding `[Discounted Terminal Value]`:
 > `[Enterprise Value]` = `[Discounted Free Cash Flow]`(1) + ... + `[Discounted Free Cash Flow]`(`[Projection Years]`) + `[Discounted Terminal Value]`
 
