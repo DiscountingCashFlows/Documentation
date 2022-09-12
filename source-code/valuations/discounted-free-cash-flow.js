@@ -206,14 +206,33 @@ $.when(
     
     // ---------------- TABLES SECTION ---------------- 
     // Free Cash Flow Table
-    var rows = ['Free Cash Flow', 'Discounted Free Cash Flow'];
+    var rows = ['Revenue', 'Operating Cash Flow', 'Operating Cash Flow Margin', 'Capital Expendtiture', 
+                'Capital Expendtiture Margin', 'Free Cash Flow', 'Free Cash Flow Margin', 'Discounted Free Cash Flow'];
     var columns = [];
-    var data = [[], []];
+    var data = [];
+    for(var i=0; i<rows.length; i++){
+      data.push([]);
+    }
     var lastYear = parseInt(income[0]['date']);
     for(var i=0; i<INPUT.PROJECTION_YEARS; i++){
+      var col = 0;
       columns.push(lastYear + i);
-      data[0].push(forecastedFreeCashFlow[i]);
-      data[1].push(discountedFreeCashFlow[i]);
+      // revenue
+      data[col++].push((forecastedRevenue[i]).toFixed(2));
+      // operating cash flow
+      data[col++].push((forecastedOperatingCashFlow[i]).toFixed(2));
+      // operating cash flow margin
+      data[col++].push((100*forecastedOperatingCashFlow[i]/forecastedRevenue[i]).toFixed(2) + '%');
+      // capital expenditure
+      data[col++].push(forecastedOperatingCashFlow[i] - forecastedFreeCashFlow[i]);
+      // capital expenditure margin
+      data[col++].push((100*(forecastedOperatingCashFlow[i] - forecastedFreeCashFlow[i]) / forecastedRevenue[i]).toFixed(2) + '%');
+      // free cash flow
+      data[col++].push((forecastedFreeCashFlow[i]).toFixed(2));
+      // free cash flow margin
+      data[col++].push((100*forecastedFreeCashFlow[i]/forecastedRevenue[i]).toFixed(2) + '%');
+      // discounted free cash flow
+      data[col++].push((discountedFreeCashFlow[i]).toFixed(2));
     }
     contextItem = {name:'Estimated Future Data (Mil. ' + currency + ')', display:'table', rows:rows, columns:columns, data:data};
     context.push(contextItem);
