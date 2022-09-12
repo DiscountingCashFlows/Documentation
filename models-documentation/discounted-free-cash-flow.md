@@ -23,7 +23,7 @@ Then, we need to discount each Free Cash Flow to the present:
 The `[Terminal Value]` is the expected value of the company at the end of the projection period. 
 It is calculated using the Gordon Growth formula for `[Growth In Perpetuity(%)]` based on the last free cash flow of the projection period (or Free Cash Flow(`[Projection Years]`))
 
-> `[Terminal Value]` = Free Cash Flow(`[Projection Years]`) * (1 + `[Growth In Perpetuity(%)]`) / (`[Discount Rate]` - `[Growth In Perpetuity(%)]`)
+> `[Terminal Value]` = `[Free Cash Flow]`(`[Projection Years]`) * (1 + `[Growth In Perpetuity(%)]`) / (`[Discount Rate]` - `[Growth In Perpetuity(%)]`)
 
 We need to discount the terminal value to the present
 
