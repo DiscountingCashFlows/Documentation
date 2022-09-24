@@ -383,7 +383,7 @@ $.when(
     }
     else{
       var rows = ['Net income', 'Equity', 'Return on equity', 'Dividends paid', 
-                  'Payout ratio', 'Shares outstanding', 'Reference market share price', 'Earnings per share(EPS)',
+                  'Payout ratio(common)', 'Shares outstanding', 'Reference market share price', 'Earnings per share(EPS)',
                   'Dividends per common share', 'Dividend yield'];
       var columns = [];
       var data = [];
