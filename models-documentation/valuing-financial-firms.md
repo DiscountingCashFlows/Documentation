@@ -10,18 +10,10 @@ Models recommended to use when valuing a financial service firm:
 Financial service firms are different from other firms in the market and are best valued using equity valuation models, rather than enterprise valuation models (such as the Discounted Free Cash Flow Model).
 Why do we tend to avoid enterprise valuation models for financial service firms?
 
-`Mark to Market`
+- `Mark to Market` : Assets on the balance sheet are valued at fair value (rather than the original cost in the case of an ordinary firm).
 
-Assets on the balance sheet are valued at fair value (rather than the original cost in the case of an ordinary firm).
+- `Loss Provisions and smoothing out earnings` : Banks can increase their earnings by reducing their loss provisions and lending out more money.
 
-`Loss Provisions and smoothing out earnings`
+- `Debt and Equity` : The debt cannot be defined properly for a financial services firm.
 
-Banks can increase their earnings by reducing their loss provisions and lending out more money.
-
-`Debt and Equity`
-
-The debt cannot be defined properly for a financial services firm.
-
-`Estimating cash flows is difficult`
-
-Reinvestment needs like capital expenditures or working capital are hard to estimate with any degree of precision.
+- `Estimating cash flows is difficult` : Reinvestment needs like capital expenditures or working capital are hard to estimate with any degree of precision.
