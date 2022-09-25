@@ -104,7 +104,7 @@ $.when(
 	}
     // If the profile and reports currencies differ from each other, the user needs to select a currency from the top right menu to get the values in one currency.
     if( currencyProfile != currency ){
-      warning("The market price currency(" + currencyProfile + ") and the financial report's currency(" + currency + ") do not match! Please select a curreny from the top right menu.");
+      warning("The market price currency(" + currencyProfile + ") and the financial report's currency(" + currency + ") do not match! Please select a currency from the top right menu.");
       return;
     }
     // Set beta 
@@ -339,7 +339,7 @@ $.when(
     }
     else{
       var rows = ['Net income', 'Equity', 'Return on equity', 'Dividends paid', 
-                  'Payout ratio', 'Shares outstanding', 'Reference market share price', 'Earnings per share(EPS)',
+                  'Payout ratio (common)', 'Shares outstanding', 'Reference market share price', 'Earnings per share(EPS)',
                   'Dividends per common share', 'Dividend yield'];
       var columns = [];
       var data = [];
