@@ -45,8 +45,9 @@ $.when(
   get_profile(),
   get_dividends_annual(),
   get_prices_annual(),
-  get_treasury()).done(
-  function(_income, _income_ltm, _balance, _balance_quarterly, _flows, _flows_ltm, _profile, _dividends, _prices, _treasury){
+  get_treasury(),
+  get_fx()).done(
+  function(_income, _income_ltm, _balance, _balance_quarterly, _flows, _flows_ltm, _profile, _dividends, _prices, _treasury, _fx){
     // Create deep copies of reports. This section is needed for watchlist compatibility.
     var income = JSON.parse(JSON.stringify(_income));
     var income_ltm = JSON.parse(JSON.stringify(_income_ltm));
@@ -58,6 +59,7 @@ $.when(
     var treasury = JSON.parse(JSON.stringify(_treasury));
     var dividends = JSON.parse(JSON.stringify(_dividends));
     var prices = JSON.parse(JSON.stringify(_prices));
+    var fx = JSON.parse(JSON.stringify(_fx));
     // context is where tables and values of interest are stored
     var context = [];
     var chartProjectionYears = 5;
@@ -85,9 +87,8 @@ $.when(
     flows_ltm = flows_ltm[0];
     prices = prices[0];
     dividends = dividends[0].slice(0, INPUT.HISTORIC_YEARS + 1);
+    fx = fx[0];
     
-    // Get the linear regression curve line as a list
-    var linDividends = linearRegressionGrowthRate('adjDividend', dividends, chartProjectionYears - 1, 1);
 	// Get the currencies used in the profile and reports (flows).
     // The profile can have a different currency from the reports.
     var currency = '';
@@ -102,11 +103,15 @@ $.when(
 	}else{
 		currency = flows[0]['reportedCurrency'];
 	}
-    // If the profile and reports currencies differ from each other, the user needs to select a currency from the top right menu to get the values in one currency.
-    if( currencyProfile != currency ){
-      warning("The market price currency(" + currencyProfile + ") and the financial report's currency(" + currency + ") do not match! Please select a currency from the top right menu.");
-      return;
+    var ccyRate = currencyRate(fx,  currency, currencyProfile);
+    if(ccyRate != 1){
+    	// adjust dividends for fx
+      	for(var i=0; i<dividends.length; i++){
+          	dividends[i].adjDividend = dividends[i].adjDividend / ccyRate;
+        }
     }
+    // Get the linear regression curve line as a list
+    var linDividends = linearRegressionGrowthRate('adjDividend', dividends, chartProjectionYears - 1, 1);
     // Set beta 
     if(profile.beta){
     	setInputDefault('BETA', profile.beta);
@@ -209,12 +214,14 @@ $.when(
     var valueOfStock = INPUT.EXPECTED_DIVIDEND / (INPUT._DISCOUNT_RATE - INPUT._GROWTH_IN_PERPETUITY);
     
     // If we are calculating the value per share for a watch, we can stop right here.
-    if(_StopIfWatch(valueOfStock, currency)){
+    if(_StopIfWatch(ccyRate*valueOfStock, currencyProfile)){
       return;
     }
     var stringCurrency = ' ('+currency+')';
-    _SetEstimatedValue(valueOfStock, currency);
-    print(valueOfStock, "Estimated value" + stringCurrency, '#');
+    _SetEstimatedValue(ccyRate*valueOfStock, currencyProfile);
+    if(ccyRate != 1){
+    	print(valueOfStock, 'Value per Share in ' + currency, '#');
+    }
     print(dividends[0].adjDividend, "LTM dividend" + stringCurrency, '#');
     print(linDividends[dividends.length - 1], "Next linear regression dividend" + stringCurrency, '#');
     print(INPUT.EXPECTED_DIVIDEND, "Next year's expected dividend" + stringCurrency, '#');
