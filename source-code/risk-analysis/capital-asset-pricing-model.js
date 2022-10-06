@@ -2,7 +2,7 @@
 //   Model: Capital Asset Pricing Model (CAPM)					
 //   Copyright: https://discountingcashflows.com, 2022			
 // +------------------------------------------------------------+
-var INPUT = Input({_MARKET_RETURN: 7.5,
+var INPUT = Input({_MARKET_PREMIUM: 5.5,
   				   _RISK_FREE_RATE: '',
                    BETA: ''}); 
 
@@ -21,7 +21,7 @@ $.when(
 	setInputDefault('_RISK_FREE_RATE', treasury['year10']);
 	
     // Expected Return
-    var expectedReturn = INPUT._RISK_FREE_RATE + INPUT.BETA*(INPUT._MARKET_RETURN - INPUT._RISK_FREE_RATE);
+    var expectedReturn = INPUT._RISK_FREE_RATE + INPUT.BETA*INPUT._MARKET_PREMIUM;
     
     // If we are calculating the value per share for a watch, we can stop right here.
     if(_StopIfWatch(expectedReturn*100, '%')){
