@@ -1,11 +1,12 @@
 // +------------------------------------------------------------+
-// | Model: Excess Returns Model 								|
-// | Copyright: https://discountingcashflows.com, 2022			|
+//   Model: Excess Returns Model 								
+//   Copyright: https://discountingcashflows.com, 2022			
 // +------------------------------------------------------------+
 
-var INPUT = Input({_GROWTH_IN_PERPETUITY: '',
-                   _MARKET_RETURN: 7,
-  				   _RISK_FREE_RATE: '',
+var INPUT = Input({_DISCOUNT_RATE: '',
+                   _GROWTH_IN_PERPETUITY: '',
+                   _MARKET_PREMIUM: 5.5,
+                   _RISK_FREE_RATE: '',
                    BETA: '',
                    EPS: ''
                    }); 
@@ -39,8 +40,9 @@ $.when(
     
 	setInputDefault('_RISK_FREE_RATE', treasury[0][0]['year10']);
     setInputDefault('_GROWTH_IN_PERPETUITY', treasury[0][0]['year10']);
-	setInputDefault('BETA', profile['beta']);
-	setInputDefault('EPS', income_ltm['netIncome'] / income_ltm['weightedAverageShsOutDil']);
+    setInputDefault('BETA', profile['beta']);
+    setInputDefault('EPS', income_ltm['netIncome'] / income_ltm['weightedAverageShsOutDil']);
+    setInputDefault('_DISCOUNT_RATE', 100*(INPUT._RISK_FREE_RATE + INPUT.BETA*INPUT._MARKET_PREMIUM));
     
     // Fill chart historic
     var y_historic = [];
@@ -62,7 +64,7 @@ $.when(
     fillHistoricUsingList(y_historic, 'eps', parseInt(income_ltm['date']) + 11);
 	
     let bookValue = balance['totalStockholdersEquity'] / income_ltm['weightedAverageShsOutDil'];
-    let costOfEquity = INPUT._RISK_FREE_RATE + INPUT.BETA*(INPUT._MARKET_RETURN - INPUT._RISK_FREE_RATE);
+    let costOfEquity = INPUT._DISCOUNT_RATE;
     let returnOnEquity = INPUT.EPS / bookValue;
 	let excessReturns = bookValue * (returnOnEquity - costOfEquity);
     let terminalValue = excessReturns / (costOfEquity - INPUT._GROWTH_IN_PERPETUITY);
@@ -75,15 +77,16 @@ $.when(
     }
     
     _SetEstimatedValue(valuePerShare, currency);
-    print(valuePerShare, 'Value per Share (' + currency + ')', '#');
+    var stringCurrency = ' ('+currency+')';
+    print(valuePerShare, 'Value per Share' + stringCurrency, '#');
     print(income_ltm['weightedAverageShsOutDil']/1000000, 'Diluted Shares Outstanding (mil.)','#');
     print(INPUT._RISK_FREE_RATE, 'Risk Free Rate from the 10 Year U.S. Treasury Note', '%');
-    print(bookValue, "Book Value", '#');
-    print(costOfEquity, "Cost of Equity", '%');
+    print(bookValue, "Book Value" + stringCurrency, '#');
+    print(costOfEquity, "Cost of Equity (Discount Rate)", '%');
     print(returnOnEquity, "Return on Equity", '%');
-    print(excessReturns, "Excess Returns", '#');
-    print(terminalValue, "Terminal Value", '#');
-	renderChart('Earnings Per Share(EPS) Historic + Forecasts');
+    print(excessReturns, "Excess Returns" + stringCurrency, '#');
+    print(terminalValue, "Terminal Value" + stringCurrency, '#');
+	renderChart('EPS (Historic and Forecasts) in ' + currency);
     monitor(context);
 });
 
