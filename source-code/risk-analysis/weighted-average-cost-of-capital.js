@@ -10,31 +10,51 @@ $.when(
   get_income_statement_ltm(),
   get_balance_sheet_statement_quarterly(),
   get_profile(),
-  get_treasury()).done(
-  function(_income_ltm, _balance_quarterly, _profile, _treasury){
+  get_treasury(),
+  get_fx()).done(
+  function(_income_ltm, _balance_quarterly, _profile, _treasury, _fx){
     var context = [];
     // Create deep copies of reports. This section is needed for watchlist compatibility.
     var income_ltm = JSON.parse(JSON.stringify(_income_ltm));
     var balance_last_quarter = JSON.parse(JSON.stringify(_balance_quarterly));
     var profile = JSON.parse(JSON.stringify(_profile));
     var treasury = JSON.parse(JSON.stringify(_treasury));
+    var fx = JSON.parse(JSON.stringify(_fx));
     
     balance_last_quarter = balance_last_quarter[0][0];
     income_ltm = income_ltm[0];
     profile = profile[0][0];
     treasury = treasury[0][0];
-
+    fx = fx[0];
+    
+    // Check if the currency is being converted 
+    // The profile can have a different currency from the reports.
+	var currency = '';
+    var currencyProfile = '';
+    if('convertedCurrency' in profile){
+		currencyProfile = profile['convertedCurrency'];
+	}else{
+		currencyProfile = profile['currency'];
+	}
+	if('convertedCurrency' in balance_last_quarter){
+		currency = balance_last_quarter['convertedCurrency'];
+	}else{
+		currency = balance_last_quarter['reportedCurrency'];
+	}
+    var ccyRate = currencyRate(fx,  currency, currencyProfile);
+    
+	// ---------------- SETTING ASSUMPTIONS SECTION ---------------- 
 	setInputDefault('BETA', profile['beta']);
 	setInputDefault('_RISK_FREE_RATE', treasury['year10']);
+    // ---------------- END OF SETTING ASSUMPTIONS SECTION ----------------
     
-    
+    // ---------------- VALUES OF INTEREST SECTION ---------------- 
     // Cost of Debt
     var costOfDebt = income_ltm['interestExpense'] / balance_last_quarter['totalDebt']; // Total Debt = Short Term Debt + Long Term Debt
 	
     // Tax Rate
     var taxRate = income_ltm['incomeTaxExpense'] / income_ltm['incomeBeforeTax'];
-    if(taxRate < 0)
-    {
+    if(taxRate < 0){
 		taxRate = 0;
     }
     
@@ -43,7 +63,7 @@ $.when(
     
     // Weights
     var totalDebt = balance_last_quarter['shortTermDebt'] + balance_last_quarter['longTermDebt'];
-    var marketCap = profile['mktCap'];
+    var marketCap = profile['mktCap'] / ccyRate; // get the market cap in reports currency
     
     var debtWeight = totalDebt / (marketCap + totalDebt);
     var equityWeight = marketCap / (marketCap + totalDebt);
@@ -61,28 +81,9 @@ $.when(
     print(debtWeight, 'Debt Weight', '%');
     print(costOfDebt, "Cost of Debt", '%');
     print(taxRate, "Tax Rate", '%');
+	// ---------------- END OF VALUES OF INTEREST SECTION ---------------- 
     
-	// Check if the currency is being converted 
-    // The profile can have a different currency from the reports.
-	var currency = '';
-    var currencyProfile = '';
-    if('convertedCurrency' in profile){
-		currencyProfile = profile['convertedCurrency'];
-	}else{
-		currencyProfile = profile['currency'];
-	}
-	if('convertedCurrency' in balance_last_quarter){
-		currency = balance_last_quarter['convertedCurrency'];
-	}else{
-		currency = balance_last_quarter['reportedCurrency'];
-	}
-    
-    // If the profile and reports currencies differ from each other, the user needs to select a currency from the top right menu to get the values in one currency.
-    if( currencyProfile != currency ){
-    	warning("The market price currency(" + currencyProfile + ") and the financial report's currency(" + currency + ") do not match! Please select a curreny from the top right menu.");
-      	return;
-    }
-
+	// ---------------- TABLES SECTION ---------------- 
     contextItem = {name:'WACC Calculation (In Millions of ' + currency + ' except for rates)', display:'table', 
                    rows:['WACC%','Interest Expense', 'Short Term Debt', 'Long Term Debt', 'Total Debt', 
                          'Cost of Debt%', 'Cost of Equity%', 'Market Cap', 'Debt Weight%', 'Equity Weight%', 'Income Tax Expense', 'Income Before Tax', 'Tax Rate%'], 
@@ -93,7 +94,7 @@ $.when(
                                              [toM(balance_last_quarter['totalDebt'])], 
                                              [(100 * costOfDebt).toFixed(2) + '%'],
                                              [(100 * costOfEquity).toFixed(2) + '%'],
-                                             [(toM(profile['mktCap'])).toFixed(2)], 
+                                             [(toM(marketCap)).toFixed(2)], 
                                              [(100 * debtWeight).toFixed(2) + '%'],
                                              [(100 * equityWeight).toFixed(2) + '%'],
                                              [toM(income_ltm['incomeTaxExpense'])], 
@@ -102,6 +103,7 @@ $.when(
                                             ]};
     context.push(contextItem);
     monitor(context);
+    // ---------------- END OF TABLES SECTION ---------------- 
 });
 
 var DESCRIPTION = Description(`

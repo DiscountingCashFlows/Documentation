@@ -47,8 +47,9 @@ $.when(
   get_profile(),
   get_dividends_annual(),
   get_prices_annual(),
-  get_treasury()).done(
-  function(_income, _income_ltm, _balance, _balance_quarterly, _flows, _flows_ltm, _profile, _dividends, _prices, _treasury){
+  get_treasury(),
+  get_fx()).done(
+  function(_income, _income_ltm, _balance, _balance_quarterly, _flows, _flows_ltm, _profile, _dividends, _prices, _treasury, _fx){
     // Create deep copies of reports. This section is needed for watchlist compatibility.
     var income = JSON.parse(JSON.stringify(_income));
     var income_ltm = JSON.parse(JSON.stringify(_income_ltm));
@@ -60,6 +61,7 @@ $.when(
     var treasury = JSON.parse(JSON.stringify(_treasury));
     var dividends = JSON.parse(JSON.stringify(_dividends));
     var prices = JSON.parse(JSON.stringify(_prices));
+    var fx = JSON.parse(JSON.stringify(_fx));
     // context is where tables and values of interest are stored
     var context = [];
     
@@ -87,6 +89,7 @@ $.when(
     flows_ltm = flows_ltm[0];
     prices = prices[0];
     dividends = dividends[0].slice(0, INPUT.HISTORIC_YEARS + 1);
+    fx = fx[0];
 	
     // Get the linear regression curve line as a list
     var linEps = linearRegressionGrowthRate('eps', income, INPUT.HIGH_GROWTH_YEARS, 1);
@@ -104,10 +107,12 @@ $.when(
 	}else{
 		currency = flows[0]['reportedCurrency'];
 	}
-    // If the profile and reports currencies differ from each other, the user needs to select a currency from the top right menu to get the values in one currency.
-    if( currencyProfile != currency ){
-    	warning("The market price currency(" + currencyProfile + ") and the financial report's currency(" + currency + ") do not match! Please select a curreny from the top right menu.");
-      	return;
+    var ccyRate = currencyRate(fx,  currency, currencyProfile);
+    if(ccyRate != 1){
+    	// adjust dividends for fx
+      	for(var i=0; i<dividends.length; i++){
+          	dividends[i].adjDividend = dividends[i].adjDividend / ccyRate;
+        }
     }
     // Set beta 
     if(profile.beta){
@@ -121,8 +126,6 @@ $.when(
     // Discount Rate is the cost of equity
     setInputDefault('_DISCOUNT_RATE', 100*(INPUT._RISK_FREE_RATE + INPUT.BETA * INPUT._MARKET_PREMIUM));
     
-    // price is the Current Last Price of a Share on the Stock Market
-    var price = profile['price'];
     var sensitivity = 0.05;
     var prefDividendsRatio = Math.abs((Math.abs(flows[0].dividendsPaid) - dividends[1].adjDividend * income[0].weightedAverageShsOut) / flows[0].dividendsPaid);
     
@@ -230,14 +233,14 @@ $.when(
     fillHistoricUsingReport(income, 'eps');
     fillHistoricUsingList(linEps, 'linear regression eps');
     
-    var growthDividends = [dividends[0].adjDividend]; // Set the first forecasted dividend to ltm
-    var highGrowthEps = [income_ltm.eps]; // Set the first forecasted eps to ltm 
+    var growthDividends = []; // Set the first forecasted dividend to ltm
+    var highGrowthEps = []; // Set the first forecasted eps to ltm 
     // Estimate the next dividends
-    for(var i=1; i<INPUT.HIGH_GROWTH_YEARS; i++){
+    for(var i=0; i<INPUT.HIGH_GROWTH_YEARS; i++){
       highGrowthEps.push(linEps[income.length] * Math.pow(1 + INPUT._HIGH_GROWTH_RATE, i));
     }
     highGrowthEps = forecast(highGrowthEps, 'eps');
-    for(var i=1; i<INPUT.HIGH_GROWTH_YEARS; i++){
+    for(var i=0; i<INPUT.HIGH_GROWTH_YEARS; i++){
       growthDividends.push(highGrowthEps[i] * INPUT._HIGH_GROWTH_PAYOUT);
     }
     growthDividends = forecast(growthDividends, 'dividends');
@@ -262,12 +265,14 @@ $.when(
     var valueOfStock = discountedTerminalValue + sumOfDiscountedDividends;
     
     // If we are calculating the value per share for a watch, we can stop right here.
-    if(_StopIfWatch(valueOfStock, currency)){
+    if(_StopIfWatch(ccyRate*valueOfStock, currencyProfile)){
       return;
     }
     var stringCurrency = ' ('+currency+')';
-    _SetEstimatedValue(valueOfStock, currency);
-    print(valueOfStock, "Estimated value" + stringCurrency, '#');
+    _SetEstimatedValue(ccyRate*valueOfStock, currencyProfile);
+    if(ccyRate != 1){
+    	print(valueOfStock, 'Value per Share in ' + currency, '#');
+    }
     print(sumOfDiscountedDividends, "Sum of discounted dividends" + stringCurrency, '#');
     print(discountedTerminalValue, "Discounted terminal value" + stringCurrency, '#');
     print(terminalValue, "Terminal value" + stringCurrency, '#');

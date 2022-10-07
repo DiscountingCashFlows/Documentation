@@ -38,8 +38,9 @@ $.when(
   get_cash_flow_statement(),
   get_cash_flow_statement_ltm(),
   get_profile(),
-  get_treasury()).done(
-  function(_income, _income_ltm, _balance_quarterly, _flows, _flows_ltm, _profile, _treasury){
+  get_treasury(),
+  get_fx()).done(
+  function(_income, _income_ltm, _balance_quarterly, _flows, _flows_ltm, _profile, _treasury, _fx){
     var context = [];
     // Create deep copies of reports. This section is needed for watchlist compatibility.
     var income = JSON.parse(JSON.stringify(_income));
@@ -49,8 +50,8 @@ $.when(
     var flows_ltm = JSON.parse(JSON.stringify(_flows_ltm));
     var profile = JSON.parse(JSON.stringify(_profile));
     var treasury = JSON.parse(JSON.stringify(_treasury));
+    var fx = JSON.parse(JSON.stringify(_fx));
     
-    // ---------------- SETTING ASSUMPTIONS SECTION ---------------- 
     var numberOfPeriods = GetIncomeSlicePeriods(income);
     income = income[0].slice(0, numberOfPeriods);
     income_ltm = income_ltm[0];
@@ -58,6 +59,7 @@ $.when(
     flows = flows[0].slice(0, numberOfPeriods);
     flows_ltm = flows_ltm[0];
     profile = profile[0][0];
+    fx = fx[0];
     
     // Add the revenue key to the flows report
     flows = addKey('revenue', income, flows);
@@ -67,6 +69,23 @@ $.when(
     income.unshift(income_ltm);
     flows.unshift(flows_ltm);
     
+    // Check if the currency is being converted 
+    // The profile can have a different currency from the reports.
+	var currency = '';
+    var currencyProfile = '';
+    if('convertedCurrency' in profile){
+		currencyProfile = profile['convertedCurrency'];
+	}else{
+		currencyProfile = profile['currency'];
+	}
+	if('convertedCurrency' in income[0]){
+		currency = income[0]['convertedCurrency'];
+	}else{
+		currency = income[0]['reportedCurrency'];
+	}	
+    var ccyRate = currencyRate(fx,  currency, currencyProfile);
+    
+    // ---------------- SETTING ASSUMPTIONS SECTION ---------------- 
     // Set the growth in perpetuity to the 10Y Treasury Yield
     setInputDefault('_GROWTH_IN_PERPETUITY', treasury[0][0]['year10']);
     
@@ -88,7 +107,7 @@ $.when(
     {
 		taxRate = 0;
     }
-    var marketCap = profile['mktCap'];
+    var marketCap = profile['mktCap'] / ccyRate; // get the market cap in reports currency
     
     var debtWeight = balance_last_quarter['totalDebt'] / (marketCap + balance_last_quarter['totalDebt']);
     var equityWeight = marketCap / (marketCap + balance_last_quarter['totalDebt']);
@@ -119,22 +138,19 @@ $.when(
     var capitalExpenditure = [];
     var forecastedFreeCashFlow = [];
     var discountedFreeCashFlow = [];
-    forecastedRevenue.push(toM(income_ltm['revenue']));
-    for(var i=1; i<INPUT.PROJECTION_YEARS; i++){
+    for(var i=0; i<INPUT.PROJECTION_YEARS; i++){
       forecastedRevenue.push(linRevenue[flows.length + i - 1]);
     }
     forecastedRevenue = forecast(forecastedRevenue, 'revenue');
     
-    forecastedOperatingCashFlow.push(toM(flows_ltm['operatingCashFlow']));
-    for(var i=1; i<INPUT.PROJECTION_YEARS; i++){
+    for(var i=0; i<INPUT.PROJECTION_YEARS; i++){
       forecastedOperatingCashFlow.push(forecastedRevenue[i] * INPUT._OPERATING_CASH_FLOW_MARGIN);
       capitalExpenditure.push(forecastedRevenue[i] * capitalExpenditureMargin);
     }
     forecastedOperatingCashFlow = forecast(forecastedOperatingCashFlow, 'operatingCashFlow');
     
-    forecastedFreeCashFlow.push(toM(flows_ltm['freeCashFlow']));
-    for(var i=1; i<INPUT.PROJECTION_YEARS; i++){
-      forecastedFreeCashFlow.push(forecastedOperatingCashFlow[i] - capitalExpenditure[i-1]);
+    for(var i=0; i<INPUT.PROJECTION_YEARS; i++){
+      forecastedFreeCashFlow.push(forecastedOperatingCashFlow[i] - capitalExpenditure[i]);
     }
     forecastedFreeCashFlow = forecast(forecastedFreeCashFlow, 'freeCashFlow');
     for(var i=0; i<INPUT.PROJECTION_YEARS; i++){
@@ -157,31 +173,10 @@ $.when(
     var equityValue = projectedEnterpriseValue + toM(balance_last_quarter['cashAndShortTermInvestments'] - balance_last_quarter['totalDebt']);
     var valuePerShare = equityValue/toM(income[0]['weightedAverageShsOut']);
     
-    // Check if the currency is being converted 
-    // The profile can have a different currency from the reports.
-	var currency = '';
-    var currencyProfile = '';
-    if('convertedCurrency' in profile){
-		currencyProfile = profile['convertedCurrency'];
-	}else{
-		currencyProfile = profile['currency'];
-	}
-	if('convertedCurrency' in income[0]){
-		currency = income[0]['convertedCurrency'];
-	}else{
-		currency = income[0]['reportedCurrency'];
-	}
-    // If the profile and reports currencies differ from each other, the user needs to select a currency from the top right menu to get the values in one currency.
-    if( currencyProfile != currency ){
-    	warning("The market price currency(" + currencyProfile + ") and the financial report's currency(" + currency + ") do not match! Please select a curreny from the top right menu.");
-      	return;
-    }
-	
     // If we are calculating the value per share for a watch, we can stop right here.
-    if(_StopIfWatch(valuePerShare, currency)){
+    if(_StopIfWatch(ccyRate*valuePerShare, currencyProfile)){
       return;
     }
-    
     print(terminalValue, 'Terminal Value (mil. ' + currency + ')', '#');
     print(discountedTerminalValue, 'Discounted Terminal Value (mil. ' + currency + ')', '#');
     print(projectedEnterpriseValue-discountedTerminalValue, 'Sum of Discounted Free Cash Flow (mil. ' + currency + ')', '#');
@@ -202,7 +197,7 @@ $.when(
 	// ---------------- END OF VALUES OF INTEREST SECTION ---------------- 
     
     // Print the value to the top of the model
-    _SetEstimatedValue(valuePerShare, currency);
+    _SetEstimatedValue(ccyRate*valuePerShare, currencyProfile);
     
     // ---------------- TABLES SECTION ---------------- 
     // Free Cash Flow Table
