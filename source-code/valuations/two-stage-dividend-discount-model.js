@@ -462,7 +462,7 @@ $.when(
     }
     context.push(contextItem);
     
-    renderChart('Historic and Projected Dividends(Mil. ' + currency + ')');
+    renderChart('Historic and Projected Dividends (' + currency + ')');
     // ---------------- END OF TABLES SECTION ---------------- 
     monitor(context);
 });
