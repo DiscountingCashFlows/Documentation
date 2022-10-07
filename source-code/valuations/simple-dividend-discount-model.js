@@ -415,7 +415,7 @@ $.when(
       contextItem = {name:'Historic figures (Mil. ' + currency + ' except per share items)', display:'table', rows:rows, columns:columns, data:data};
     }
     context.push(contextItem);
-    renderChart('Historic and Projected Dividends(Mil. ' + currency + ')');
+    renderChart('Historic and Projected Dividends (' + currency + ')');
     // ---------------- END OF TABLES SECTION ---------------- 
     monitor(context);
 });
