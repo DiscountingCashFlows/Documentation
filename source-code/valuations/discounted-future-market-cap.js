@@ -1,8 +1,8 @@
 // +------------------------------------------------------------+
-// | Model: Discounted Future Market Cap						|
-// | Copyright: https://discountingcashflows.com, 2022			|
+//   Model: Discounted Future Market Cap	
+//   Copyright: https://discountingcashflows.com, 2022	
 // +------------------------------------------------------------+
-var INPUT = Input({_REQUIRED_RATE_OF_RETURN: 7.5,
+var INPUT = Input({_DISCOUNT_RATE: 7.5,
                    PE: '', 	
                    PROJECTION_YEARS: 5,
                    HISTORIC_YEARS: 10,
@@ -29,7 +29,7 @@ $.when(
     var projectedNetIncome = projectedRevenue * INPUT._NET_INCOME_MARGIN;
 	
 	setInputDefault('PE', quote[0]['pe']);
-    var presentValue = INPUT.PE * projectedNetIncome / Math.pow(1 + INPUT._REQUIRED_RATE_OF_RETURN, INPUT.PROJECTION_YEARS);
+    var presentValue = INPUT.PE * projectedNetIncome / Math.pow(1 + INPUT._DISCOUNT_RATE, INPUT.PROJECTION_YEARS);
     
 	var currency = '';
 	if('convertedCurrency' in income[0]){
@@ -47,7 +47,7 @@ $.when(
     print(presentValue/quote[0]['sharesOutstanding'], 'Present Value (In ' + currency + ')', '#');
     print(projectedNetIncome/1000000, 'Estimated Net Income in ' + (parseInt(income[0]['date']) + INPUT.PROJECTION_YEARS) + '  (In Mill. of ' + currency + ')', '#');
     print(INPUT.PE * projectedNetIncome/1000000, 'Estimated Market Capitalisation in ' + (parseInt(income[0]['date']) + INPUT.PROJECTION_YEARS) + ' (In Mill. of ' + currency + ')', '#');
-    print(INPUT.PE * projectedNetIncome / (1000000 * Math.pow(1 + INPUT._REQUIRED_RATE_OF_RETURN, INPUT.PROJECTION_YEARS)), 'Market Capitalisation discounted to present(In Mill. of ' + currency + ')', '#');
+    print(INPUT.PE * projectedNetIncome / (1000000 * Math.pow(1 + INPUT._DISCOUNT_RATE, INPUT.PROJECTION_YEARS)), 'Market Capitalisation discounted to present(In Mill. of ' + currency + ')', '#');
     print(quote[0]['sharesOutstanding']/1000000, 'Shares Outstanding (In Millions)', '#');
 
     var context = [];
