@@ -1,0 +1,2 @@
+## Excess Return Model ([Source Code](https://github.com/DiscountingCashFlows/Documentation/blob/main/source-code/valuations/excess-returns-model.js))
+Excess Return model is better suited to calculate the intrinsic value of financial companies rather than enterprise valuation models (such as the Discounted Free Cash Flow Model). See [Valuing financial service firms](https://github.com/DiscountingCashFlows/Documentation/blob/main/models-documentation/valuing-financial-firms.md#valuing-financial-service-firms-banks-insurance-companies-and-investment-banks)
