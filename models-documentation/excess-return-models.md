@@ -4,7 +4,7 @@ Used to predict the value of a company's stock based on the future excess return
 Excess Returns are better suited for financial companies, rather than an enterprise valuation model (such as the Discounted Free Cash Flow Model). 
 See [Valuing financial service firms](https://github.com/DiscountingCashFlows/Documentation/blob/main/models-documentation/valuing-financial-firms.md#valuing-financial-service-firms-banks-insurance-companies-and-investment-banks)
 
-> These models were inspired by prof. Aswath Damodaran's spreadsheet [eqexret.xls](https://pages.stern.nyu.edu/~adamodar/pc/eqexret.xls)
+> These models were inspired by prof. Aswath Damodaran's spreadsheet [⬇️eqexret.xls](https://pages.stern.nyu.edu/~adamodar/pc/eqexret.xls) 
 
 * For stable and mature companies, use [Simple Excess Return Model](#simple-excess-return-model-source-code)
 * For high growth companies, use the [Two-Stage Excess Return Model](#two-stage-excess-return-model-source-code)
@@ -151,8 +151,6 @@ This following example show the values of interest for the stable period highlig
 
 Because some companies have preferred shares outstanding that receive dividends, we need to take them into account when calculating the common shareholders net income and dividends.
 
-![image](https://user-images.githubusercontent.com/46221053/198636256-af5efd9e-60ec-47c0-b6c0-fdd7d4c225ce.png)
-
 ```
 [Calculated preferred stock dividends & premiums](t) = [Net income](t) - [Net income available to common shareholders](t)
 [Net income available to common shareholders](t) = [EPS available to Common shareholders](t) * [Common shares outstanding](t)
@@ -161,3 +159,5 @@ Because some companies have preferred shares outstanding that receive dividends,
 [Payout ratio (common)](t) = [Dividends paid to common shareholders](t) / [Net income available to common shareholders](t)
 [Ending Book Value per share](t) = [Equity](t) / [Common shares outstanding](t)
 ```
+
+![image](https://user-images.githubusercontent.com/46221053/198636256-af5efd9e-60ec-47c0-b6c0-fdd7d4c225ce.png)
