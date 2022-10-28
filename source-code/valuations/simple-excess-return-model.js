@@ -1,10 +1,10 @@
 // +------------------------------------------------------------+
-//   Model: Simple Excess Returns Model 								
+//   Model: Simple Excess Return Model 								
 //   Copyright: https://discountingcashflows.com, 2022			
 // +------------------------------------------------------------+
 
 var INPUT = Input({_DISCOUNT_RATE: '',
-				   _RETURN_ON_EQUITY: '',
+		   _RETURN_ON_EQUITY: '',
                    _GROWTH_IN_PERPETUITY: '',
                    _MARKET_PREMIUM: 5.5,
                    _RISK_FREE_RATE: '',
