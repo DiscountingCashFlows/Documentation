@@ -1,5 +1,5 @@
 // +------------------------------------------------------------+
-//   Model: Two-Stage Excess Returns Model 								
+//   Model: Two-Stage Excess Return Model 								
 //   Copyright: https://discountingcashflows.com, 2022			
 // +------------------------------------------------------------+
 
