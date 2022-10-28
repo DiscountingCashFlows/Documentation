@@ -5,7 +5,7 @@
 
 var INPUT = Input({_DISCOUNT_RATE: '',
                    HIGH_GROWTH_YEARS: 5,
-				           _STABLE_RETURN_ON_EQUITY: '',
+		   _STABLE_RETURN_ON_EQUITY: '',
                    _STABLE_GROWTH_IN_PERPETUITY: '',
                    _MARKET_PREMIUM: 5.5,
                    _RISK_FREE_RATE: '',
