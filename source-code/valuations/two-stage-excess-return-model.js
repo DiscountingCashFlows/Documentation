@@ -412,5 +412,5 @@ $.when(
 
 var DESCRIPTION = Description(`<h5>Two-Stage Excess Return Model</h5>
                                <p>Used to estimate the value of companies based on two stages of growth. An initial period of high growth, represented by [Sum of discounted excess returns in Growth Stage], followed by a period of stable growth, represented by [Discounted excess return in terminal stage]. Excess Return models are better suited to calculate the intrinsic value of a financial company than an enterprise valuation model (such as the Discounted Free Cash Flow Model).</p>
-                               <p class='text-center'>Read more: <a href='https://github.com/DiscountingCashFlows/Documentation/blob/excess-return-documentation/models-documentation/excess-return-models.md#two-stage-excess-return-model-source-code' target='_blank'><i class="fab fa-github"></i> GitHub Documentation</a></p>
+                               <p class='text-center'>Read more: <a href='https://github.com/DiscountingCashFlows/Documentation/blob/main/models-documentation/excess-return-models.md#two-stage-excess-return-model-source-code' target='_blank'><i class="fab fa-github"></i> GitHub Documentation</a></p>
 							  `);
