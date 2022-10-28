@@ -162,8 +162,9 @@ $.when(
     // The next year's eps is the roe percentage of next year's book value
     var eps = INPUT._RETURN_ON_EQUITY * y_book_value[y_book_value.length - 1];
     y_eps.push(eps.toFixed(2));
-    y_dividends.push(eps*averagePayoutRatio);
-    y_retained_earnings.push(eps*(1-averagePayoutRatio));
+    var stablePayoutRatio = 1 - (INPUT._GROWTH_IN_PERPETUITY / INPUT._RETURN_ON_EQUITY);
+    y_dividends.push(eps*stablePayoutRatio);
+    y_retained_earnings.push(eps*(1-stablePayoutRatio));
     
     y_equity_cost.push(y_book_value[y_book_value.length-1] * INPUT._DISCOUNT_RATE);
     y_excess_return.push(y_eps[y_eps.length-1] - y_equity_cost[y_equity_cost.length-1]);
@@ -178,8 +179,8 @@ $.when(
       y_equity_cost.push(eps - y_excess_return[y_excess_return.length-1]);
       y_eps.push(eps.toFixed(2));
       costOfEquityList.push((100 * y_equity_cost[y_equity_cost.length - 1] / y_book_value[y_book_value.length - 1]).toFixed(2) + '%');
-      y_dividends.push(eps*averagePayoutRatio);
-      y_retained_earnings.push(eps*(1-averagePayoutRatio));
+      y_dividends.push(eps*stablePayoutRatio);
+      y_retained_earnings.push(eps*(1-stablePayoutRatio));
     }
     fillHistoricUsingList(y_eps, 'eps', parseInt(income_ltm['date']) + projectionYears);
     fillHistoricUsingList(y_book_value, 'book value');
@@ -212,6 +213,7 @@ $.when(
     print(INPUT._GROWTH_IN_PERPETUITY, 'Growth in perpetuity', '%');
     print(averageReturnOnEquity, "Average historic Return on Equity", '%');
     print(averagePayoutRatio, "Average historic Payout Ratio", '%');
+    print(stablePayoutRatio, "Payout Ratio used", '%');
     print(treasury[0][0]['year10']/100, 'Risk Free Rate of the 10 Year U.S. Treasury Note', '%');
     // ---------------- END OF VALUES OF INTEREST SECTION ---------------- 
     // ---------------- TABLES SECTION ---------------- 
