@@ -65,11 +65,11 @@ Used to estimate the value of companies based on two stages of growth. An initia
     
 ### The first stage (High growth phase):
 
-In the first stage, we estimate the future excess returns for the next number of [High Growth Years](The number of years of expected high growth), and then discount them (using the `[Cost of equity](t)`) to present value.
+In the first stage, we estimate the future excess returns for the next number of [High Growth Years](The number of years of expected high growth), and then discount them to present value (using the `[Cost of equity](t)`).
 
-In the table below, there are 5 years of high growth and the expected excess returns for each period marked in purple. (Please ignore the Terminal Year column as this corresponds to the stable period)
+In the table below, there are 5 years of high growth and the expected excess returns for each period marked in purple.
 
-![image](https://user-images.githubusercontent.com/46221053/198590034-50dcae2f-c186-40ff-8a92-199cba2638f6.png)
+![image](https://user-images.githubusercontent.com/46221053/198632102-92acf191-840f-4c26-a865-46e3395cda68.png)
 
 Each period's excess return is calculated by subtracting the Equity cost from the Net Income. Values in the example estimates table are calculated on a per share basis:
 
@@ -84,7 +84,7 @@ All excess returns are then discounted at the `[Cost of Equity](t)` that can be 
 
 Then we sum up all these `[Discounted excess return per share]` to get the `[Sum of Discounted excess returns in Growth Stage]`.
 
-#### Calculating the estimates table values:
+#### Calculating the table values:
 
 ```
 [Beginning book value of equity per share](t) = [Beginning book value of equity per share](t-1) + [Retained earnings](t-1)
@@ -144,6 +144,8 @@ This following example show the values of interest for the stable period highlig
 ## Calculating historic table values
 
 Because some companies have preferred shares outstanding that receive dividends, we need to take them into account when calculating the common shareholders net income and dividends.
+
+![image](https://user-images.githubusercontent.com/46221053/198636256-af5efd9e-60ec-47c0-b6c0-fdd7d4c225ce.png)
 
 ```
 [Calculated preferred stock dividends & premiums](t) = [Net income](t) - [Net income available to common shareholders](t)
