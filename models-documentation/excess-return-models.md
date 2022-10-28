@@ -11,7 +11,7 @@ See [Valuing financial service firms](https://github.com/DiscountingCashFlows/Do
 * Discount rate calculation [Discount Rate (Cost of Equity)](#discount-rate-cost-of-equity)
 * Table values calculation [Calculating table values](#calculating-historic-table-values)
 
-## Simple Excess Return Model ([Source Code](https://github.com/DiscountingCashFlows/Documentation/blob/main/source-code/valuations/excess-returns-model.js))
+## Simple Excess Return Model ([Source Code](https://github.com/DiscountingCashFlows/Documentation/blob/main/source-code/valuations/simple-excess-return-model.js))
 
 Used to estimate the value of companies that have reached maturity and earn stable excess returns with little to no high growth chance.
 
@@ -66,7 +66,7 @@ See [Discount Rate (Cost of Equity)](#discount-rate-cost-of-equity)
 - Number of historic years used to calculate averages. (such as the `[Average historic Return on Equity]` and the `[Average historic Payout Ratio]`)
 - 10 years by default
 
-## Two-Stage Excess Return Model ([Source Code](https://github.com/DiscountingCashFlows/Documentation/blob/main/source-code/valuations/excess-returns-model.js))
+## Two-Stage Excess Return Model ([Source Code](https://github.com/DiscountingCashFlows/Documentation/blob/main/source-code/valuations/two-stage-excess-return-model.js))
 Used to estimate the value of companies based on two stages of growth. An initial period of high growth, represented by `[Sum of discounted excess returns in Growth Stage]`, followed by a period of stable growth, represented by `[Discounted excess return in terminal stage]`.
 
     [Estimated Value] = [Sum of Discounted excess returns in Growth Stage] + [Discounted excess return in terminal stage] + [Book value of equity invested]
