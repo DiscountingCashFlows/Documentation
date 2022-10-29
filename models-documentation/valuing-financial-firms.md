@@ -1,6 +1,7 @@
 # Valuing financial service firms (banks, insurance companies and investment banks)
 Models recommended to use when valuing a financial service firm:
-* Excess Returns Model ([Example](https://discountingcashflows.com/company/GS/valuation/default/8/))
+* Simple Excess Returns Model ([Example](https://discountingcashflows.com/company/GS/valuation/default/8/))
+* Two-Stage Excess Returns Model ([Example](https://discountingcashflows.com/company/GS/valuation/default/12/))
 * Simple Dividend Discount Model ([Example](https://discountingcashflows.com/company/GS/valuation/default/9/))
 * Two-Stage Dividend Discount Model ([Example](https://discountingcashflows.com/company/GS/valuation/default/1/))
 * Discounted Cash Flow to Equity (To be implemented...)
