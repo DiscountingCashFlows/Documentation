@@ -219,14 +219,13 @@ $.when(
     }
     
     _SetEstimatedValue(ccyRate*valuePerShare, currencyProfile);
-    var stringCurrency = ' ('+currency+')';
-    print(valuePerShare, 'Estimated Value' + stringCurrency, '#');
-    print(ltmBookValueOfEquity, "Book value of equity invested" + stringCurrency, '#');
-    print(sumOfDiscountedExcessReturns, "Sum of discounted excess returns in Growth Stage" + stringCurrency, '#');
-    print(discountedTerminalValue, "Discounted excess return in terminal stage" + stringCurrency, '#');
-    print(terminalValueOfExcessReturns, "Excess Returns in the Terminal Stage" + stringCurrency, '#');
+    print(valuePerShare, 'Estimated Value', '#', currency);
+    print(ltmBookValueOfEquity, "Book value of equity invested", '#', currency);
+    print(sumOfDiscountedExcessReturns, "Sum of discounted excess returns in Growth Stage", '#', currency);
+    print(discountedTerminalValue, "Discounted excess return in terminal stage", '#', currency);
+    print(terminalValueOfExcessReturns, "Excess Returns in the Terminal Stage", '#', currency);
     print(INPUT._DISCOUNT_RATE, "Terminal Cost of Equity (the discount rate)", '%');
-    print(terminalExcessReturn, "Terminal year's excess return" + stringCurrency, '#');
+    print(terminalExcessReturn, "Terminal year's excess return", '#', currency);
     print(INPUT._STABLE_RETURN_ON_EQUITY, "Return on equity in terminal stage", '%');
     print(INPUT._STABLE_GROWTH_IN_PERPETUITY, 'Stable growth in perpetuity', '%');
     print(averageReturnOnEquity, "Average historic Return on Equity", '%');
