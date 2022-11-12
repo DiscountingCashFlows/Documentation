@@ -44,11 +44,12 @@ $.when(
     }
     
     _SetEstimatedValue(presentValue/quote[0]['sharesOutstanding'], currency);
-    print(presentValue/quote[0]['sharesOutstanding'], 'Present Value (In ' + currency + ')', '#');
-    print(projectedNetIncome/1000000, 'Estimated Net Income in ' + (parseInt(income[0]['date']) + INPUT.PROJECTION_YEARS) + '  (In Mill. of ' + currency + ')', '#');
-    print(INPUT.PE * projectedNetIncome/1000000, 'Estimated Market Capitalisation in ' + (parseInt(income[0]['date']) + INPUT.PROJECTION_YEARS) + ' (In Mill. of ' + currency + ')', '#');
-    print(INPUT.PE * projectedNetIncome / (1000000 * Math.pow(1 + INPUT._DISCOUNT_RATE, INPUT.PROJECTION_YEARS)), 'Market Capitalisation discounted to present(In Mill. of ' + currency + ')', '#');
-    print(quote[0]['sharesOutstanding']/1000000, 'Shares Outstanding (In Millions)', '#');
+    var mil_currency = 'mil. ' + currency;
+    print(presentValue/quote[0]['sharesOutstanding'], 'Present Value', '#', currency);
+    print(projectedNetIncome/1000000, 'Estimated Net Income ' + (parseInt(income[0]['date']) + INPUT.PROJECTION_YEARS), '#', mil_currency);
+    print(INPUT.PE * projectedNetIncome/1000000, 'Estimated Market Capitalisation ' + (parseInt(income[0]['date']) + INPUT.PROJECTION_YEARS), '#', mil_currency);
+    print(INPUT.PE * projectedNetIncome / (1000000 * Math.pow(1 + INPUT._DISCOUNT_RATE, INPUT.PROJECTION_YEARS)), 'Market Capitalisation discounted to present, '#', mil_currency);
+    print(quote[0]['sharesOutstanding']/1000000, 'Shares Outstanding', '#', mil_currency);
 
     var context = [];
     var lastYear = parseInt(income[0]['date']);
