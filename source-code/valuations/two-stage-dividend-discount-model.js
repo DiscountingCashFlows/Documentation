@@ -268,16 +268,15 @@ $.when(
     if(_StopIfWatch(ccyRate*valueOfStock, currencyProfile)){
       return;
     }
-    var stringCurrency = ' ('+currency+')';
     _SetEstimatedValue(ccyRate*valueOfStock, currencyProfile);
     if(ccyRate != 1){
-    	print(valueOfStock, 'Value per Share in ' + currency, '#');
+    	print(valueOfStock, 'Value per Share ', '#', currency);
     }
-    print(sumOfDiscountedDividends, "Sum of discounted dividends" + stringCurrency, '#');
-    print(discountedTerminalValue, "Discounted terminal value" + stringCurrency, '#');
-    print(terminalValue, "Terminal value" + stringCurrency, '#');
-    print(stableDividend, "Dividend in stable phase" + stringCurrency, '#');
-    print(stableEps, "Eps in stable phase" + stringCurrency, '#');
+    print(sumOfDiscountedDividends, "Sum of discounted dividends", '#', currency);
+    print(discountedTerminalValue, "Discounted terminal value", '#', currency);
+    print(terminalValue, "Terminal value", '#', currency);
+    print(stableDividend, "Dividend in stable phase", '#', currency);
+    print(stableEps, "Eps in stable phase", '#', currency);
     print(dgr, "Average historic Dividend Growth Rate", '%');
     print(averagePayoutRatio, "Average historic Payout Ratio", '%');
     print(averageReturnOnEquity, "Average historic Return on Equity", '%');
