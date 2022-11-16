@@ -177,15 +177,16 @@ $.when(
     if(_StopIfWatch(ccyRate*valuePerShare, currencyProfile)){
       return;
     }
-    print(terminalValue, 'Terminal Value (mil. ' + currency + ')', '#');
-    print(discountedTerminalValue, 'Discounted Terminal Value (mil. ' + currency + ')', '#');
-    print(projectedEnterpriseValue-discountedTerminalValue, 'Sum of Discounted Free Cash Flow (mil. ' + currency + ')', '#');
-    print(projectedEnterpriseValue, 'Enterprise Value (mil. ' + currency + ')', '#');
-    print(toM(balance_last_quarter['cashAndShortTermInvestments']), 'Cash and Equivalents (mil. ' + currency + ')', '#');
-    print(toM(balance_last_quarter['totalDebt']), 'Total Debt (mil ' + currency + ')', '#');
-    print(equityValue, 'Equity Value (mil. ' + currency + ')', '#');
-    print(toM(income[0]['weightedAverageShsOut']), 'Shares Outstanding (mil.)','#');
-    print(valuePerShare, 'Estimated Value per Share (' + currency + ')', '#');
+    var mil_currency = 'mil. ' + currency;
+    print(terminalValue, 'Terminal Value', '#', mil_currency);
+    print(discountedTerminalValue, 'Discounted Terminal Value', '#', mil_currency);
+    print(projectedEnterpriseValue-discountedTerminalValue, 'Sum of Discounted Free Cash Flow', '#', mil_currency);
+    print(projectedEnterpriseValue, 'Enterprise Value', '#', mil_currency);
+    print(toM(balance_last_quarter['cashAndShortTermInvestments']), 'Cash and Equivalents', '#', mil_currency);
+    print(toM(balance_last_quarter['totalDebt']), 'Total Debt', '#', mil_currency);
+    print(equityValue, 'Equity Value', '#', mil_currency);
+    print(toM(income[0]['weightedAverageShsOut']), 'Shares Outstanding','#', 'mil.');
+    print(valuePerShare, 'Estimated Value per Share', '#', currency);
     print(treasury[0][0]['year10']/100,'Yield of the U.S. 10 Year Treasury Note', '%');
     print(operatingCashFlowMargin, 'Average Cash from Operating Activities Margin', '%');
     print(capitalExpenditureMargin, 'Average Capital Expenditure Margin', '%');

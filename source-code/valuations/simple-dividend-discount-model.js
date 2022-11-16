@@ -217,14 +217,13 @@ $.when(
     if(_StopIfWatch(ccyRate*valueOfStock, currencyProfile)){
       return;
     }
-    var stringCurrency = ' ('+currency+')';
+
     _SetEstimatedValue(ccyRate*valueOfStock, currencyProfile);
     if(ccyRate != 1){
-    	print(valueOfStock, 'Value per Share in ' + currency, '#');
+    	print(valueOfStock, 'Value per Share', '#', currency);
     }
-    print(dividends[0].adjDividend, "LTM dividend" + stringCurrency, '#');
-    print(linDividends[dividends.length - 1], "Next linear regression dividend" + stringCurrency, '#');
-    print(INPUT.EXPECTED_DIVIDEND, "Next year's expected dividend" + stringCurrency, '#');
+    print(dividends[0].adjDividend, "LTM dividend", '#', currency);
+    print(INPUT.EXPECTED_DIVIDEND, "Next year's expected dividend", '#', currency);
     print(dgr, "Average historic dividend growth rate", '%');
     print(averagePayoutRatio, "Average historic Payout Ratio", '%');
     print(averageReturnOnEquity, "Average historic Return on Equity", '%');

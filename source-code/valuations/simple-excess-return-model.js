@@ -202,12 +202,12 @@ $.when(
     }
     
     _SetEstimatedValue(ccyRate*valuePerShare, currencyProfile);
-    var stringCurrency = ' ('+currency+')';
-    print(valuePerShare, 'Estimated Value' + stringCurrency, '#');
-    print(bookValue, "Book value of equity invested" + stringCurrency, '#');
-    print(y_book_value[len + 1], "Next year's estimated book value", '#');
-    print(terminalValue, "Present value of future excess returns" + stringCurrency, '#');
-    print(excessReturns, "Excess Return per share" + stringCurrency, '#');
+
+    print(valuePerShare, 'Estimated Value', '#', currency);
+    print(bookValue, "Book value of equity invested", '#', currency);
+    print(y_book_value[len + 1], "Next year's estimated book value", '#', currency);
+    print(terminalValue, "Present value of future excess returns", '#', currency);
+    print(excessReturns, "Excess Return per share", '#', currency);
     print(costOfEquity, "Cost of Equity (the discount rate)", '%');
     print(INPUT._RETURN_ON_EQUITY, "Return on equity", '%');
     print(INPUT._GROWTH_IN_PERPETUITY, 'Growth in perpetuity', '%');
