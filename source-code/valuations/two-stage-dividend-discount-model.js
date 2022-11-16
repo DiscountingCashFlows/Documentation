@@ -270,7 +270,7 @@ $.when(
     }
     _SetEstimatedValue(ccyRate*valueOfStock, currencyProfile);
     if(ccyRate != 1){
-    	print(valueOfStock, 'Value per Share ', '#', currency);
+    	print(valueOfStock, 'Value per Share', '#', currency);
     }
     print(sumOfDiscountedDividends, "Sum of discounted dividends", '#', currency);
     print(discountedTerminalValue, "Discounted terminal value", '#', currency);
