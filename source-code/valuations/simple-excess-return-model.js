@@ -205,7 +205,7 @@ $.when(
 
     print(valuePerShare, 'Estimated Value', '#', currency);
     print(bookValue, "Book value of equity invested", '#', currency);
-    print(y_book_value[len + 1], "Next year's estimated book value", '#');
+    print(y_book_value[len + 1], "Next year's estimated book value", '#', currency);
     print(terminalValue, "Present value of future excess returns", '#', currency);
     print(excessReturns, "Excess Return per share", '#', currency);
     print(costOfEquity, "Cost of Equity (the discount rate)", '%');
