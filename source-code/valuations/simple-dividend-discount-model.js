@@ -220,10 +220,9 @@ $.when(
 
     _SetEstimatedValue(ccyRate*valueOfStock, currencyProfile);
     if(ccyRate != 1){
-    	print(valueOfStock, 'Value per Share ', '#', currency);
+    	print(valueOfStock, 'Value per Share', '#', currency);
     }
     print(dividends[0].adjDividend, "LTM dividend", '#', currency);
-    print(linDividends[dividends.length - 1], "Next linear regression dividend", '#', currency);
     print(INPUT.EXPECTED_DIVIDEND, "Next year's expected dividend", '#', currency);
     print(dgr, "Average historic dividend growth rate", '%');
     print(averagePayoutRatio, "Average historic Payout Ratio", '%');
