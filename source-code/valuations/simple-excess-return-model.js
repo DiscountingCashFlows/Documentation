@@ -12,14 +12,6 @@ var INPUT = Input({_DISCOUNT_RATE: '',
                    HISTORIC_YEARS: 10
                    }); 
 
-function newArrayFill(length, fillObject){
-  var newArray = new Array(length);
-  for(var i=0; i<newArray.length; i++){
-    newArray[i] = fillObject;
-  }
-  return newArray;
-}
-
 $.when(
   get_income_statement(),
   get_income_statement_ltm(),
