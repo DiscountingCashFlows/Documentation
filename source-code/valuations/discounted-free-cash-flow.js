@@ -177,13 +177,13 @@ $.when(
     if(_StopIfWatch(ccyRate*valuePerShare, currencyProfile)){
       return;
     }
-    print(terminalValue, 'Terminal Value', '#', currency);
-    print(discountedTerminalValue, 'Discounted Terminal Value', '#', currency);
-    print(projectedEnterpriseValue-discountedTerminalValue, 'Sum of Discounted Free Cash Flow', '#', currency);
-    print(projectedEnterpriseValue, 'Enterprise Value', '#', currency);
+    print(terminalValue/toM(1), 'Terminal Value', '#', currency);
+    print(discountedTerminalValue/toM(1), 'Discounted Terminal Value', '#', currency);
+    print((projectedEnterpriseValue-discountedTerminalValue)/toM(1), 'Sum of Discounted Free Cash Flow', '#', currency);
+    print(projectedEnterpriseValue/toM(1), 'Enterprise Value', '#', currency);
     print(balance_last_quarter['cashAndShortTermInvestments'], 'Cash and Equivalents', '#', currency);
     print(balance_last_quarter['totalDebt'], 'Total Debt', '#', currency);
-    print(equityValue, 'Equity Value', '#', currency);
+    print(equityValue/toM(1), 'Equity Value', '#', currency);
     print(income[0]['weightedAverageShsOut'], 'Shares Outstanding','#');
     print(valuePerShare, 'Estimated Value per Share', '#', currency);
     print(treasury[0][0]['year10']/100,'Yield of the U.S. 10 Year Treasury Note', '%');
