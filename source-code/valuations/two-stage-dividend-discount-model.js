@@ -14,29 +14,6 @@ var INPUT = Input({_DISCOUNT_RATE: '',
                    _MARKET_PREMIUM: 5.5,
                    HISTORIC_YEARS: ''});  
 
-// Gets the growth rates from a list of values
-// The mode formats the output to either 'percentage' 12.34% or normal 0.1234
-function getGrowthRateList(values, mode){
-  var growthRateList = [];
-  if(values.length > 1){
-    if(mode == 'percentage'){growthRateList.push('');}
-    else{growthRateList.push(0);}
-    
-    var val1 = values[0];
-    for(var i=1; i<values.length; i++){
-      var val2 = values[i];
-      if(mode == 'percentage'){
-        growthRateList.push( (100*(val2-val1)/val1).toFixed(2) + '%' );
-      }
-      else{
-        growthRateList.push((val2-val1)/val1);
-      }
-      val1=val2;
-    }
-  }
-  return growthRateList;
-}
-
 $.when(
   get_income_statement(),
   get_income_statement_ltm(),

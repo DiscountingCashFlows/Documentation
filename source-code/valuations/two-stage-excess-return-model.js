@@ -13,30 +13,6 @@ var INPUT = Input({_DISCOUNT_RATE: '',
                    HISTORIC_YEARS: 10,
                    }); 
 
-function newArrayFill(length, fillObject){
-  var newArray = new Array(length);
-  for(var i=0; i<newArray.length; i++){
-    newArray[i] = fillObject;
-  }
-  return newArray;
-}
-
-function arrayValuesToRates(array){
-  var newArray = [];
-  for(var i=0;i<array.length;i++){
-    newArray.push(Math.floor(array[i]*10000)/100+'%');
-  }
-  return newArray;
-}
-
-function getArraySum(array){
-  var sum = 0;
-  for(var i=0;i<array.length;i++){
-    sum += array[i];
-  }
-  return sum;
-}
-
 $.when(
   get_income_statement(),
   get_income_statement_ltm(),
