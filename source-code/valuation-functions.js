@@ -31,6 +31,9 @@ _chart_data['y_forecasted_chart_hidden'] = {};
 _chart_data['name'] = 'My Chart';
 _chart_data['hidden_series'] = [];
 
+var global_str = '';  // used by the code editor
+var _CodeMirror_output = undefined;
+
 function resetChartData(){
     _chart_data['x_historic'] = [];
     _chart_data['x_forecasted'] = [];
@@ -50,6 +53,11 @@ function unsetAllData(){
     _profile = undefined;
     _treasury = undefined;
     _estimates = undefined;
+    _dividends_annual = undefined;
+    _dividends_reported = undefined;
+    _prices_daily = undefined;
+    _prices_annual = undefined;
+    _fx = undefined;
 }
 
 function get_income_statement(){
@@ -246,7 +254,8 @@ function appendTable(item, modalTablesSection, tablesCount){
         for(var i = 0; i < item.data.length; i++){
             var dataItem = item.data[i];
             tableString += '<tr>';
-            tableString += '<td class="row-description"><b>' + item.rows[i] + '</b></td>';
+            tableString += '<td class="row-description"><b><span class="row-description-text" nondev="'
+                        + item.rows[i] + '">' + item.rows[i] + '</span></b></td>';
             for(var j = 0; j < dataItem.length; j++){
                 var valueData = dataItem[j];
                 if ($.isNumeric(dataItem[j])){
@@ -729,13 +738,15 @@ function monitor(context){
                     textColor = 'text-danger';
                 }
                 $('.heading-values').show();
-                // valueData is the formatted number of item.data example: 1,234,456.32 instead of 1234456.32
-                var valueData = item.data;
-                if ($.isNumeric(item.data)){
-                    valueData = nf.format(valueData);
-                }
                 modalValuesSection.append('<li class="dynamic-size-row list-group-item py-1 px-0 ' + textColor + ' ">' + item.name +
-                                 '<span class="float-right">' + valueData + '</span></li>');
+                                 '<div class="float-right"><span class="mr-1">' + item.data + '</span><span>' + item.currency + '</span></li>');
+
+                // Will soon be DEPRECATED
+                global_str += ' > ' + item.name + ': ' + item.data + ' ' + item.currency + '\n';
+                // Dummy class
+                if(_CodeMirror_output != undefined){
+                    _CodeMirror_output.setValue(global_str);
+                }
             }
             else if(item.display == 'table'){
                 $('.heading-tables').show();
@@ -1092,4 +1103,139 @@ function currencyRate(fx, fromCurrency, toCurrency){
         }
     }
     return 1;
+}
+
+// adjusts each key that is not in do_not_adjust_key using fxRate
+function adjustQuoteToFXRate(quote, fxRate){
+    if ("fxRate" in quote && quote.fxRate == fxRate){
+        // do not adjust the quote if it already has been adjusted
+        return quote;
+    }
+     var do_not_adjust_key = [
+        'sharesOutstanding',
+        'timestamp',
+        'volume',
+        'pe',
+        'changesPercentage',
+        'avgVolume'
+    ]
+    for (key in quote){
+        if ($.isNumeric(quote[key]) &&
+            typeof quote[key] != 'string' &&
+            !do_not_adjust_key.includes(key)){
+            quote[key] *= fxRate;
+        }
+    }
+    quote.fxRate = fxRate;
+    return quote;
+}
+
+// print function
+function print(str, label='', type='', currency=''){
+    var nf = new Intl.NumberFormat('en-US');
+    var context = [];
+    var string = '';
+
+    if(typeof(str) === 'number')
+    {
+        if(type == '%')
+        {
+            string = (str * 100).toFixed(2);
+            string += '%';
+        }
+        else if(type == '#')
+        {
+            if (str >= 1000000){
+                string = nf.format(toM(str));
+                string += ' Mil.';
+            }
+            else if (str >= 1000){
+                string = nf.format(toK(str));
+                string += ' K';
+            }
+            else{
+                string = nf.format(str);
+            }
+        }
+        else
+        {
+            string = String(str);
+        }
+    }
+    else
+    {
+        string = String(str);
+    }
+    if (label){
+        context.push({name:label, display:'value', data:string, currency: currency});
+    }
+    else{
+        context.push({name:'Unlabeled Print ' + unlabeledPrint, display:'value', data:string, currency:currency});
+        unlabeledPrint += 1;
+    }
+    monitor(context);
+    return;
+}
+
+function toColumn(report, key, measure){
+  var returnList = [];
+  for(var i=0; i<report.length; i++){
+    if(measure == 'M'){
+    	returnList.push(toM(report[i][key]));
+    }
+    else if(measure == 'K'){
+        returnList.push(toK(report[i][key]));
+    }
+    else{
+        returnList.push(report[i][key]);
+    }
+  }
+  return returnList;
+}
+
+function newArrayFill(length, fillObject){
+  var newArray = new Array(length);
+  for(var i=0; i<newArray.length; i++){
+    newArray[i] = fillObject;
+  }
+  return newArray;
+}
+
+function arrayValuesToRates(array){
+  var newArray = [];
+  for(var i=0;i<array.length;i++){
+    newArray.push(Math.floor(array[i]*10000)/100+'%');
+  }
+  return newArray;
+}
+
+function getArraySum(array){
+  var sum = 0;
+  for(var i=0;i<array.length;i++){
+    sum += array[i];
+  }
+  return sum;
+}
+
+// Gets the growth rates from a list of values
+// The mode formats the output to either 'percentage' 12.34% or normal 0.1234
+function getGrowthRateList(values, mode){
+  var growthRateList = [];
+  if(values.length > 1){
+    if(mode == 'percentage'){growthRateList.push('');}
+    else{growthRateList.push(0);}
+
+    var val1 = values[0];
+    for(var i=1; i<values.length; i++){
+      var val2 = values[i];
+      if(mode == 'percentage'){
+        growthRateList.push( (100*(val2-val1)/val1).toFixed(2) + '%' );
+      }
+      else{
+        growthRateList.push((val2-val1)/val1);
+      }
+      val1=val2;
+    }
+  }
+  return growthRateList;
 }
