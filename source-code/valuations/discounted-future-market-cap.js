@@ -22,7 +22,7 @@ $.when(
     quote = quote[0].slice(0, INPUT.HISTORIC_YEARS);
     income = replaceWithLTM(income, income_ltm);
     
-    var linRevenue = linearRegressionGrowthRate('revenue', income, INPUT.PROJECTION_YEARS, INPUT.PROJECTED_REVENUE_SLOPE);
+    var linRevenue = linearRegressionGrowthRate(income, 'revenue', INPUT.PROJECTION_YEARS, INPUT.PROJECTED_REVENUE_SLOPE);
     var projectedRevenue = linRevenue[linRevenue.length - 1];
 	
 	setInputDefault('_NET_INCOME_MARGIN', 100 * averageMargin('netIncome', 'revenue', income));

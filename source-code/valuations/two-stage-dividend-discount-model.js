@@ -69,7 +69,7 @@ $.when(
     fx = fx[0];
 	
     // Get the linear regression curve line as a list
-    var linEps = linearRegressionGrowthRate('eps', income, INPUT.HIGH_GROWTH_YEARS, 1);
+    var linEps = linearRegressionGrowthRate(income, 'eps', INPUT.HIGH_GROWTH_YEARS, 1);
     // Get the currencies used in the profile and reports (flows).
     // The profile can have a different currency from the reports.
     var currency = '';

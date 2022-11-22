@@ -115,7 +115,7 @@ $.when(
     
     // Set the Discount Rate to 10Y Treasury Yield + 4%
     setInputDefault('_DISCOUNT_RATE', 100*wacc);
-    var linRevenue = linearRegressionGrowthRate('revenue', income, INPUT.PROJECTION_YEARS, INPUT.REVENUE_REGRESSION_SLOPE).slice(0,-1);
+    var linRevenue = linearRegressionGrowthRate(income, 'revenue', INPUT.PROJECTION_YEARS, INPUT.REVENUE_REGRESSION_SLOPE).slice(0,-1);
     for(var i in linRevenue){
       linRevenue[i] = toM(linRevenue[i]);
     }

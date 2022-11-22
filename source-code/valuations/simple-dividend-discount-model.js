@@ -88,7 +88,7 @@ $.when(
         }
     }
     // Get the linear regression curve line as a list
-    var linDividends = linearRegressionGrowthRate('adjDividend', dividends, chartProjectionYears - 1, 1);
+    var linDividends = linearRegressionGrowthRate(dividends, 'adjDividend', chartProjectionYears - 1, 1);
     // Set beta 
     if(profile.beta){
     	setInputDefault('BETA', profile.beta);
