@@ -71,18 +71,8 @@ $.when(
     
     // Check if the currency is being converted 
     // The profile can have a different currency from the reports.
-	var currency = '';
-    var currencyProfile = '';
-    if('convertedCurrency' in profile){
-		currencyProfile = profile['convertedCurrency'];
-	}else{
-		currencyProfile = profile['currency'];
-	}
-	if('convertedCurrency' in income[0]){
-		currency = income[0]['convertedCurrency'];
-	}else{
-		currency = income[0]['reportedCurrency'];
-	}	
+	var currency = income[0]['convertedCurrency'];
+    var currencyProfile = profile['convertedCurrency'];
     var ccyRate = currencyRate(fx,  currency, currencyProfile);
     
     // ---------------- SETTING ASSUMPTIONS SECTION ---------------- 
