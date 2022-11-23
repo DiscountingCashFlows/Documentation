@@ -2,7 +2,7 @@
 The source code and documentation behind our website's valuation models, functions and more.
 
 [API & Functions (readthedocs)](https://discounting-cash-flows.readthedocs.io/en/latest/index.html)
- - Developer's guide to understanding and writing code for the valuation models.
+ - Developer's guide to writing code for the valuation models.
 
 [Source Code](https://github.com/DiscountingCashFlows/Documentation/tree/main/source-code)
  - The source code for all our valuation models.
