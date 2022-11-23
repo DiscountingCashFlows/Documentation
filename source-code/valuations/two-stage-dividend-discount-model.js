@@ -72,18 +72,8 @@ $.when(
     var linEps = linearRegressionGrowthRate(income, 'eps', INPUT.HIGH_GROWTH_YEARS, 1);
     // Get the currencies used in the profile and reports (flows).
     // The profile can have a different currency from the reports.
-    var currency = '';
-    var currencyProfile = '';
-    if('convertedCurrency' in profile){
-		currencyProfile = profile['convertedCurrency'];
-	}else{
-		currencyProfile = profile['currency'];
-	}
-	if('convertedCurrency' in flows[0]){
-		currency = flows[0]['convertedCurrency'];
-	}else{
-		currency = flows[0]['reportedCurrency'];
-	}
+    var currency = flows[0]['convertedCurrency'];
+    var currencyProfile = profile['convertedCurrency'];
     var ccyRate = currencyRate(fx,  currency, currencyProfile);
     if(ccyRate != 1){
     	// adjust dividends for fx
