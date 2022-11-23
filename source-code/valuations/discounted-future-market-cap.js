@@ -31,12 +31,7 @@ $.when(
 	setInputDefault('PE', quote[0]['pe']);
     var presentValue = INPUT.PE * projectedNetIncome / Math.pow(1 + INPUT._DISCOUNT_RATE, INPUT.PROJECTION_YEARS);
     
-	var currency = '';
-	if('convertedCurrency' in income[0]){
-		currency = income[0]['convertedCurrency'];
-	}else{
-		currency = income[0]['reportedCurrency'];
-	}
+	var currency = income[0]['convertedCurrency'];
 	
     // If we are calculating the value per share for a watch, we can stop right here.
     if(_StopIfWatch(presentValue/quote[0]['sharesOutstanding'], currency)){
