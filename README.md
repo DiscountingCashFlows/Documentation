@@ -8,6 +8,6 @@ The source code and documentation behind our website's valuation models, functio
  - The source code for all our valuation models.
  
 [Valuation Models Documentation](https://github.com/DiscountingCashFlows/Documentation/tree/main/models-documentation)
- - Description of all our valuation models and how they are calculated.
+ - Descriptions of all our valuation models and how they are calculated.
 
 Open sourcing our models supports our committment to full transparency and allows our users to fully understand the logic behind the selection of the metrics used and edit those base models or create new ones.
