@@ -21,6 +21,8 @@ $.when(
     flows = addKey('revenue', income, flows);
     flows_ltm['revenue'] = income_ltm['revenue'];
     
+    var currency = income[0]['convertedCurrency'];
+    
     // Print Average Margins
     // Avg. Revenue Growth Rate
     print(averageGrowthRate('revenue', income), 'Avg. Revenue Growth Rate', '%');
@@ -135,7 +137,7 @@ $.when(
     data[8].push((100 * income_ltm['netIncome']/income_ltm['revenue']).toFixed(2) + '%');
     data[9].push((income_ltm['netIncome']/1000000).toFixed(2));
     
-    contextItem = {name:'Income Statement Margins (Mil. ' + income[0]['reportedCurrency'] + ')', display:'table', rows:rows, columns:columns, data:data};
+    contextItem = {name:'Income Statement Margins (Mil. ' + currency + ')', display:'table', rows:rows, columns:columns, data:data};
     context.push(contextItem);
     
     // Cash Flow Statement Margins Table
@@ -176,7 +178,7 @@ $.when(
     data[7].push((100 * flows_ltm['capitalExpenditure']/flows_ltm['revenue']).toFixed(2) + '%');
     data[8].push((flows_ltm['capitalExpenditure']/1000000).toFixed(2));
 
-    contextItem = {name:'Cash Flow Statement Margins (Mil. ' + flows[0]['reportedCurrency'] + ')', display:'table', rows:rows, columns:columns, data:data};
+    contextItem = {name:'Cash Flow Statement Margins (Mil. ' + currency + ')', display:'table', rows:rows, columns:columns, data:data};
     context.push(contextItem);
     
 	renderChart('Cash Flow Statement Margins(% of Revenue)');
