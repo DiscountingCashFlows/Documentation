@@ -3,7 +3,7 @@
 //   Copyright: https://discountingcashflows.com, 2022			
 // +------------------------------------------------------------+
 var INPUT = Input({_MARKET_PREMIUM: 5.5,
-  				   _RISK_FREE_RATE: '',
+                   _RISK_FREE_RATE: '',
                    BETA: ''}); 
 
 $.when(
@@ -29,18 +29,8 @@ $.when(
     
     // Check if the currency is being converted 
     // The profile can have a different currency from the reports.
-	var currency = '';
-    var currencyProfile = '';
-    if('convertedCurrency' in profile){
-		currencyProfile = profile['convertedCurrency'];
-	}else{
-		currencyProfile = profile['currency'];
-	}
-	if('convertedCurrency' in balance_last_quarter){
-		currency = balance_last_quarter['convertedCurrency'];
-	}else{
-		currency = balance_last_quarter['reportedCurrency'];
-	}
+	var currency = balance_last_quarter['convertedCurrency'];
+    var currencyProfile = profile['convertedCurrency'];
     var ccyRate = currencyRate(fx,  currency, currencyProfile);
     
 	// ---------------- SETTING ASSUMPTIONS SECTION ---------------- 
