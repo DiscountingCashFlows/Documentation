@@ -47,18 +47,8 @@ $.when(
     profile = profile[0][0];
     fx = fx[0];
     var valuePerShare = 0;
-    var currency = '';
-    var currencyProfile = '';
-    if('convertedCurrency' in profile){
-		currencyProfile = profile['convertedCurrency'];
-	}else{
-		currencyProfile = profile['currency'];
-	}
-	if('convertedCurrency' in income_ltm){
-		currency = income_ltm['convertedCurrency'];
-	}else{
-		currency = income_ltm['reportedCurrency'];
-	}
+    var currency = income_ltm['convertedCurrency'];
+    var currencyProfile = profile['convertedCurrency'];
     var ccyRate = currencyRate(fx,  currency, currencyProfile);
     if(ccyRate != 1){
     	// adjust dividends for fx
