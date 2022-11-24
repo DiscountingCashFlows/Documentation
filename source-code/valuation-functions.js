@@ -742,7 +742,12 @@ function monitor(context){
                                  '<div class="float-right"><span class="mr-1">' + item.data + '</span><span>' + item.currency + '</span></li>');
 
                 // Will soon be DEPRECATED
-                global_str += ' > ' + item.name + ': ' + item.data + ' ' + item.currency + '\n';
+                if(item.name){
+                    global_str += '>>> ' + item.name + ': ' + item.data + ' ' + item.currency + '\n';
+                }
+                else{
+                    global_str += '>>> ' + item.data + ' ' + item.currency + '\n';
+                }
                 // Dummy class
                 if(_CodeMirror_output != undefined){
                     _CodeMirror_output.setValue(global_str);
@@ -827,12 +832,28 @@ function fillHistoricUsingList(list, key, endingYear){
     return _chart_data['y_historic'][key];
 }
 
-function toM(value){
-    return value / 1000000;
+function toM(obj){
+    // if obj is a list
+    if(typeof(obj) == 'object'){
+        for(var i=0; i<obj.length; i++){
+            obj[i] /= 1000000;
+        }
+        return obj;
+    }
+    // obj is a number
+    return obj / 1000000;
 }
 
-function toK(value){
-    return value / 1000;
+function toK(obj){
+    // if obj is a list
+    if(typeof(obj) == 'object'){
+        for(var i=0; i<obj.length; i++){
+            obj[i] /= 1000;
+        }
+        return obj;
+    }
+    // obj is a number
+    return obj / 1000;
 }
 
 // forecast() uses the 'x_historic' member's last date for correct indexing
@@ -1032,7 +1053,7 @@ function replaceWithLTM(report, ltm){
   return report;
 }
 
-function linearRegressionGrowthRate(key, report, years, slope){
+function linearRegressionGrowthRate(report, key, projection_years, slope){
   var rep = report.slice();
   rep.reverse();
   var count = rep.length;
@@ -1052,7 +1073,7 @@ function linearRegressionGrowthRate(key, report, years, slope){
     // Generate values
     var xValues = [];
     var yValues = [];
-    for(var i = 0; i < count + years; i++){
+    for(var i = 0; i < count + projection_years; i++){
       xValues.push(i+1);
       yValues.push((i+1) * slope + intercept);
     }
@@ -1082,6 +1103,10 @@ function addKey(key, report_from, report_to){
     }
   }
   return report_to;
+}
+
+function fxRate(fx, fromCurrency, toCurrency){
+    return currencyRate(fx, fromCurrency, toCurrency);
 }
 
 function currencyRate(fx, fromCurrency, toCurrency){
@@ -1170,14 +1195,13 @@ function print(str, label='', type='', currency=''){
         context.push({name:label, display:'value', data:string, currency: currency});
     }
     else{
-        context.push({name:'Unlabeled Print ' + unlabeledPrint, display:'value', data:string, currency:currency});
-        unlabeledPrint += 1;
+        context.push({name:'', display:'value', data:string, currency:currency});
     }
     monitor(context);
     return;
 }
 
-function toColumn(report, key, measure){
+function toList(report, key, measure){
   var returnList = [];
   for(var i=0; i<report.length; i++){
     if(measure == 'M'){
