@@ -51,10 +51,11 @@ $.when(
     if(dividendsCount > 10){
       dividendsCount = 10;
     }
+    treasury = treasury[0];
     // Set the default historic years to the number of historic dividends
     setInputDefault('HISTORIC_YEARS', dividendsCount);
     // Set the stable growth in perpetuity to the 10 year treasury note
-    setInputDefault('_STABLE_GROWTH_IN_PERPETUITY', treasury[0][0].year10);
+    setInputDefault('_STABLE_GROWTH_IN_PERPETUITY', treasury.year10);
     
     // Slice the reports to the number of historic years set previously
     flows = flows[0].slice(0, INPUT.HISTORIC_YEARS);
@@ -89,7 +90,7 @@ $.when(
     	setInputDefault('BETA', 1);
     }
     // Risk free rate is the yield of the 10 year treasury note
-	setInputDefault('_RISK_FREE_RATE', treasury[0][0].year10);
+	setInputDefault('_RISK_FREE_RATE', treasury.year10);
     // Discount Rate is the cost of equity
     setInputDefault('_DISCOUNT_RATE', 100*(INPUT._RISK_FREE_RATE + INPUT.BETA * INPUT._MARKET_PREMIUM));
     
