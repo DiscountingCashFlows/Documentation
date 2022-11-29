@@ -47,6 +47,7 @@ $.when(
     if(!income_ltm.revenue){income_ltm = income[0];}
     profile = profile[0][0];
     fx = fx[0];
+    treasury = treasury[0];
     var valuePerShare = 0;
     var currency = income_ltm['convertedCurrency'];
     var currencyProfile = profile['convertedCurrency'];
@@ -59,8 +60,8 @@ $.when(
     }
     
     // ---------------- SETTING ASSUMPTIONS SECTION ---------------- 
-	setInputDefault('_RISK_FREE_RATE', treasury[0][0]['year10']);
-    setInputDefault('_GROWTH_IN_PERPETUITY', treasury[0][0]['year10']);
+	setInputDefault('_RISK_FREE_RATE', treasury.year10);
+    setInputDefault('_GROWTH_IN_PERPETUITY', treasury.year10);
     setInputDefault('BETA', profile['beta']);
     setInputDefault('_DISCOUNT_RATE', 100*(INPUT._RISK_FREE_RATE + INPUT.BETA*INPUT._MARKET_PREMIUM));
 	
@@ -196,7 +197,7 @@ $.when(
     print(averageReturnOnEquity, "Average historic Return on Equity", '%');
     print(averagePayoutRatio, "Average historic Payout Ratio", '%');
     print(stablePayoutRatio, "Payout Ratio used", '%');
-    print(treasury[0][0]['year10']/100, 'Risk Free Rate of the 10 Year U.S. Treasury Note', '%');
+    print(treasury.year10/100, 'Risk Free Rate of the 10 Year U.S. Treasury Note', '%');
     // ---------------- END OF VALUES OF INTEREST SECTION ---------------- 
     // ---------------- TABLES SECTION ---------------- 
     var lastYearDate = parseInt(income[0]['date']);
