@@ -59,6 +59,7 @@ $.when(
     flows = flows[0].slice(0, numberOfPeriods);
     flows_ltm = flows_ltm[0];
     profile = profile[0][0];
+    treasury = treasury[0];
     fx = fx[0];
     
     // Add the revenue key to the flows report
@@ -77,7 +78,7 @@ $.when(
     
     // ---------------- SETTING ASSUMPTIONS SECTION ---------------- 
     // Set the growth in perpetuity to the 10Y Treasury Yield
-    setInputDefault('_GROWTH_IN_PERPETUITY', treasury[0][0]['year10']);
+    setInputDefault('_GROWTH_IN_PERPETUITY', treasury.year10);
     
     // Set beta (used in calculating the discount rate)
     if(profile.beta){
@@ -87,7 +88,7 @@ $.when(
     	setInputDefault('BETA', 1);
     }
     // Risk free rate is the yield of the 10 year treasury note
-	setInputDefault('_RISK_FREE_RATE', treasury[0][0].year10);
+	setInputDefault('_RISK_FREE_RATE', treasury.year10);
     
     // Calculate the discount rate using the wacc formula
     var costOfEquity = INPUT._RISK_FREE_RATE + INPUT.BETA * INPUT._MARKET_PREMIUM;
@@ -176,7 +177,7 @@ $.when(
     print(equityValue/toM(1), 'Equity Value', '#', currency);
     print(income[0]['weightedAverageShsOut'], 'Shares Outstanding','#');
     print(valuePerShare, 'Estimated Value per Share', '#', currency);
-    print(treasury[0][0]['year10']/100,'Yield of the U.S. 10 Year Treasury Note', '%');
+    print(treasury.year10/100,'Yield of the U.S. 10 Year Treasury Note', '%');
     print(operatingCashFlowMargin, 'Average Cash from Operating Activities Margin', '%');
     print(capitalExpenditureMargin, 'Average Capital Expenditure Margin', '%');
     print(costOfEquity, 'Cost of Equity', '%');
