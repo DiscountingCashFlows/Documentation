@@ -1,6 +1,6 @@
 // +------------------------------------------------------------+
 //   Model: Two-Stage Excess Return Model 								
-//   Copyright: https://discountingcashflows.com, 2022			
+//   © Copyright: https://discountingcashflows.com
 // +------------------------------------------------------------+
 
 var INPUT = Input({_DISCOUNT_RATE: '',
@@ -25,28 +25,25 @@ $.when(
   function(_income, _income_ltm, _balance, _balance_quarterly, _profile, _dividends, _treasury, _fx){
     // context is a must-have. it is used to display charts, tables and values
     var context = [];
-    var income = JSON.parse(JSON.stringify(_income));
-    var income_ltm = JSON.parse(JSON.stringify(_income_ltm));
-    var balance = JSON.parse(JSON.stringify(_balance));
-    var balance_quarterly = JSON.parse(JSON.stringify(_balance_quarterly));
-    var profile = JSON.parse(JSON.stringify(_profile));
-    var dividends = JSON.parse(JSON.stringify(_dividends));
-    var treasury = JSON.parse(JSON.stringify(_treasury));
-    var fx = JSON.parse(JSON.stringify(_fx));
+    var income = deepCopy(_income);
+    var income_ltm = deepCopy(_income_ltm);
+    var balance = deepCopy(_balance);
+    var balance_quarterly = deepCopy(_balance_quarterly);
+    var profile = deepCopy(_profile);
+    var dividends = deepCopy(_dividends);
+    var treasury = deepCopy(_treasury);
+    var fx = deepCopy(_fx);
     
-    income = income[0].slice(0, INPUT.HISTORIC_YEARS);
-    balance = balance[0].slice(0, INPUT.HISTORIC_YEARS);
-    balance_quarterly = balance_quarterly[0][0];
-    dividends = dividends[0].slice(0, INPUT.HISTORIC_YEARS + 1);
+    income = income.slice(0, INPUT.HISTORIC_YEARS);
+    balance = balance.slice(0, INPUT.HISTORIC_YEARS);
+    balance_quarterly = balance_quarterly[0]; // last quarter
+    dividends = dividends.slice(0, INPUT.HISTORIC_YEARS + 1);
     // if the company doesn't pay dividends, make an empty dividend list with 0 values
     if(dividends.length < INPUT.HISTORIC_YEARS + 1){
       dividends = dividends.concat(newArrayFill(INPUT.HISTORIC_YEARS + 1 - dividends.length, {'year': 0, 'adjDividend': 0}));
     }
-    income_ltm = income_ltm[0];
     if(!income_ltm.revenue){income_ltm = income[0];}
-    profile = profile[0][0];
-    treasury = treasury[0];
-    fx = fx[0];
+    
     var valuePerShare = 0;
     var currency = income_ltm['convertedCurrency'];
     var currencyProfile = profile['convertedCurrency'];
@@ -376,7 +373,8 @@ $.when(
     monitor(context);
 });
 
-var DESCRIPTION = Description(`<h5>Two-Stage Excess Return Model</h5>
-                               <p>Used to estimate the value of companies based on two stages of growth. An initial period of high growth, represented by [Sum of discounted excess returns in Growth Stage], followed by a period of stable growth, represented by [Discounted excess return in terminal stage]. Excess Return models are better suited to calculate the intrinsic value of a financial company than an enterprise valuation model (such as the Discounted Free Cash Flow Model).</p>
-                               <p class='text-center'>Read more: <a href='https://github.com/DiscountingCashFlows/Documentation/blob/main/models-documentation/excess-return-models.md#two-stage-excess-return-model-source-code' target='_blank'><i class="fab fa-github"></i> GitHub Documentation</a></p>
-							  `);
+Description(`
+	<h5>Two-Stage Excess Return Model</h5>
+	<p>Used to estimate the value of companies based on two stages of growth. An initial period of high growth, represented by [Sum of discounted excess returns in Growth Stage], followed by a period of stable growth, represented by [Discounted excess return in terminal stage]. Excess Return models are better suited to calculate the intrinsic value of a financial company than an enterprise valuation model (such as the Discounted Free Cash Flow Model).</p>
+	<p class='text-center'>Read more: <a href='https://github.com/DiscountingCashFlows/Documentation/blob/main/models-documentation/excess-return-models.md#two-stage-excess-return-model-source-code' target='_blank'><i class="fab fa-github"></i> GitHub Documentation</a></p>
+`);
