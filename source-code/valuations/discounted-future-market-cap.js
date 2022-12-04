@@ -1,25 +1,24 @@
 // +------------------------------------------------------------+
 //   Model: Discounted Future Market Cap	
-//   Copyright: https://discountingcashflows.com, 2022	
+//   © Copyright: https://discountingcashflows.com
 // +------------------------------------------------------------+
 var INPUT = Input({_DISCOUNT_RATE: 7.5,
                    PE: '', 	
                    PROJECTION_YEARS: 5,
                    HISTORIC_YEARS: 10,
                    PROJECTED_REVENUE_SLOPE: 1,
-		   _NET_INCOME_MARGIN: ''}); 
+                   _NET_INCOME_MARGIN: ''}); 
 
 $.when(
   get_income_statement(),
   get_income_statement_ltm(),
   get_quote()).done(
   function(_income, _income_ltm, _quote){
-    var income = JSON.parse(JSON.stringify(_income));
-    var income_ltm = JSON.parse(JSON.stringify(_income_ltm));
-    var quote = JSON.parse(JSON.stringify(_quote));
+    var income = deepCopy(_income);
+    var income_ltm = deepCopy(_income_ltm);
+    var quote = deepCopy(_quote);
     
-    income = income[0].slice(0, INPUT.HISTORIC_YEARS);
-    quote = quote[0].slice(0, INPUT.HISTORIC_YEARS);
+    income = income.slice(0, INPUT.HISTORIC_YEARS);
     income = replaceWithLTM(income, income_ltm);
     
     var linRevenue = linearRegressionGrowthRate(income, 'revenue', INPUT.PROJECTION_YEARS, INPUT.PROJECTED_REVENUE_SLOPE);
@@ -28,22 +27,22 @@ $.when(
 	setInputDefault('_NET_INCOME_MARGIN', 100 * averageMargin('netIncome', 'revenue', income));
     var projectedNetIncome = projectedRevenue * INPUT._NET_INCOME_MARGIN;
 	
-	setInputDefault('PE', quote[0]['pe']);
+	setInputDefault('PE', quote['pe']);
     var presentValue = INPUT.PE * projectedNetIncome / Math.pow(1 + INPUT._DISCOUNT_RATE, INPUT.PROJECTION_YEARS);
     
 	var currency = income[0]['convertedCurrency'];
 	
     // If we are calculating the value per share for a watch, we can stop right here.
-    if(_StopIfWatch(presentValue/quote[0]['sharesOutstanding'], currency)){
+    if(_StopIfWatch(presentValue/quote['sharesOutstanding'], currency)){
       return;
     }
     
-    _SetEstimatedValue(presentValue/quote[0]['sharesOutstanding'], currency);
-    print(presentValue/quote[0]['sharesOutstanding'], 'Present Value', '#', currency);
+    _SetEstimatedValue(presentValue/quote['sharesOutstanding'], currency);
+    print(presentValue/quote['sharesOutstanding'], 'Present Value', '#', currency);
     print(projectedNetIncome, 'Estimated Net Income ' + String(parseInt(income[0]['date']) + INPUT.PROJECTION_YEARS), '#', currency);
     print(INPUT.PE * projectedNetIncome, 'Estimated Market Capitalisation ' + String(parseInt(income[0]['date']) + INPUT.PROJECTION_YEARS), '#', currency);
     print(INPUT.PE * projectedNetIncome / Math.pow(1 + INPUT._DISCOUNT_RATE, INPUT.PROJECTION_YEARS), 'Market Capitalisation discounted to present', '#', currency);
-    print(quote[0]['sharesOutstanding'], 'Shares Outstanding', '#');
+    print(quote['sharesOutstanding'], 'Shares Outstanding', '#');
 
     var context = [];
     var lastYear = parseInt(income[0]['date']);
@@ -142,50 +141,6 @@ $.when(
     monitor(context);
 });
 
-var DESCRIPTION = Description(`<h5>Discounted Future Market Cap</h5>
-								This model estimates the intrinsic value of a common share by projecting the Future Market Capitalization using the estimated PE Ratio and then discounting it to the Present using an Annual Required Rate of Return.
-							  `,`
-                              <p>User Inputs Description:</p>
-                              <ul>
-                                <li><b>Required Rate Of Return:</b> The estimated stock value will be calculated based on this annual rate of return</li>
-                                <li><b>PE:</b> By default, it is equal to the company's current PE ratio, or edite this value to use a custom PE</li>
-                                <li><b>Projection Years:</b> Amount of years projecting into the future</li>
-                                <li><b>Historic Years:</b> Past years used to calculate the average margins</li>
-                                <li><b>Projected Revenue Slope:</b> '> 1' for higher revenue growth, '< 1' for slower growth</li>
-                               	<li><b>Net Income Margin:</b> Net Income as a percentage of revenue</li>
-                              </ul>
-                              <p>
-                              Projecting the Future Market Capitalization:
-                              <div class="d-block text-center my-2">
-                              \\( Future Market Capitalization \\) \\( = Estimated PE Ratio \\) \\( * Projected Net Income \\)
-                              </div>
-                              <ul>
-                                <li>Estimated PE Ratio (Up to the user, you can use the current PE or the forward PE)</li>
-                               	<li>Projected Net Income (Calculation is explained below)</li>
-                              </ul>
-
-                              Then, we discount the Market Capitalization to Present:
-                              <div class="d-block text-center my-2">
-                                  \\( Estimated Value = \\) \\( {Future Market Capitalization \\over (1 + Required Rate Of Return)^{Years}} \\)
-                              </div>
-                              
-                              <ul>
-                              	<li>Required Rate of Return (Annual rate of return required by the investor, used as the Discount Rate)</li>
-                               	<li>Years (Number of years used to discount the Future Market Capitalization)</li>
-                              </ul>
-                              </p>
-                              The Projected Net Income is calculated as such:
-                              <ol>
-                              <li>Determine the Projected Revenue:
-                              <ul>
-                              <li>Apply Linear Regression for the Historic Revenue Curve</li>
-                              <li>Use the determined regression curve to project the revenue in X years, where X is "Projection Years"</li>
-							  </ul>
-                              </li>
-                              <li>Calculate the Net Income:</li>
-                              <div class="d-block text-center my-2">
-                                  \\( Projected Net Income \\) = \\( Projected Revenue * \\) \\( Net Income Margin \\)
-                              </div>
-                              </ol>
-                              *Margins refer to % of Revenue
-                              `);
+Description(`<h5>Discounted Future Market Cap</h5>
+	This model estimates the intrinsic value of a common share by projecting the Future Market Capitalization using the estimated PE Ratio and then discounting it to the Present using an Annual Required Rate of Return.
+`);
