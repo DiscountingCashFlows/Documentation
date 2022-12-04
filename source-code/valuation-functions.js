@@ -1,6 +1,14 @@
+function getSign(value){
+    if(typeof(value) == 'number'){
+        if (value > 0){return 1;}
+        else if (value < 0){return -1;}
+    }
+    return 0;
+}
+
 function roundValue(value, type){
-    var sign = Math.sign(value)
-    value = Math.abs(value)
+    var sign = getSign(value);
+    value = Math.abs(value);
     // if the rate < 1, then round to 4 decimals
     // else if rate < 10 round to 3 decimals
     // else if rate < 100 round to 2 decimals
@@ -51,6 +59,10 @@ function toK(obj){
 }
 
 function toR(obj){
+    return numberToRate(obj);
+}
+
+function numberToRate(obj){
     // if obj is a list
     if(typeof(obj) == 'object'){
         for(var i=0; i<obj.length; i++){
@@ -60,6 +72,22 @@ function toR(obj){
     }
     // obj is a number
     return obj * 100;
+}
+
+function toN(obj){
+    return rateToNumber(obj);
+}
+
+function rateToNumber(obj){
+    // if obj is a list
+    if(typeof(obj) == 'object'){
+        for(var i=0; i<obj.length; i++){
+            obj[i] /= 100;
+        }
+        return obj;
+    }
+    // obj is a number
+    return obj / 100;
 }
 
 function getGrowthList(report, key, length, rate){
@@ -291,4 +319,32 @@ function getGrowthRateList(values, mode){
     }
   }
   return growthRateList;
+}
+
+function getYear(obj){
+  var return_obj = [];
+  if(typeof(obj) == 'object' && obj.length >= 1){
+    for(i in obj){
+      return_obj.push(parseInt(obj[i]));
+    }
+  }
+  else if(obj){
+    return_obj = parseInt(obj);
+  }
+  return return_obj;
+}
+
+function deepCopy(object){
+    // response format
+    if(object.length == 3 && object[1] == 'success' && object[0]){
+        if(object[0].length == 1){
+            return JSON.parse(JSON.stringify(object[0][0]));
+        }
+        return JSON.parse(JSON.stringify(object[0]));
+    }
+    var x = JSON.parse(JSON.stringify(object));
+    while(x.length == 1){
+        x = x[0];
+    }
+    return x;
 }
