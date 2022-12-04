@@ -1,6 +1,6 @@
 // +------------------------------------------------------------+
 //   Model: WACC (Weighted Average Cost of Capital)				
-//   Copyright: https://discountingcashflows.com, 2022			
+//   © Copyright: https://discountingcashflows.com
 // +------------------------------------------------------------+
 var INPUT = Input({_MARKET_PREMIUM: 5.5,
                    _RISK_FREE_RATE: '',
@@ -15,17 +15,13 @@ $.when(
   function(_income_ltm, _balance_quarterly, _profile, _treasury, _fx){
     var context = [];
     // Create deep copies of reports. This section is needed for watchlist compatibility.
-    var income_ltm = JSON.parse(JSON.stringify(_income_ltm));
-    var balance_last_quarter = JSON.parse(JSON.stringify(_balance_quarterly));
-    var profile = JSON.parse(JSON.stringify(_profile));
-    var treasury = JSON.parse(JSON.stringify(_treasury));
-    var fx = JSON.parse(JSON.stringify(_fx));
+    var income_ltm = deepCopy(_income_ltm);
+    var balance_last_quarter = deepCopy(_balance_quarterly);
+    var profile = deepCopy(_profile);
+    var treasury = deepCopy(_treasury);
+    var fx = deepCopy(_fx);
     
-    balance_last_quarter = balance_last_quarter[0][0];
-    income_ltm = income_ltm[0];
-    profile = profile[0][0];
-    treasury = treasury[0][0];
-    fx = fx[0];
+    balance_last_quarter = balance_last_quarter[0];
     
     // Check if the currency is being converted 
     // The profile can have a different currency from the reports.
@@ -96,8 +92,8 @@ $.when(
     // ---------------- END OF TABLES SECTION ---------------- 
 });
 
-var DESCRIPTION = Description(`
-								<h5>Weighted Average Cost of Capital (WACC)</h5> 
-								<p>WACC is a financial metric that helps in calculating a firm’s cost of financing by combining the cost of debt and cost of equity structure together.</p>
-								<p class='text-center'>Read more: <a href='https://github.com/DiscountingCashFlows/Documentation/blob/main/models-documentation/discounted-free-cash-flow.md#discount-rate-wacc---weighted-average-cost-of-capital' target='_blank'><i class="fab fa-github"></i> GitHub Documentation</a></p>
-                                `);
+Description(`
+	<h5>Weighted Average Cost of Capital (WACC)</h5> 
+	<p>WACC is a financial metric that helps in calculating a firm’s cost of financing by combining the cost of debt and cost of equity structure together.</p>
+	<p class='text-center'>Read more: <a href='https://github.com/DiscountingCashFlows/Documentation/blob/main/models-documentation/discounted-free-cash-flow.md#discount-rate-wacc---weighted-average-cost-of-capital' target='_blank'><i class="fab fa-github"></i> GitHub Documentation</a></p>
+`);

@@ -1,6 +1,6 @@
 // +------------------------------------------------------------+
 //   Model: Simple Dividend Discount Model
-//   Copyright: https://discountingcashflows.com, 2022
+//   © Copyright: https://discountingcashflows.com
 // +------------------------------------------------------------+
 
 var INPUT = Input({_DISCOUNT_RATE: '',
@@ -26,23 +26,23 @@ $.when(
   get_fx()).done(
   function(_income, _income_ltm, _balance, _balance_quarterly, _flows, _flows_ltm, _profile, _dividends, _prices, _treasury, _fx){
     // Create deep copies of reports. This section is needed for watchlist compatibility.
-    var income = JSON.parse(JSON.stringify(_income));
-    var income_ltm = JSON.parse(JSON.stringify(_income_ltm));
-    var balance = JSON.parse(JSON.stringify(_balance));
-    var balance_quarterly = JSON.parse(JSON.stringify(_balance_quarterly));
-    var flows = JSON.parse(JSON.stringify(_flows));
-    var flows_ltm = JSON.parse(JSON.stringify(_flows_ltm));
-    var profile = JSON.parse(JSON.stringify(_profile));
-    var treasury = JSON.parse(JSON.stringify(_treasury));
-    var dividends = JSON.parse(JSON.stringify(_dividends));
-    var prices = JSON.parse(JSON.stringify(_prices));
-    var fx = JSON.parse(JSON.stringify(_fx));
+    var income = deepCopy(_income);
+    var income_ltm = deepCopy(_income_ltm);
+    var balance = deepCopy(_balance);
+    var balance_quarterly = deepCopy(_balance_quarterly);
+    var flows = deepCopy(_flows);
+    var flows_ltm = deepCopy(_flows_ltm);
+    var profile = deepCopy(_profile);
+    var treasury = deepCopy(_treasury);
+    var dividends = deepCopy(_dividends);
+    var prices = deepCopy(_prices);
+    var fx = deepCopy(_fx);
     // context is where tables and values of interest are stored
     var context = [];
     var chartProjectionYears = 5;
     // ---------------- SETTING ASSUMPTIONS SECTION ---------------- 
     // Count the dividends. If there are no dividends, display a warning.
-    var dividendsCount = dividends[0].length - 1;
+    var dividendsCount = dividends.length - 1;
     if(dividendsCount <= 0){
     	warning("The company does not currently pay dividends!");
     }
@@ -50,25 +50,17 @@ $.when(
       dividendsCount = 10;
     }
 	
-    treasury = treasury[0];
-	
     // Set the default historic years to the number of historic dividends
     setInputDefault('HISTORIC_YEARS', dividendsCount);
     // Set the growth in perpetuity to the 10 year treasury note
     setInputDefault('_GROWTH_IN_PERPETUITY', treasury.year10);
     
     // Slice the reports to the number of historic years set previously
-    flows = flows[0].slice(0, INPUT.HISTORIC_YEARS);
-    income = income[0].slice(0, INPUT.HISTORIC_YEARS);
-    balance = balance[0].slice(0, INPUT.HISTORIC_YEARS);
-    balance_quarterly = balance_quarterly[0][0];
-    profile = profile[0][0];
-    income_ltm = income_ltm[0];
-    flows_ltm = flows_ltm[0];
-    prices = prices[0];
-    dividends = dividends[0].slice(0, INPUT.HISTORIC_YEARS + 1);
-    fx = fx[0];
-    
+    flows = flows.slice(0, INPUT.HISTORIC_YEARS);
+    income = income.slice(0, INPUT.HISTORIC_YEARS);
+    balance = balance.slice(0, INPUT.HISTORIC_YEARS);
+    balance_quarterly = balance_quarterly[0]; // get the last quarter
+    dividends = dividends.slice(0, INPUT.HISTORIC_YEARS + 1);
 	// Get the currencies used in the profile and reports (flows).
     // The profile can have a different currency from the reports.
     var currency = flows[0]['convertedCurrency'];
@@ -389,8 +381,8 @@ $.when(
     monitor(context);
 });
 
-var DESCRIPTION = Description(`
-								<h5>Simple Dividend Discount Model</h5>
-								<p>Used to estimate the value of companies that have reached maturity and pay stable dividends as a significant percentage of their Free Cashflow to Equity with little to no high growth chance.</p>
-								<p class='text-center'>Read more: <a href='https://github.com/DiscountingCashFlows/Documentation/blob/main/models-documentation/dividend-discount-models.md#simple-dividend-discount-model-source-code' target='_blank'><i class="fab fa-github"></i> GitHub Documentation</a></p>
-                                `);
+Description(`
+	<h5>Simple Dividend Discount Model</h5>
+	<p>Used to estimate the value of companies that have reached maturity and pay stable dividends as a significant percentage of their Free Cashflow to Equity with little to no high growth chance.</p>
+	<p class='text-center'>Read more: <a href='https://github.com/DiscountingCashFlows/Documentation/blob/main/models-documentation/dividend-discount-models.md#simple-dividend-discount-model-source-code' target='_blank'><i class="fab fa-github"></i> GitHub Documentation</a></p>
+`);

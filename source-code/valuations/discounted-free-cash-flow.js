@@ -1,6 +1,6 @@
 // +----------------------------------------------------------+
 //   Model: Discounted Free Cash Flow 
-//   Copyright: https://discountingcashflows.com, 2022			
+//   © Copyright: https://discountingcashflows.com
 // +----------------------------------------------------------+
 
 var INPUT = Input({_DISCOUNT_RATE: '',
@@ -43,24 +43,19 @@ $.when(
   function(_income, _income_ltm, _balance_quarterly, _flows, _flows_ltm, _profile, _treasury, _fx){
     var context = [];
     // Create deep copies of reports. This section is needed for watchlist compatibility.
-    var income = JSON.parse(JSON.stringify(_income));
-    var income_ltm = JSON.parse(JSON.stringify(_income_ltm));
-    var balance_last_quarter = JSON.parse(JSON.stringify(_balance_quarterly));
-    var flows = JSON.parse(JSON.stringify(_flows));
-    var flows_ltm = JSON.parse(JSON.stringify(_flows_ltm));
-    var profile = JSON.parse(JSON.stringify(_profile));
-    var treasury = JSON.parse(JSON.stringify(_treasury));
-    var fx = JSON.parse(JSON.stringify(_fx));
+    var income = deepCopy(_income);
+    var income_ltm = deepCopy(_income_ltm);
+    var balance_last_quarter = deepCopy(_balance_quarterly);
+    var flows = deepCopy(_flows);
+    var flows_ltm = deepCopy(_flows_ltm);
+    var profile = deepCopy(_profile);
+    var treasury = deepCopy(_treasury);
+    var fx = deepCopy(_fx);
     
     var numberOfPeriods = GetIncomeSlicePeriods(income);
-    income = income[0].slice(0, numberOfPeriods);
-    income_ltm = income_ltm[0];
-    balance_last_quarter = balance_last_quarter[0][0];
-    flows = flows[0].slice(0, numberOfPeriods);
-    flows_ltm = flows_ltm[0];
-    profile = profile[0][0];
-    treasury = treasury[0];
-    fx = fx[0];
+    income = income.slice(0, numberOfPeriods);
+    flows = flows.slice(0, numberOfPeriods);
+    balance_last_quarter = balance_last_quarter[0];
     
     // Add the revenue key to the flows report
     flows = addKey('revenue', income, flows);
@@ -276,7 +271,7 @@ $.when(
     monitor(context);
 });
 
-var DESCRIPTION = Description(`<h5>Discounted Free Cash Flow Model</h5>
-                                <p>Discounted Free Cash Flow calculates the value of a share based on the company's estimated future Free Cash Flow figures.</p>
-                                <p class='text-center'>Read more: <a href='https://github.com/DiscountingCashFlows/Documentation/blob/main/models-documentation/discounted-free-cash-flow.md#discounted-free-cash-flow-model-source-code' target='_blank'><i class="fab fa-github"></i> GitHub Documentation</a></p>
-                                `);
+Description(`<h5>Discounted Free Cash Flow Model</h5>
+			<p>Discounted Free Cash Flow calculates the value of a share based on the company's estimated future Free Cash Flow figures.</p>
+			<p class='text-center'>Read more: <a href='https://github.com/DiscountingCashFlows/Documentation/blob/main/models-documentation/discounted-free-cash-flow.md#discounted-free-cash-flow-model-source-code' target='_blank'><i class="fab fa-github"></i> GitHub Documentation</a></p>
+			`);
