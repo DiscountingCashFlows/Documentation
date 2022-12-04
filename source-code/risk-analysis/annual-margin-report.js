@@ -1,6 +1,6 @@
 // +------------------------------------------------------------+
 //   Model: Annual Margin Report				
-//   Copyright: https://discountingcashflows.com, 2022		
+//   © Copyright: https://discountingcashflows.com
 // +------------------------------------------------------------+
 var INPUT = Input({YEARS: 10}); 
 
@@ -11,13 +11,17 @@ $.when(
   get_balance_sheet_statement(),
   get_cash_flow_statement(),
   get_cash_flow_statement_ltm()).done(
-  function(income, income_ltm, balance, flows, flows_ltm){
+  function(_income, _income_ltm, _balance, _flows, _flows_ltm){
     var context = [];
-    income = income[0].slice(0, INPUT.YEARS);
-    income_ltm = income_ltm[0];
-    balance = balance[0].slice(0, INPUT.YEARS);
-    flows_ltm = flows_ltm[0];
-    flows = flows[0].slice(0, INPUT.YEARS);
+    var income = deepCopy(_income);
+    var income_ltm = deepCopy(_income_ltm);
+    var balance = deepCopy(_balance);
+    var flows = deepCopy(_flows);
+    var flows_ltm = deepCopy(_flows_ltm);
+    
+    income = income.slice(0, INPUT.YEARS);
+    balance = balance.slice(0, INPUT.YEARS);
+    flows = flows.slice(0, INPUT.YEARS);
     flows = addKey('revenue', income, flows);
     flows_ltm['revenue'] = income_ltm['revenue'];
     
@@ -185,7 +189,8 @@ $.when(
     monitor(context);
 });
 
-var DESCRIPTION = Description(`<h5>Annual Margin Analysis Report</h5>
-                                Margins refer to the ratio between a financial report item and the revenue (Example: Net Income Margin = Net Income / Revenue).
-                                This analysis provides a report of the company's key margins, which could be further used in a valuation model.
-                                `);
+Description(`
+	<h5>Annual Margin Analysis Report</h5>
+	Margins refer to the ratio between a financial report item and the revenue (Example: Net Income Margin = Net Income / Revenue).
+	This analysis provides a report of the company's key margins, which could be further used in a valuation model.
+`);
