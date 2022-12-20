@@ -191,7 +191,7 @@ $.when(
     }
     // Append estimations
     var lastYearDate = parseInt(flows[0]['date']);
-    fillHistoricUsingList(y_historic, 'dividends', parseInt(flows[0]['date']) + 1);
+    fillHistoricUsingList(y_historic, 'dividends', parseInt(flows[0]['date']));
     fillHistoricUsingReport(income, 'eps');
     fillHistoricUsingList(linEps, 'linear regression eps');
     
