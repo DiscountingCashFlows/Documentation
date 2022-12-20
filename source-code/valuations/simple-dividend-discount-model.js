@@ -203,8 +203,8 @@ $.when(
     for(var i = 1; i < chartProjectionYears; i++){
       y_values.push(INPUT.EXPECTED_DIVIDEND * Math.pow(1 + INPUT._GROWTH_IN_PERPETUITY, i));
     }
-    fillHistoricUsingList(y_values, 'dividends', parseInt(flows[0]['date']) + chartProjectionYears + 1);
-    fillHistoricUsingList(linDividends, 'linear regression', parseInt(flows[0]['date']) + chartProjectionYears + 1);
+    fillHistoricUsingList(y_values, 'dividends', parseInt(flows[0]['date']) + chartProjectionYears);
+    fillHistoricUsingList(linDividends, 'linear regression');
     // ---------------- END OF CHARTS SECTION ---------------- 
     
     // ---------------- TABLES SECTION ---------------- 
