@@ -135,7 +135,7 @@ $.when(
       y_netIncome.push(i_netIncome/1000000);
       y_revenue.push(linRevenue[income.length + i - 1]/1000000);
     }
-    fillHistoricUsingList(y_netIncome, 'netIncome', lastYear + INPUT.PROJECTION_YEARS + 1);
+    fillHistoricUsingList(y_netIncome, 'netIncome', lastYear + INPUT.PROJECTION_YEARS);
     fillHistoricUsingList(y_revenue, 'revenue');
     renderChart('Historic and Forecasted Net Income (In Mill. of ' + currency + ')');
     monitor(context);

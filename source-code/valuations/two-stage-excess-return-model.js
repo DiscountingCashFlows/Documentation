@@ -131,7 +131,7 @@ $.when(
       historicPayoutRatio.push(y_dividends[y_dividends.length-1] / y_eps[y_eps.length-1]);
       historicReturnOnEquity.push(y_eps[y_eps.length-1] / y_book_value[y_book_value.length-1]);
     }
-    fillHistoricUsingList(y_book_value, 'endingBookValue', parseInt(income_ltm['date']));
+    fillHistoricUsingList(y_book_value, 'endingBookValue', parseInt(income_ltm['date']) - 1);
     
     // Projected data
     var forecastedReturnOnEquity = newArrayFill(INPUT.HIGH_GROWTH_YEARS, INPUT._STABLE_RETURN_ON_EQUITY);
@@ -159,7 +159,7 @@ $.when(
       futureDiscountedExcessReturns.push(futureExcessReturns[futureExcessReturns.length-1]/Math.pow(1+forecastedCostOfEquity[i], i+1));
       y_book_value.push(y_book_value[y_book_value.length-1] + y_eps[y_eps.length-1] - y_dividends[y_dividends.length-1]);
     }
-    fillHistoricUsingList(y_book_value, 'endingBookValue', parseInt(income_ltm['date']) + INPUT.HIGH_GROWTH_YEARS);
+    fillHistoricUsingList(y_book_value, 'endingBookValue', parseInt(income_ltm['date']) + INPUT.HIGH_GROWTH_YEARS - 1);
     fillHistoricUsingList(y_eps, 'eps');
     fillHistoricUsingList(y_dividends, 'dividends');
 	// ---------------- END OF CHARTS SECTION ---------------- 
