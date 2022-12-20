@@ -161,7 +161,7 @@ $.when(
       y_dividends.push(eps*stablePayoutRatio);
       y_retained_earnings.push(eps*(1-stablePayoutRatio));
     }
-    fillHistoricUsingList(y_eps, 'eps', parseInt(income_ltm['date']) + projectionYears);
+    fillHistoricUsingList(y_eps, 'eps', parseInt(income_ltm['date']) + projectionYears - 1);
     fillHistoricUsingList(y_book_value, 'book value');
     fillHistoricUsingList(y_dividends, 'dividends');
 	// ---------------- END OF CHARTS SECTION ---------------- 
