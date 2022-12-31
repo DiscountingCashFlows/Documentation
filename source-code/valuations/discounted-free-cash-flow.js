@@ -51,6 +51,7 @@ $.when(
     var profile = deepCopy(_profile);
     var treasury = deepCopy(_treasury);
     var fx = deepCopy(_fx);
+    checkIncomeFlowsIntegrity(income, income_ltm, flows, flows_ltm);
     
     var numberOfPeriods = GetIncomeSlicePeriods(income);
     income = income.slice(0, numberOfPeriods);
