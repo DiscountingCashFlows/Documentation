@@ -5,7 +5,7 @@
 
 var INPUT = Input({_DISCOUNT_RATE: '',
                    HIGH_GROWTH_YEARS: 5,
-		   _STABLE_RETURN_ON_EQUITY: '',
+                   _STABLE_RETURN_ON_EQUITY: '',
                    _STABLE_GROWTH_IN_PERPETUITY: '',
                    _MARKET_PREMIUM: 5.5,
                    _RISK_FREE_RATE: '',
@@ -33,6 +33,9 @@ $.when(
     var dividends = deepCopy(_dividends);
     var treasury = deepCopy(_treasury);
     var fx = deepCopy(_fx);
+    
+    // Get the shift between dividends and income statements
+    var indexShift = Number(dividends[1].year) - Number(income[0].calendarYear);
     
     income = income.slice(0, INPUT.HISTORIC_YEARS);
     balance = balance.slice(0, INPUT.HISTORIC_YEARS);
@@ -123,15 +126,23 @@ $.when(
       	len = income.length - 1;
     }
     // Historic data
-    for(var i = len; i >= 0; i--){
+    for(var i = len - indexShift; i >= 0; i--){
       y_eps.push(income[i]['eps']);
       y_book_value.push(balance[i].totalStockholdersEquity / income[i].weightedAverageShsOut);
-      y_dividends.push(Math.abs(dividends[i + 1].adjDividend));
+      y_dividends.push(Math.abs(dividends[i + 1 + indexShift].adjDividend));
       y_retained_earnings.push(y_eps[y_eps.length-1] - y_dividends[y_dividends.length-1]);
       historicPayoutRatio.push(y_dividends[y_dividends.length-1] / y_eps[y_eps.length-1]);
       historicReturnOnEquity.push(y_eps[y_eps.length-1] / y_book_value[y_book_value.length-1]);
     }
-    fillHistoricUsingList(y_book_value, 'endingBookValue', parseInt(income_ltm['date']) - 1);
+    if(indexShift > 0){
+      y_eps.push((income_ltm.eps).toFixed(2));
+      y_book_value.push(balance_quarterly.totalStockholdersEquity / income_ltm.weightedAverageShsOut);
+      y_dividends.push(Math.abs(dividends[1].adjDividend)); // last year dividend
+      y_retained_earnings.push(y_eps[y_eps.length-1] - y_dividends[y_dividends.length-1]);
+      historicPayoutRatio.push(y_dividends[y_dividends.length-1] / y_eps[y_eps.length-1]);
+      historicReturnOnEquity.push(y_eps[y_eps.length-1] / y_book_value[y_book_value.length-1]);
+    }
+    fillHistoricUsingList(y_book_value, 'endingBookValue', parseInt(income_ltm['date']));
     
     // Projected data
     var forecastedReturnOnEquity = newArrayFill(INPUT.HIGH_GROWTH_YEARS, INPUT._STABLE_RETURN_ON_EQUITY);
@@ -159,7 +170,7 @@ $.when(
       futureDiscountedExcessReturns.push(futureExcessReturns[futureExcessReturns.length-1]/Math.pow(1+forecastedCostOfEquity[i], i+1));
       y_book_value.push(y_book_value[y_book_value.length-1] + y_eps[y_eps.length-1] - y_dividends[y_dividends.length-1]);
     }
-    fillHistoricUsingList(y_book_value, 'endingBookValue', parseInt(income_ltm['date']) + INPUT.HIGH_GROWTH_YEARS - 1);
+    fillHistoricUsingList(y_book_value, 'endingBookValue', parseInt(income_ltm['date']) + INPUT.HIGH_GROWTH_YEARS);
     fillHistoricUsingList(y_eps, 'eps');
     fillHistoricUsingList(y_dividends, 'dividends');
 	// ---------------- END OF CHARTS SECTION ---------------- 
@@ -198,7 +209,7 @@ $.when(
     print(treasury.year10/100, 'Yield of the U.S. 10 Year Treasury Bond', '%');
     // ---------------- END OF VALUES OF INTEREST SECTION ---------------- 
     // ---------------- TABLES SECTION ---------------- 
-    var lastYearDate = parseInt(income[0]['date']);
+    var lastYearDate = parseInt(income[0]['date']) + indexShift;
     // Future data
     var rows = ['Beginning book value of equity per share', 'EPS available to common shareholders', 'Return on equity', 'Dividend per common share', 'Payout Ratio',
                 'Retained earnings', 'Equity cost per share', 'Cost of equity', 'Excess return per share', 'Discounted excess return per share'];
@@ -239,10 +250,10 @@ $.when(
           maxLength = lengths[i];
         }
       }
-      for(var i=1; i<=maxLength; i++){
+      for(var i = 1 + indexShift; i<=maxLength; i++){
         var i_inverse = maxLength - i;
         var col = 0;
-        columns.push(lastYearDate - i_inverse);
+        columns.push(lastYearDate - i_inverse - indexShift);
         // Net Income
         data[col++].push( toM(income[i_inverse].netIncome) );
         var preferredStockDividends = income[i_inverse].netIncome - income[i_inverse].eps * income[i_inverse].weightedAverageShsOut;
@@ -270,36 +281,43 @@ $.when(
         // EPS
         data[col++].push( income[i_inverse].eps );
         // Dividends per Share
-        data[col++].push( dividends[i_inverse + 1].adjDividend );
+        data[col++].push( dividends[i_inverse + 1 + indexShift].adjDividend );
         // Book Value
         data[col++].push( (balance[i_inverse].totalStockholdersEquity / income[i_inverse].weightedAverageShsOut).toFixed(2) );
       }
-      // append LTM values
-      columns.push('LTM');
-      var col = 0;
-      // Net Income
-      data[col++].push( toM(income_ltm.netIncome) );
-      var preferredStockDividends = income_ltm.netIncome - income_ltm.eps * income_ltm.weightedAverageShsOut;
-      // Preferred stock dividends
-      data[col++].push( toM(preferredStockDividends).toFixed(2) );
-      // Net Income available to common shareholders
-      data[col++].push( toM(income_ltm.eps * income_ltm.weightedAverageShsOut).toFixed(2) );
-      // Equity
-      data[col++].push( toM(balance_quarterly.totalStockholdersEquity) );
-      // Common Return on Equity
-      data[col++].push( (100 * (income_ltm.eps * income_ltm.weightedAverageShsOut) / balance_quarterly.totalStockholdersEquity).toFixed(2) + '%' );
-      // Dividends paid to common
-      data[col++].push( toM(dividends[0].adjDividend * income_ltm.weightedAverageShsOut).toFixed(2) ); 
-      // Common stock payout Ratio
-      data[col++].push( (100 * payoutRatioList[0]).toFixed(2) + '%' );
-      // Shares Outstanding
-      data[col++].push( toM(income_ltm.weightedAverageShsOut).toFixed(2) );
-      // EPS
-      data[col++].push( income_ltm.eps );
-      // Dividends per Share
-      data[col++].push( dividends[0].adjDividend );
-      // Book Value
-      data[col++].push( ltmBookValueOfEquity );
+      for(var i=0; i<indexShift+1; i++){
+        // append LTM values
+        if(i == indexShift){
+          columns.push('LTM');
+        }
+        else{
+          columns.push(lastYearDate + indexShift - i - 1);
+        }
+        var col = 0;
+        // Net Income
+        data[col++].push( toM(income_ltm.netIncome) );
+        var preferredStockDividends = income_ltm.netIncome - income_ltm.eps * income_ltm.weightedAverageShsOut;
+        // Preferred stock dividends
+        data[col++].push( toM(preferredStockDividends).toFixed(2) );
+        // Net Income available to common shareholders
+        data[col++].push( toM(income_ltm.eps * income_ltm.weightedAverageShsOut).toFixed(2) );
+        // Equity
+        data[col++].push( toM(balance_quarterly.totalStockholdersEquity) );
+        // Common Return on Equity
+        data[col++].push( (100 * (income_ltm.eps * income_ltm.weightedAverageShsOut) / balance_quarterly.totalStockholdersEquity).toFixed(2) + '%' );
+        // Dividends paid to common
+        data[col++].push( toM(dividends[0].adjDividend * income_ltm.weightedAverageShsOut).toFixed(2) ); 
+        // Common stock payout Ratio
+        data[col++].push( (100 * payoutRatioList[0]).toFixed(2) + '%' );
+        // Shares Outstanding
+        data[col++].push( toM(income_ltm.weightedAverageShsOut).toFixed(2) );
+        // EPS
+        data[col++].push( income_ltm.eps );
+        // Dividends per Share
+        data[col++].push( dividends[0].adjDividend );
+        // Book Value
+        data[col++].push( balance_quarterly.totalStockholdersEquity / income_ltm.weightedAverageShsOut );
+      }
     }
     else{
       var rows = ['Net income', 'Total Equity', 'Return on equity', 'Dividends paid', 
@@ -317,7 +335,7 @@ $.when(
           maxLength = lengths[i];
         }
       }
-      for(var i=1; i<=maxLength; i++){
+      for(var i=1+indexShift; i<=maxLength; i++){
         var i_inverse = maxLength - i;
         var col = 0;
         columns.push(lastYearDate - i_inverse);
@@ -344,27 +362,34 @@ $.when(
         // Book Value
         data[col++].push( (balance[i_inverse].totalStockholdersEquity / income[i_inverse].weightedAverageShsOut).toFixed(2) );
       }
-      // append LTM values
-      columns.push('LTM');
-      var col = 0;
-      // Net Income
-      data[col++].push( toM(income_ltm.netIncome) );
-      // Equity
-      data[col++].push( toM(balance_quarterly.totalStockholdersEquity) );
-      // Return on Equity
-      data[col++].push( (100 * income_ltm.netIncome / balance_quarterly.totalStockholdersEquity).toFixed(2) + '%' );
-      // Dividends paid to common
-      data[col++].push( toM(dividends[0].adjDividend * income_ltm.weightedAverageShsOut) ); 
-      // All dividends payout Ratio
-      data[col++].push( (100 * payoutRatioList[0]).toFixed(2) + '%' );
-      // Shares Outstanding
-      data[col++].push( toM(income_ltm.weightedAverageShsOut).toFixed(2) );
-      // EPS
-      data[col++].push( income_ltm.eps );
-      // Dividends per Share
-      data[col++].push( dividends[0].adjDividend );
-      // Book Value
-      data[col++].push( ltmBookValueOfEquity );
+      for(var i=0; i<indexShift+1; i++){
+        // append LTM values
+        if(i == indexShift){
+          columns.push('LTM');
+        }
+        else{
+          columns.push(lastYearDate + indexShift - i - 1);
+        }
+        var col = 0;
+        // Net Income
+        data[col++].push( toM(income_ltm.netIncome) );
+        // Equity
+        data[col++].push( toM(balance_quarterly.totalStockholdersEquity) );
+        // Return on Equity
+        data[col++].push( (100 * income_ltm.netIncome / balance_quarterly.totalStockholdersEquity).toFixed(2) + '%' );
+        // Dividends paid to common
+        data[col++].push( toM(dividends[0].adjDividend * income_ltm.weightedAverageShsOut) ); 
+        // All dividends payout Ratio
+        data[col++].push( (100 * payoutRatioList[0]).toFixed(2) + '%' );
+        // Shares Outstanding
+        data[col++].push( toM(income_ltm.weightedAverageShsOut).toFixed(2) );
+        // EPS
+        data[col++].push( income_ltm.eps );
+        // Dividends per Share
+        data[col++].push( dividends[0].adjDividend );
+        // Book Value
+        data[col++].push( balance_quarterly.totalStockholdersEquity / income_ltm.weightedAverageShsOut );
+      }
     }
     contextItem = {name:'Historic data (Mil. ' + currency + ' except per share items)', display:'table', rows:rows, columns:columns, data:data};
     context.push(contextItem);
