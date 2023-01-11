@@ -173,6 +173,7 @@ $.when(
     fillHistoricUsingList(y_eps, 'eps', parseInt(income_ltm['date']) + projectionYears);
     fillHistoricUsingList(y_book_value, 'book value');
     fillHistoricUsingList(y_dividends, 'dividends');
+    renderChart('Historic and forecasted data in ' + currency);
 	// ---------------- END OF CHARTS SECTION ---------------- 
     // ---------------- VALUES OF INTEREST SECTION ----------------
     // LTM book value
@@ -215,8 +216,7 @@ $.when(
     for(var i=1; i <= projectionYears; i++){
       columns.push(lastYearDate + i);
     }
-    contextItem = {name:'5 Years of projected data (' + currency + ')', display:'table', rows:rows, columns:columns, data:data};
-    context.push(contextItem);
+    renderTable('5 Years of projected data (' + currency + ')', data, rows, columns);
     
     // Historic table
     if( prefDividendsRatio > sensitivity ){
@@ -259,7 +259,7 @@ $.when(
           	data[col++].push('');
         }
         // Dividends paid to common
-        data[col++].push( toM(dividends[i_inverse + 1].adjDividend * income[i_inverse].weightedAverageShsOut).toFixed(2) ); 
+        data[col++].push( toM(dividends[i_inverse + 1 + indexShift].adjDividend * income[i_inverse].weightedAverageShsOut).toFixed(2) ); 
         // Common stock payout Ratio
         data[col++].push( (100 * payoutRatioList[i_inverse + 1]).toFixed(2) + '%' );
         // Shares Outstanding
@@ -336,7 +336,7 @@ $.when(
           	data[col++].push('');
         }
         // Dividends paid
-        data[col++].push( toM(dividends[i_inverse + 1].adjDividend * income[i_inverse].weightedAverageShsOut) ); 
+        data[col++].push( toM(dividends[i_inverse + 1 + indexShift].adjDividend * income[i_inverse].weightedAverageShsOut) ); 
         // All dividends payout Ratio
         data[col++].push( (100 * payoutRatioList[i_inverse + 1]).toFixed(2) + '%' );
         // Shares Outstanding
@@ -344,7 +344,7 @@ $.when(
         // EPS
         data[col++].push( income[i_inverse].eps );
         // Dividends per Share
-        data[col++].push( dividends[i_inverse + 1].adjDividend );
+        data[col++].push( dividends[i_inverse + 1 + indexShift].adjDividend );
         // Book Value
         data[col++].push( (balance[i_inverse].totalStockholdersEquity / income[i_inverse].weightedAverageShsOut).toFixed(2) );
       }
@@ -377,11 +377,8 @@ $.when(
         data[col++].push( balance_quarterly.totalStockholdersEquity / income_ltm.weightedAverageShsOut );
       }
     }
-    contextItem = {name:'Historic data (Mil. ' + currency + ' except per share items)', display:'table', rows:rows, columns:columns, data:data};
-    context.push(contextItem);
+    renderTable('Historic data (Mil. ' + currency + ' except per share items)', data, rows, columns);
     // ---------------- END OF TABLES SECTION ---------------- 
-	renderChart('Historic and forecasted data in ' + currency);
-    monitor(context);
 });
 
 Description(`
