@@ -338,7 +338,7 @@ $.when(
       for(var i=1+indexShift; i<=maxLength; i++){
         var i_inverse = maxLength - i;
         var col = 0;
-        columns.push(lastYearDate - i_inverse);
+        columns.push(lastYearDate - i_inverse - indexShift);
         // Net Income
         data[col++].push( toM(income[i_inverse].netIncome) );
         // Equity
