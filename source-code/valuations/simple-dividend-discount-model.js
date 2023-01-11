@@ -37,6 +37,10 @@ $.when(
     var dividends = deepCopy(_dividends);
     var prices = deepCopy(_prices);
     var fx = deepCopy(_fx);
+    
+    // Get the shift between dividends and income statements
+    var indexShift = Number(dividends[1].year) - Number(income[0].calendarYear);
+    
     // context is where tables and values of interest are stored
     var context = [];
     var chartProjectionYears = 5;
@@ -199,12 +203,13 @@ $.when(
     }
     y_values.push(INPUT.EXPECTED_DIVIDEND);
     // Append estimations
-    var lastYearDate = parseInt(flows[0]['date']);
+    var lastYearDate = parseInt(income[0]['date']) + indexShift;
     for(var i = 1; i < chartProjectionYears; i++){
       y_values.push(INPUT.EXPECTED_DIVIDEND * Math.pow(1 + INPUT._GROWTH_IN_PERPETUITY, i));
     }
-    fillHistoricUsingList(y_values, 'dividends', parseInt(flows[0]['date']) + chartProjectionYears);
+    fillHistoricUsingList(y_values, 'dividends', lastYearDate + chartProjectionYears);
     fillHistoricUsingList(linDividends, 'linear regression');
+    renderChart('Historic and Projected Dividends (' + currency + ')');
     // ---------------- END OF CHARTS SECTION ---------------- 
     
     // ---------------- TABLES SECTION ---------------- 
@@ -215,8 +220,8 @@ $.when(
     for(var i=1; i<=chartProjectionYears + INPUT.HISTORIC_YEARS; i++){
       columns.push(lastYearDate - INPUT.HISTORIC_YEARS + i);
     }
-    contextItem = {name:'Historic and Projected Dividends (' + currency + ')', display:'table', rows:rows, columns:columns, data:data};
-    context.push(contextItem);
+    renderTable('Historic and Projected Dividends (' + currency + ')', data, rows, columns);
+
     // if the last period has considerable preferred dividends (meaning that the company has pref. stock issued)
     if( prefDividendsRatio > sensitivity ){
       var rows = ['Net income','Calculated preferred stock dividends & premiums','Net income available to common shareholders', 'Equity', 'Return on equity', 'Dividends paid to common shareholders', 
@@ -234,13 +239,13 @@ $.when(
           maxLength = lengths[i];
         }
       }
-      for(var i=1; i<=maxLength; i++){
+      for(var i=1+indexShift; i<=maxLength; i++){
         var i_inverse = maxLength - i;
         var col = 0;
-        columns.push(lastYearDate - i_inverse);
+        columns.push(lastYearDate - i_inverse - indexShift);
         // Net Income
         data[col++].push( toM(income[i_inverse].netIncome) );
-        var preferredStockDividends = Math.abs(flows[i_inverse].dividendsPaid) - dividends[i_inverse + 1].adjDividend * income[i_inverse].weightedAverageShsOut;
+        var preferredStockDividends = Math.abs(flows[i_inverse].dividendsPaid) - dividends[i_inverse + 1 + indexShift].adjDividend * income[i_inverse].weightedAverageShsOut;
         if(preferredStockDividends < 0){
           warning("Preferred stock dividends for year " + (lastYearDate - i_inverse) + " are negative! Shares outstanding may not be inline with the ones reported.");
         }
@@ -257,7 +262,7 @@ $.when(
           	data[col++].push('');
         }
         // Dividends paid to common
-        data[col++].push( toM(dividends[i_inverse + 1].adjDividend * income[i_inverse].weightedAverageShsOut).toFixed(2) ); 
+        data[col++].push( toM(dividends[i_inverse + 1 + indexShift].adjDividend * income[i_inverse].weightedAverageShsOut).toFixed(2) ); 
         // Total Dividends
         data[col++].push( toM(Math.abs(flows[i_inverse].dividendsPaid)) );
         // Common stock payout Ratio
@@ -269,41 +274,47 @@ $.when(
         // EPS
         data[col++].push( income[i_inverse].eps );
         // Dividends per Share
-        data[col++].push( dividends[i_inverse + 1].adjDividend );
+        data[col++].push( dividends[i_inverse + 1 + indexShift].adjDividend );
         // Dividend Yield
-        data[col++].push( (100*dividends[i_inverse + 1].adjDividend/prices[i_inverse + 1]['close']).toFixed(2) + '%' );
+        data[col++].push( (100*dividends[i_inverse + 1 + indexShift].adjDividend/prices[i_inverse + 1]['close']).toFixed(2) + '%' );
       }
-      // append LTM values
-      columns.push('LTM');
-      var col = 0;
-      // Net Income
-      data[col++].push( toM(income_ltm.netIncome) );
-      var preferredStockDividends = -flows_ltm.dividendsPaid - dividends[0].adjDividend * income_ltm.weightedAverageShsOut;
-      // Preferred stock dividends
-      data[col++].push( toM(preferredStockDividends).toFixed(2) );
-      // Net Income available to common shareholders
-      data[col++].push( toM(income_ltm.netIncome - preferredStockDividends).toFixed(2) );
-      // Equity
-      data[col++].push( toM(balance_quarterly.totalStockholdersEquity) );
-      // Common Return on Equity
-      data[col++].push( (100 * returnOnEquityList[0]).toFixed(2) + '%' );
-      // Dividends paid to common
-      data[col++].push( toM(dividends[0].adjDividend * income_ltm.weightedAverageShsOut).toFixed(2) ); 
-      // Total Dividends
-      data[col++].push( toM(Math.abs(flows_ltm.dividendsPaid)) );
-      // Common stock payout Ratio
-      data[col++].push( (100 * payoutRatioList[0]).toFixed(2) + '%' );
-      // Shares Outstanding
-      data[col++].push( toM(income_ltm.weightedAverageShsOut).toFixed(2) );
-      // Market Price per Share
-      data[col++].push(prices[0]['close'] );
-      // EPS
-      data[col++].push( income_ltm.eps );
-      // Dividends per Share
-      data[col++].push( dividends[0].adjDividend );
-      // Dividend Yield ltm
-      data[col++].push( (100*dividends[0].adjDividend/prices[0]['close']).toFixed(2) + '%' );
-      contextItem = {name:'Historic figures (Mil. ' + currency + ' except per share items)', display:'table', rows:rows, columns:columns, data:data};
+      for(var i=0; i<indexShift+1; i++){
+        // append LTM values
+        if(i == indexShift){
+          columns.push('LTM');
+        }
+        else{
+          columns.push(lastYearDate + indexShift - i - 1);
+        }
+        var col = 0;
+        // Net Income
+        data[col++].push( toM(income_ltm.netIncome) );
+        var preferredStockDividends = -flows_ltm.dividendsPaid - dividends[0].adjDividend * income_ltm.weightedAverageShsOut;
+        // Preferred stock dividends
+        data[col++].push( toM(preferredStockDividends).toFixed(2) );
+        // Net Income available to common shareholders
+        data[col++].push( toM(income_ltm.netIncome - preferredStockDividends).toFixed(2) );
+        // Equity
+        data[col++].push( toM(balance_quarterly.totalStockholdersEquity) );
+        // Common Return on Equity
+        data[col++].push( (100 * returnOnEquityList[0]).toFixed(2) + '%' );
+        // Dividends paid to common
+        data[col++].push( toM(dividends[0].adjDividend * income_ltm.weightedAverageShsOut).toFixed(2) ); 
+        // Total Dividends
+        data[col++].push( toM(Math.abs(flows_ltm.dividendsPaid)) );
+        // Common stock payout Ratio
+        data[col++].push( (100 * payoutRatioList[0]).toFixed(2) + '%' );
+        // Shares Outstanding
+        data[col++].push( toM(income_ltm.weightedAverageShsOut).toFixed(2) );
+        // Market Price per Share
+        data[col++].push(prices[0]['close'] );
+        // EPS
+        data[col++].push( income_ltm.eps );
+        // Dividends per Share
+        data[col++].push( dividends[0].adjDividend );
+        // Dividend Yield ltm
+        data[col++].push( (100*dividends[0].adjDividend/prices[0]['close']).toFixed(2) + '%' );
+      }
     }
     else{
       var rows = ['Net income', 'Equity', 'Return on equity', 'Dividends paid', 
@@ -321,10 +332,10 @@ $.when(
           maxLength = lengths[i];
         }
       }
-      for(var i=1; i<=maxLength; i++){
+      for(var i=1+indexShift; i<=maxLength; i++){
         var i_inverse = maxLength - i;
         var col = 0;
-        columns.push(lastYearDate - i_inverse);
+        columns.push(lastYearDate - i_inverse - indexShift);
         // Net Income
         data[col++].push( toM(income[i_inverse].netIncome) );
         // Equity
@@ -336,7 +347,7 @@ $.when(
           	data[col++].push('');
         }
         // Dividends paid
-        data[col++].push( toM(dividends[i_inverse + 1].adjDividend * income[i_inverse].weightedAverageShsOut) ); 
+        data[col++].push( toM(dividends[i_inverse + 1 + indexShift].adjDividend * income[i_inverse].weightedAverageShsOut) ); 
         // All dividends payout Ratio
         data[col++].push( (100 * payoutRatioList[i_inverse + 1]).toFixed(2) + '%' );
         // Shares Outstanding
@@ -346,39 +357,43 @@ $.when(
         // EPS
         data[col++].push( income[i_inverse].eps );
         // Dividends per Share
-        data[col++].push( dividends[i_inverse + 1].adjDividend );
+        data[col++].push( dividends[i_inverse + 1 + indexShift].adjDividend );
         // Dividend Yield
-        data[col++].push( (100*dividends[i_inverse + 1].adjDividend/prices[i_inverse + 1]['close']).toFixed(2) + '%' );
+        data[col++].push( (100*dividends[i_inverse + 1 + indexShift].adjDividend/prices[i_inverse + 1]['close']).toFixed(2) + '%' );
       }
-      // append LTM values
-      columns.push('LTM');
-      var col = 0;
-      // Net Income
-      data[col++].push( toM(income_ltm.netIncome) );
-      // Equity
-      data[col++].push( toM(balance_quarterly.totalStockholdersEquity) );
-      // Return on Equity
-      data[col++].push( (100 * returnOnEquityList[0]).toFixed(2) + '%' );
-      // Dividends paid to common
-      data[col++].push( toM(dividends[0].adjDividend * income_ltm.weightedAverageShsOut) ); 
-      // All dividends payout Ratio
-      data[col++].push( (100 * payoutRatioList[0]).toFixed(2) + '%' );
-      // Shares Outstanding
-      data[col++].push( toM(income_ltm.weightedAverageShsOut).toFixed(2) );
-      // Market Price per Share
-      data[col++].push(prices[0]['close'] );
-      // EPS
-      data[col++].push( income_ltm.eps );
-      // Dividends per Share
-      data[col++].push( dividends[0].adjDividend );
-      // Dividend Yield ltm
-      data[col++].push( (100*dividends[0].adjDividend/prices[0]['close']).toFixed(2) + '%' );
-      contextItem = {name:'Historic figures (Mil. ' + currency + ' except per share items)', display:'table', rows:rows, columns:columns, data:data};
+      for(var i=0; i<indexShift+1; i++){
+        // append LTM values
+        if(i == indexShift){
+          columns.push('LTM');
+        }
+        else{
+          columns.push(lastYearDate + indexShift - i - 1);
+        }
+        var col = 0;
+        // Net Income
+        data[col++].push( toM(income_ltm.netIncome) );
+        // Equity
+        data[col++].push( toM(balance_quarterly.totalStockholdersEquity) );
+        // Return on Equity
+        data[col++].push( (100 * returnOnEquityList[0]).toFixed(2) + '%' );
+        // Dividends paid to common
+        data[col++].push( toM(dividends[0].adjDividend * income_ltm.weightedAverageShsOut) ); 
+        // All dividends payout Ratio
+        data[col++].push( (100 * payoutRatioList[0]).toFixed(2) + '%' );
+        // Shares Outstanding
+        data[col++].push( toM(income_ltm.weightedAverageShsOut).toFixed(2) );
+        // Market Price per Share
+        data[col++].push(prices[0]['close'] );
+        // EPS
+        data[col++].push( income_ltm.eps );
+        // Dividends per Share
+        data[col++].push( dividends[0].adjDividend );
+        // Dividend Yield ltm
+        data[col++].push( (100*dividends[0].adjDividend/prices[0]['close']).toFixed(2) + '%' );
+      }
     }
-    context.push(contextItem);
-    renderChart('Historic and Projected Dividends (' + currency + ')');
+    renderTable('Historic figures (Mil. ' + currency + ' except per share items)', data, rows, columns);
     // ---------------- END OF TABLES SECTION ---------------- 
-    monitor(context);
 });
 
 Description(`
