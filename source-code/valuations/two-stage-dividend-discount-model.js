@@ -284,7 +284,7 @@ $.when(
         columns.push(lastYearDate - i_inverse - indexShift);
         // Net Income
         data[col++].push( toM(income[i_inverse].netIncome) );
-        var preferredStockDividends = Math.abs(flows[i_inverse].dividendsPaid) - dividends[i_inverse + 1 + indexShift].adjDividend * income[i_inverse].weightedAverageShsOut;
+        var preferredStockDividends = income[i_inverse].netIncome - income[i_inverse].eps * income[i_inverse].weightedAverageShsOut;
         if(preferredStockDividends < 0){
           warning("Preferred stock dividends for year " + (lastYearDate - i_inverse) + " are negative! Shares outstanding may not be inline with the ones reported.");
         }
@@ -328,7 +328,7 @@ $.when(
         var col = 0;
         // Net Income
         data[col++].push( toM(income_ltm.netIncome) );
-        var preferredStockDividends = -flows_ltm.dividendsPaid - dividends[0].adjDividend * income_ltm.weightedAverageShsOut;
+        var preferredStockDividends = income_ltm.netIncome - income_ltm.eps * income_ltm.weightedAverageShsOut;
         // Preferred stock dividends
         data[col++].push( toM(preferredStockDividends).toFixed(2) );
         // Net Income available to common shareholders
