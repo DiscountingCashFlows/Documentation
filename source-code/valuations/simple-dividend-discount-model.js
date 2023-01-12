@@ -91,17 +91,13 @@ $.when(
     // Discount Rate is the cost of equity
     setInputDefault('_DISCOUNT_RATE', 100*(INPUT._RISK_FREE_RATE + INPUT.BETA * INPUT._MARKET_PREMIUM));
     
-    // price is the Current Last Price of a Share on the Stock Market
-    var price = profile['price'];
     var sensitivity = 0.01;
     var prefDividendsRatio = Math.abs((income[0].eps * income[0].weightedAverageShsOut - income[0].netIncome) / income[0].netIncome);
     
     var payoutRatioList = [];
-    var averagePayoutRatio = 0;
     var payoutRatio = 0;
     
     var returnOnEquityList = [];
-    var averageReturnOnEquity = 0;
     var returnOnEquity = 0;
     
     var commonIncome = 0;
@@ -117,11 +113,9 @@ $.when(
       payoutRatio = 0;
     }
     payoutRatioList.push(payoutRatio);
-    averagePayoutRatio += payoutRatio;
 
     returnOnEquity = commonIncome / balance[0].totalStockholdersEquity; // ltm income / last year equity
     returnOnEquityList.push(returnOnEquity);
-    averageReturnOnEquity += returnOnEquity;
     // Calculate Average historical Payout Ratio, average Return on Equity
     for(var i=0; i<minLength - indexShift; i++){
       if( prefDividendsRatio > sensitivity ){
@@ -140,8 +134,6 @@ $.when(
         returnOnEquityList.push(returnOnEquity);
       }
     }
-    averagePayoutRatio = getArraySum(payoutRatioList)/payoutRatioList.length;
-    averageReturnOnEquity = getArraySum(returnOnEquityList)/returnOnEquityList.length;
 
     var expectedDividend = INPUT._LINEAR_REGRESSION_WEIGHT * linDividends[minLength - 1] + (1-INPUT._LINEAR_REGRESSION_WEIGHT) * dividends[0].adjDividend;
     setInputDefault('EXPECTED_DIVIDEND', expectedDividend);
@@ -163,8 +155,8 @@ $.when(
     print(dividends[0].adjDividend, "LTM dividend", '#', currency);
     print(INPUT.EXPECTED_DIVIDEND, "Next year's expected dividend", '#', currency);
     print(averageGrowthRate('adjDividend', dividends.slice(1, dividends.length)), "Average historical dividend growth rate", '%');
-    print(averagePayoutRatio, "Average historical Payout Ratio", '%');
-    print(averageReturnOnEquity, "Average historical Return on Equity", '%');
+    print(getArraySum(payoutRatioList)/payoutRatioList.length, "Average historical Payout Ratio", '%');
+    print(getArraySum(returnOnEquityList)/returnOnEquityList.length, "Average historical Return on Equity", '%');
     // ---------------- END OF VALUES OF INTEREST SECTION ---------------- 
     
     // ---------------- CHARTS SECTION ---------------- 
