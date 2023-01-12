@@ -41,8 +41,6 @@ $.when(
     // Get the shift between dividends and income statements
     var indexShift = Number(dividends[1].year) - Number(income[0].calendarYear);
     
-    // context is where tables and values of interest are stored
-    var context = [];
     var chartProjectionYears = 5;
     // ---------------- SETTING ASSUMPTIONS SECTION ---------------- 
     // Count the dividends. If there are no dividends, display a warning.
