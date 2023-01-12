@@ -40,15 +40,16 @@ $.when(
     var prices = deepCopy(_prices);
     var fx = deepCopy(_fx);
     
-    // Get the shift between dividends and income statements
-    var indexShift = Number(dividends[1].year) - Number(income[0].calendarYear);
-    
     // ---------------- SETTING ASSUMPTIONS SECTION ---------------- 
     // Count the dividends. If there are no dividends, display a warning.
     var dividendsCount = dividends.length - 1;
-    if(!dividendsCount){
-    	warning("The company does not currently pay dividends!");
+    if(dividendsCount <= 0){
+      error("The company does not currently pay dividends!");
+      return;
     }
+    // Get the shift between dividends and income statements
+    var indexShift = Number(dividends[1].year) - Number(income[0].calendarYear);
+    
     if(dividendsCount > 10){
     	setInputDefault('HISTORIC_YEARS', 10);
     }
