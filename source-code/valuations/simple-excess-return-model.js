@@ -35,16 +35,21 @@ $.when(
     var treasury = deepCopy(_treasury);
     var fx = deepCopy(_fx);
     
-    // Get the shift between dividends and income statements
-    var indexShift = Number(dividends[1].year) - Number(income[0].calendarYear);
+    var indexShift = 0;
+    if(dividends.length > 1){
+      // Get the shift between dividends and income statements
+      indexShift = Number(dividends[1].year) - Number(income[0].calendarYear);
+    }
     
-    income = income.slice(0, INPUT.HISTORIC_YEARS);
-    balance = balance.slice(0, INPUT.HISTORIC_YEARS);
+    var minLength = Math.min(income.length, balance.length, INPUT.HISTORIC_YEARS);
+    
+    income = income.slice(0, minLength);
+    balance = balance.slice(0, minLength);
     balance_quarterly = balance_quarterly[0]; // last quarter
-    dividends = dividends.slice(0, INPUT.HISTORIC_YEARS + 1);
+    dividends = dividends.slice(0, minLength + 1);
     // if the company doesn't pay dividends, make an empty dividend list with 0 values
-    if(dividends.length < INPUT.HISTORIC_YEARS + 1){
-      dividends = dividends.concat(newArrayFill(INPUT.HISTORIC_YEARS + 1 - dividends.length, {'year': 0, 'adjDividend': 0}));
+    if(dividends.length < minLength + 1){
+      dividends = dividends.concat(newArrayFill(minLength + 1 - dividends.length, {'year': 0, 'adjDividend': 0}));
     }
     if(!income_ltm.revenue){income_ltm = income[0];}
     var valuePerShare = 0;
@@ -69,48 +74,44 @@ $.when(
     var commonIncome = 0;
     
 	var returnOnEquityList = [];
-	var averageReturnOnEquity = 0;
     
     var payoutRatioList = [];
-    var averagePayoutRatio = 0;
     var payoutRatio = 0;
     
     if( prefDividendsRatio > sensitivity ){
       commonIncome = income_ltm.eps * income_ltm.weightedAverageShsOut;
-      payoutRatio = dividends[0].adjDividend / income_ltm.eps;
     }
     else{
       commonIncome = income_ltm.netIncome;
-      payoutRatio = dividends[0].adjDividend / income_ltm.eps;
+    }
+    payoutRatio = dividends[0].adjDividend / income_ltm.eps;
+    if(commonIncome <= 0){
+      payoutRatio = 0;
     }
     payoutRatioList.push(payoutRatio);
-    averagePayoutRatio += payoutRatio;
     
 	var returnOnEquity = commonIncome / balance[0].totalStockholdersEquity;
 	returnOnEquityList.push(returnOnEquity);
-	averageReturnOnEquity += returnOnEquity;
     // Calculate Average Return on Equity
-    for(var i=0; i<income.length; i++){
+    for(var i=0; i<minLength - indexShift; i++){
       if( prefDividendsRatio > sensitivity ){
         commonIncome = income[i].eps * income[i].weightedAverageShsOut;
       }
       else{
         commonIncome = income[i].netIncome;
       }
-      payoutRatio = dividends[i + 1].adjDividend / income[i].eps;
+      payoutRatio = dividends[i + 1 + indexShift].adjDividend / income[i].eps;
       if(commonIncome <= 0){
         payoutRatio = 0;
       }
       payoutRatioList.push(payoutRatio);
-      averagePayoutRatio += payoutRatio;
-      if(i<balance.length - 1){
+      if(i<minLength - 1){
       	returnOnEquity = commonIncome / balance[i + 1].totalStockholdersEquity;
         returnOnEquityList.push(returnOnEquity);
-        averageReturnOnEquity += returnOnEquity;
       }
     }
-    averagePayoutRatio /= Math.min(income.length, balance.length) + 1;
-    averageReturnOnEquity /= Math.min(income.length, balance.length);
+    var averagePayoutRatio = getArraySum(payoutRatioList)/payoutRatioList.length;
+    var averageReturnOnEquity = getArraySum(returnOnEquityList)/returnOnEquityList.length;
     
 	setInputDefault('_RETURN_ON_EQUITY', 100 * averageReturnOnEquity);
     // ---------------- END OF SETTING ASSUMPTIONS SECTION ---------------- 
@@ -126,11 +127,11 @@ $.when(
     var costOfEquityList = [(100 * INPUT._DISCOUNT_RATE).toFixed(2) + '%'];
     // first year's cost of equity is the discount rate
     var returnOnEquityList = newArrayFill(projectionYears, (100 * INPUT._RETURN_ON_EQUITY).toFixed(2) + '%');
-    var len = INPUT.HISTORIC_YEARS;
+    var len = minLength;
     if(income.length - 1 < len){
       	len = income.length - 1;
     }
-    // Historic data
+    // Historical data
     for(var i = len - indexShift; i >= 0; i--){
       y_eps.push((income[i]['eps']).toFixed(2));
       y_book_value.push(balance[i].totalStockholdersEquity / income[i].weightedAverageShsOut);
@@ -173,7 +174,7 @@ $.when(
     fillHistoricUsingList(y_eps, 'eps', parseInt(income_ltm['date']) + projectionYears);
     fillHistoricUsingList(y_book_value, 'book value');
     fillHistoricUsingList(y_dividends, 'dividends');
-    renderChart('Historic and forecasted data in ' + currency);
+    renderChart('Historical and forecasted data in ' + currency);
 	// ---------------- END OF CHARTS SECTION ---------------- 
     // ---------------- VALUES OF INTEREST SECTION ----------------
     // LTM book value
@@ -200,8 +201,8 @@ $.when(
     print(costOfEquity, "Cost of Equity (the discount rate)", '%');
     print(INPUT._RETURN_ON_EQUITY, "Return on equity", '%');
     print(INPUT._GROWTH_IN_PERPETUITY, 'Growth in perpetuity', '%');
-    print(averageReturnOnEquity, "Average historic Return on Equity", '%');
-    print(averagePayoutRatio, "Average historic Payout Ratio", '%');
+    print(averageReturnOnEquity, "Average historical Return on Equity", '%');
+    print(averagePayoutRatio, "Average historical Payout Ratio", '%');
     print(stablePayoutRatio, "Payout Ratio used", '%');
     print(treasury.year10/100, 'Risk Free Rate of the 10 Year U.S. Treasury Note', '%');
     // ---------------- END OF VALUES OF INTEREST SECTION ---------------- 
@@ -218,7 +219,7 @@ $.when(
     }
     renderTable('5 Years of projected data (' + currency + ')', data, rows, columns);
     
-    // Historic table
+    // Historical table
     if( prefDividendsRatio > sensitivity ){
       var rows = ['Net income','Calculated preferred stock dividends & premiums','Net income available to common shareholders', 
                   'Total Equity', 'Return on equity', 'Dividends paid to common shareholders',
@@ -229,15 +230,8 @@ $.when(
       for(var i=0; i<rows.length; i++){
           data.push([]);
       }
-      var lengths = [income.length, balance.length];
-      var maxLength = INPUT.HISTORIC_YEARS;
-      for(var i in lengths){
-        if(lengths[i] < maxLength){
-          maxLength = lengths[i];
-        }
-      }
-      for(var i = 1 + indexShift; i<=maxLength; i++){
-        var i_inverse = maxLength - i;
+      for(var i = 1 + indexShift; i<=minLength; i++){
+        var i_inverse = minLength - i;
         var col = 0;
         columns.push(lastYearDate - i_inverse - indexShift);
         // Net Income
@@ -314,15 +308,8 @@ $.when(
       for(var i=0; i<rows.length; i++){
           data.push([]);
       }
-      var lengths = [income.length, balance.length];
-      var maxLength = INPUT.HISTORIC_YEARS;
-      for(var i in lengths){
-        if(lengths[i] < maxLength){
-          maxLength = lengths[i];
-        }
-      }
-      for(var i=1+indexShift; i<=maxLength; i++){
-        var i_inverse = maxLength - i;
+      for(var i=1+indexShift; i<=minLength; i++){
+        var i_inverse = minLength - i;
         var col = 0;
         columns.push(lastYearDate - i_inverse - indexShift);
         // Net Income
@@ -377,7 +364,7 @@ $.when(
         data[col++].push( balance_quarterly.totalStockholdersEquity / income_ltm.weightedAverageShsOut );
       }
     }
-    renderTable('Historic data (Mil. ' + currency + ' except per share items)', data, rows, columns);
+    renderTable('Historical data (Mil. ' + currency + ' except per share items)', data, rows, columns);
     // ---------------- END OF TABLES SECTION ---------------- 
 });
 
