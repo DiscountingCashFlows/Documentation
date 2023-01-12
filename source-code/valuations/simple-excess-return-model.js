@@ -126,7 +126,7 @@ $.when(
     // Cost of equity will change each year to match the constant roe and excess return's growth in perpetuity rate
     var costOfEquityList = [(100 * INPUT._DISCOUNT_RATE).toFixed(2) + '%'];
     // first year's cost of equity is the discount rate
-    var returnOnEquityList = newArrayFill(projectionYears, (100 * INPUT._RETURN_ON_EQUITY).toFixed(2) + '%');
+    var returnOnEquityLine = newArrayFill(projectionYears, (100 * INPUT._RETURN_ON_EQUITY).toFixed(2) + '%');
     var len = minLength;
     if(income.length - 1 < len){
       	len = income.length - 1;
@@ -212,7 +212,7 @@ $.when(
     var rows = ['Book value per share', 'EPS available to common shareholders', 'Return on equity', 'Dividend per common share', 
                 'Retained earnings', 'Equity cost per share', 'Cost of equity', 'Excess return per share'];
     var columns = [];
-    var data = [y_book_value.slice(len+1), y_eps.slice(len+1), returnOnEquityList, y_dividends.slice(len+1), 
+    var data = [y_book_value.slice(len+1), y_eps.slice(len+1), returnOnEquityLine, y_dividends.slice(len+1), 
                 y_retained_earnings.slice(len+1), y_equity_cost, costOfEquityList, y_excess_return];
     for(var i=1; i <= projectionYears; i++){
       columns.push(lastYearDate + i);
@@ -248,7 +248,7 @@ $.when(
         data[col++].push( toM(balance[i_inverse].totalStockholdersEquity) );
         // Common Return on Equity
         if(i_inverse < balance.length - 1){
-        	data[col++].push( (100 * (income[i_inverse].eps * income[i_inverse].weightedAverageShsOut) / balance[i_inverse + 1].totalStockholdersEquity).toFixed(2) + '%' );
+        	data[col++].push( (100 * returnOnEquityList[i_inverse + 1]).toFixed(2) + '%' );
         }else{
           	data[col++].push('');
         }
@@ -284,7 +284,7 @@ $.when(
         // Equity
         data[col++].push( toM(balance_quarterly.totalStockholdersEquity) );
         // Common Return on Equity
-        data[col++].push( (100 * (income_ltm.eps * income_ltm.weightedAverageShsOut) / balance_quarterly.totalStockholdersEquity).toFixed(2) + '%' );
+        data[col++].push( (100 * returnOnEquityList[0]).toFixed(2) + '%' );
         // Dividends paid to common
         data[col++].push( toM(dividends[0].adjDividend * income_ltm.weightedAverageShsOut).toFixed(2) ); 
         // Common stock payout Ratio
@@ -318,7 +318,7 @@ $.when(
         data[col++].push( toM(balance[i_inverse].totalStockholdersEquity) );
         // Return on Equity
         if(i_inverse < balance.length - 1){
-        	data[col++].push( (100 * income[i_inverse].netIncome / balance[i_inverse + 1].totalStockholdersEquity).toFixed(2) + '%' );
+        	data[col++].push( (100 * returnOnEquityList[i_inverse + 1]).toFixed(2) + '%' );
         }else{
           	data[col++].push('');
         }
@@ -349,7 +349,7 @@ $.when(
         // Equity
         data[col++].push( toM(balance_quarterly.totalStockholdersEquity) );
         // Return on Equity
-        data[col++].push( (100 * income_ltm.netIncome / balance_quarterly.totalStockholdersEquity).toFixed(2) + '%' );
+        data[col++].push( (100 * returnOnEquityList[0]).toFixed(2) + '%' );
         // Dividends paid to common
         data[col++].push( toM(dividends[0].adjDividend * income_ltm.weightedAverageShsOut) ); 
         // All dividends payout Ratio
