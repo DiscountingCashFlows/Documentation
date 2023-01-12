@@ -51,20 +51,23 @@ $.when(
     	warning("The company does not currently pay dividends!");
     }
     if(dividendsCount > 10){
-      dividendsCount = 10;
+    	setInputDefault('HISTORIC_YEARS', 10);
     }
-	
-    // Set the default historic years to the number of historic dividends
-    setInputDefault('HISTORIC_YEARS', dividendsCount);
+    else{
+      // Set the default historical years to the number of historical dividends
+      setInputDefault('HISTORIC_YEARS', dividendsCount);
+    }
     // Set the growth in perpetuity to the 10 year treasury note
     setInputDefault('_GROWTH_IN_PERPETUITY', treasury.year10);
     
-    // Slice the reports to the number of historic years set previously
-    flows = flows.slice(0, INPUT.HISTORIC_YEARS);
-    income = income.slice(0, INPUT.HISTORIC_YEARS);
-    balance = balance.slice(0, INPUT.HISTORIC_YEARS);
+    var minLength = Math.min(income.length, balance.length, flows.length, dividendsCount, INPUT.HISTORIC_YEARS);
+    
+    // Slice the reports to the number of historical years set previously
+    flows = flows.slice(0, minLength);
+    income = income.slice(0, minLength);
+    balance = balance.slice(0, minLength);
     balance_quarterly = balance_quarterly[0]; // get the last quarter
-    dividends = dividends.slice(0, INPUT.HISTORIC_YEARS + 1);
+    dividends = dividends.slice(0, minLength + 1);
 	// Get the currencies used in the profile and reports (flows).
     // The profile can have a different currency from the reports.
     var currency = flows[0]['convertedCurrency'];
@@ -72,7 +75,7 @@ $.when(
     var ccyRate = currencyRate(fx,  currency, currencyProfile);
     if(ccyRate != 1){
     	// adjust dividends for fx
-      	for(var i=0; i<dividends.length; i++){
+      	for(var i=0; i<minLength; i++){
           	dividends[i].adjDividend = dividends[i].adjDividend / ccyRate;
         }
     }
@@ -92,8 +95,8 @@ $.when(
     
     // price is the Current Last Price of a Share on the Stock Market
     var price = profile['price'];
-    var sensitivity = 0.05;
-    var prefDividendsRatio = Math.abs((Math.abs(flows[0].dividendsPaid) - dividends[1].adjDividend * income[0].weightedAverageShsOut) / flows[0].dividendsPaid);
+    var sensitivity = 0.01;
+    var prefDividendsRatio = Math.abs((income[0].eps * income[0].weightedAverageShsOut - income[0].netIncome) / income[0].netIncome);
     
     var payoutRatioList = [];
     var averagePayoutRatio = 0;
@@ -106,13 +109,12 @@ $.when(
     var commonIncome = 0;
     // ------ LTM - Payout Ratio, Return on Equity ------
     if( prefDividendsRatio > sensitivity ){
-      commonIncome = (income_ltm.netIncome - (Math.abs(flows_ltm.dividendsPaid) - dividends[0].adjDividend * income_ltm.weightedAverageShsOut));
-      payoutRatio = dividends[0].adjDividend * income_ltm.weightedAverageShsOut / commonIncome;
+      commonIncome = income_ltm.eps * income_ltm.weightedAverageShsOut;
     }
     else{
       commonIncome = income_ltm.netIncome;
-      payoutRatio = Math.abs(flows_ltm.dividendsPaid) / commonIncome;
     }
+    payoutRatio = dividends[0].adjDividend / income_ltm.eps;
     if(commonIncome <= 0){
       payoutRatio = 0;
     }
@@ -122,56 +124,28 @@ $.when(
     returnOnEquity = commonIncome / balance[0].totalStockholdersEquity; // ltm income / last year equity
     returnOnEquityList.push(returnOnEquity);
     averageReturnOnEquity += returnOnEquity;
-    // Calculate Average historic Payout Ratio, average Return on Equity
-    for(var i=0; i<income.length; i++){
+    // Calculate Average historical Payout Ratio, average Return on Equity
+    for(var i=0; i<minLength - indexShift; i++){
       if( prefDividendsRatio > sensitivity ){
-        commonIncome = (income[i].netIncome - (Math.abs(flows[i].dividendsPaid) - dividends[i + 1].adjDividend * income[i].weightedAverageShsOut));
-        payoutRatio = dividends[i + 1].adjDividend * income[i].weightedAverageShsOut / commonIncome;
+        commonIncome = income[i].eps * income[i].weightedAverageShsOut;
       }
       else{
         commonIncome = income[i].netIncome;
-        payoutRatio = Math.abs(flows[i].dividendsPaid) / commonIncome;
       }
+      payoutRatio = dividends[i + 1 + indexShift].adjDividend / income[i].eps;
       if(commonIncome <= 0){
         payoutRatio = 0;
       }
       payoutRatioList.push(payoutRatio);
-      averagePayoutRatio += payoutRatio;
-      if(i<balance.length - 1){
+      if(i<minLength - 1){
       	returnOnEquity = commonIncome / balance[i + 1].totalStockholdersEquity;
         returnOnEquityList.push(returnOnEquity);
-        averageReturnOnEquity += returnOnEquity;
       }
     }
-    averagePayoutRatio /= income.length + 1;
-    averageReturnOnEquity /= income.length;
+    averagePayoutRatio = getArraySum(payoutRatioList)/payoutRatioList.length;
+    averageReturnOnEquity = getArraySum(returnOnEquityList)/returnOnEquityList.length;
 
-    // dgr stores the Historic Dividend Growth Rate
-    var dgr = 0;
-    // d1 stores the previous period Dividend
-    var d1 = 0;
-    // d0 stores the current period Dividend
-    var d0 = dividends[1].adjDividend;
-    if(d0 == 0){
-        warning("A zero dividend was encountered!");
-      	_StopIfWatch(0, currency);
-        return;
-    }
-    var growthRates = [];
-    // Calculate the Average Annual Dividend Growth Rate for the last HISTORIC_YEARS
-    for(var i=2; i<dividends.length; i++){
-      d1 = dividends[i].adjDividend;
-      if(d1 == 0){
-        warning("A zero dividend was encountered!");
-        _StopIfWatch(0, currency);
-        return;
-      }
-      dgr += (d0 - d1) / d1;
-      growthRates.push(Number((100*(d0 - d1) / d1).toFixed(2)));
-      d0 = d1;
-    }
-	dgr = dgr/( dividends.length - 2 );
-    var expectedDividend = INPUT._LINEAR_REGRESSION_WEIGHT * linDividends[dividends.length - 1] + (1-INPUT._LINEAR_REGRESSION_WEIGHT) * dividends[0].adjDividend
+    var expectedDividend = INPUT._LINEAR_REGRESSION_WEIGHT * linDividends[minLength - 1] + (1-INPUT._LINEAR_REGRESSION_WEIGHT) * dividends[0].adjDividend;
     setInputDefault('EXPECTED_DIVIDEND', expectedDividend);
     // ---------------- END OF SETTING ASSUMPTIONS SECTION ---------------- 
     
@@ -190,15 +164,15 @@ $.when(
     }
     print(dividends[0].adjDividend, "LTM dividend", '#', currency);
     print(INPUT.EXPECTED_DIVIDEND, "Next year's expected dividend", '#', currency);
-    print(dgr, "Average historic dividend growth rate", '%');
-    print(averagePayoutRatio, "Average historic Payout Ratio", '%');
-    print(averageReturnOnEquity, "Average historic Return on Equity", '%');
+    print(averageGrowthRate('adjDividend', dividends.slice(1, dividends.length)), "Average historical dividend growth rate", '%');
+    print(averagePayoutRatio, "Average historical Payout Ratio", '%');
+    print(averageReturnOnEquity, "Average historical Return on Equity", '%');
     // ---------------- END OF VALUES OF INTEREST SECTION ---------------- 
     
     // ---------------- CHARTS SECTION ---------------- 
-    // Create Chart for INPUT.HISTORIC_YEARS of Previous Dividends 
+    // Create Chart for minLength of Previous Dividends 
     var y_values = [];
-    for(var i = INPUT.HISTORIC_YEARS; i >= 1; i--){
+    for(var i = minLength; i >= 1; i--){
       y_values.push(Math.abs(dividends[i].adjDividend));
     }
     y_values.push(INPUT.EXPECTED_DIVIDEND);
@@ -209,7 +183,7 @@ $.when(
     }
     fillHistoricUsingList(y_values, 'dividends', lastYearDate + chartProjectionYears);
     fillHistoricUsingList(linDividends, 'linear regression');
-    renderChart('Historic and Projected Dividends (' + currency + ')');
+    renderChart('Historical and Projected Dividends (' + currency + ')');
     // ---------------- END OF CHARTS SECTION ---------------- 
     
     // ---------------- TABLES SECTION ---------------- 
@@ -217,10 +191,10 @@ $.when(
     var rows = ['Dividends', 'Growth Rates'];
     var columns = [];
     var data = [y_values, getGrowthRateList(y_values, 'percentage')];
-    for(var i=1; i<=chartProjectionYears + INPUT.HISTORIC_YEARS; i++){
-      columns.push(lastYearDate - INPUT.HISTORIC_YEARS + i);
+    for(var i=1; i<=chartProjectionYears + minLength; i++){
+      columns.push(lastYearDate - minLength + i);
     }
-    renderTable('Historic and Projected Dividends (' + currency + ')', data, rows, columns);
+    renderTable('Historical and Projected Dividends (' + currency + ')', data, rows, columns);
 
     // if the last period has considerable preferred dividends (meaning that the company has pref. stock issued)
     if( prefDividendsRatio > sensitivity ){
@@ -232,15 +206,9 @@ $.when(
       for(var i=0; i<rows.length; i++){
           data.push([]);
       }
-      var lengths = [income.length, balance.length, flows.length];
-      var maxLength = INPUT.HISTORIC_YEARS;
-      for(var i in lengths){
-        if(lengths[i] < maxLength){
-          maxLength = lengths[i];
-        }
-      }
-      for(var i=1+indexShift; i<=maxLength; i++){
-        var i_inverse = maxLength - i;
+      
+      for(var i=1+indexShift; i<=minLength; i++){
+        var i_inverse = minLength - i;
         var col = 0;
         columns.push(lastYearDate - i_inverse - indexShift);
         // Net Income
@@ -325,15 +293,8 @@ $.when(
       for(var i=0; i<rows.length; i++){
           data.push([]);
       }
-      var lengths = [income.length, balance.length, flows.length];
-      var maxLength = INPUT.HISTORIC_YEARS;
-      for(var i in lengths){
-        if(lengths[i] < maxLength){
-          maxLength = lengths[i];
-        }
-      }
-      for(var i=1+indexShift; i<=maxLength; i++){
-        var i_inverse = maxLength - i;
+      for(var i=1+indexShift; i<=minLength; i++){
+        var i_inverse = minLength - i;
         var col = 0;
         columns.push(lastYearDate - i_inverse - indexShift);
         // Net Income
@@ -392,7 +353,7 @@ $.when(
         data[col++].push( (100*dividends[0].adjDividend/prices[0]['close']).toFixed(2) + '%' );
       }
     }
-    renderTable('Historic figures (Mil. ' + currency + ' except per share items)', data, rows, columns);
+    renderTable('Historical figures (Mil. ' + currency + ' except per share items)', data, rows, columns);
     // ---------------- END OF TABLES SECTION ---------------- 
 });
 
