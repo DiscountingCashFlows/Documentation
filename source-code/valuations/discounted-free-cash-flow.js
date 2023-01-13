@@ -106,14 +106,14 @@ $.when(
     for(var i in linRevenue){
       linRevenue[i] = toM(linRevenue[i]);
     }
-    // Calculate the average historic margin of operatingCashFlow (Cash From Operating Activities)
+    // Calculate the average historical margin of operatingCashFlow (Cash From Operating Activities)
     const operatingCashFlowMargin = averageMargin('operatingCashFlow', 'revenue', flows);
     setInputDefault('_OPERATING_CASH_FLOW_MARGIN', operatingCashFlowMargin * 100);
     const capitalExpenditureMargin = -averageMargin('capitalExpenditure', 'revenue', flows); // Is negative by default
     // ---------------- END OF SETTING ASSUMPTIONS SECTION ----------------
     
     // ---------------- CHARTS SECTION ---------------- 
-    // Fill the chart with historic data (in M or Millions)
+    // Fill the chart with historical data (in M or Millions)
     fillHistoricUsingReport(flows.slice(1), 'revenue', 'M');
 	fillHistoricUsingReport(flows.slice(1), 'operatingCashFlow', 'M');
 	fillHistoricUsingReport(flows.slice(1), 'freeCashFlow', 'M');
@@ -219,7 +219,7 @@ $.when(
     contextItem = {name:'Estimated Future Data (Mil. ' + currency + ')', display:'table', rows:rows, columns:columns, data:data};
     context.push(contextItem);
     
-    // Historic Table
+    // Historical Table
     var rows = ['Revenue', 'Revenue Growth Rate', 'Cost of Revenue', 'Gross Profit', 'Gross Margin', 
                 'Operating Income', 'Operating Margin', 'Net Income', 'Net Margin', 
                 'Cash from Operating Activities', 'Cash from Operating Activities Margin',
@@ -265,10 +265,10 @@ $.when(
       data[col++].push((toM(flows[i_inverse]['freeCashFlow'])));
     }
     
-    contextItem = {name:'Historic Data (Mil. ' + currency + ')', display:'table', rows:rows, columns:columns, data:data};
+    contextItem = {name:'Historical Data (Mil. ' + currency + ')', display:'table', rows:rows, columns:columns, data:data};
     context.push(contextItem);
     // ---------------- END OF TABLES SECTION ---------------- 
-	renderChart('Historic and Forecasted Data(In Mill. of ' + currency + ')');
+	renderChart('Historical and Forecasted Data(In Mill. of ' + currency + ')');
     monitor(context);
 });
 
