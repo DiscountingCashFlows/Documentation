@@ -64,7 +64,7 @@ $.when(
     contextItem = {name:'Projections Table (Mil. ' + currency + ')', display:'table', rows:rows, columns:columns, data:data};
     context.push(contextItem);
     
-    // Historic Table
+    // Historical Table
     var rows = ['Revenue', 'Revenue Growth Rate%', 'Cost of Revenue', 
                 'Gross Margin%', 'Gross Profit','Operating Expenses',
                 'Operating Margin%', 'Operating Income', 'Tax Expenses', 'Net Income'];
@@ -101,7 +101,7 @@ $.when(
       // net income 
       data[9].push((income[i_inverse]['netIncome']/1000000).toFixed(2));
     }    
-    contextItem = {name:'Historic Table (Mil. ' + currency + ')', display:'table', rows:rows, columns:columns, data:data};
+    contextItem = {name:'Historical Table (Mil. ' + currency + ')', display:'table', rows:rows, columns:columns, data:data};
     context.push(contextItem);
     
     // Chart for Revenues
@@ -137,7 +137,7 @@ $.when(
     }
     fillHistoricUsingList(y_netIncome, 'netIncome', lastYear + INPUT.PROJECTION_YEARS);
     fillHistoricUsingList(y_revenue, 'revenue');
-    renderChart('Historic and Forecasted Net Income (In Mill. of ' + currency + ')');
+    renderChart('Historical and Forecasted Net Income (In Mill. of ' + currency + ')');
     monitor(context);
 });
 
