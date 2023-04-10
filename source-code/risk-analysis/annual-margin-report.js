@@ -87,11 +87,11 @@ $.when(
       y_ni.push((100*flows_ltm['netIncome']/flows_ltm['revenue']).toFixed(2));
       y_ce.push((-100*flows_ltm['capitalExpenditure']/flows_ltm['revenue']).toFixed(2));
     }
-    fillHistoricUsingList(y_revenue, 'revenue', parseInt(flows[0]['date']) + 1);
-    fillHistoricUsingList(y_coa, 'netCashProvidedByOperatingActivities');
-    fillHistoricUsingList(y_fcf, 'freeCashFlow');
-    fillHistoricUsingList(y_ni, 'netIncome');
-    fillHistoricUsingList(y_ce, 'capitalExpenditure');
+    fillHistoricUsingList(y_revenue, '_revenue', parseInt(flows[0]['date']) + 1);
+    fillHistoricUsingList(y_coa, '_netCashProvidedByOperatingActivitiesMargin');
+    fillHistoricUsingList(y_fcf, '_freeCashFlowMargin');
+    fillHistoricUsingList(y_ni, '_netMargin');
+    fillHistoricUsingList(y_ce, '_capitalExpenditureMargin');
     
     // Income Statement Margins Table
     var rows = ['Revenue', 'Revenue Growth Rate%', 'Gross Margin%', 'Gross Profit', 'Operating Expenses to Revenue%', 'Operating Expenses',
@@ -185,7 +185,7 @@ $.when(
     contextItem = {name:'Cash Flow Statement Margins (Mil. ' + currency + ')', display:'table', rows:rows, columns:columns, data:data};
     context.push(contextItem);
     
-	renderChart('Cash Flow Statement Margins(% of Revenue)');
+	renderChart('Cash Flow Statement Margins (% of Revenue)');
     monitor(context);
 });
 
