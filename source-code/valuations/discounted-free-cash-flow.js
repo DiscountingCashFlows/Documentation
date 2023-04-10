@@ -9,6 +9,7 @@ var INPUT = Input({_DISCOUNT_RATE: '',
                    HISTORIC_YEARS: 10,
                    REVENUE_REGRESSION_SLOPE: 1,
                    _OPERATING_CASH_FLOW_MARGIN: '',
+                   _CAPITAL_EXPENDITURE_MARGIN: '',
                    BETA:'',
                    _RISK_FREE_RATE: '',
                    _MARKET_PREMIUM: 5.5,
@@ -110,6 +111,7 @@ $.when(
     const operatingCashFlowMargin = averageMargin('operatingCashFlow', 'revenue', flows);
     setInputDefault('_OPERATING_CASH_FLOW_MARGIN', operatingCashFlowMargin * 100);
     const capitalExpenditureMargin = -averageMargin('capitalExpenditure', 'revenue', flows); // Is negative by default
+    setInputDefault('_CAPITAL_EXPENDITURE_MARGIN', capitalExpenditureMargin * 100);
     // ---------------- END OF SETTING ASSUMPTIONS SECTION ----------------
     
     // ---------------- CHARTS SECTION ---------------- 
@@ -132,7 +134,7 @@ $.when(
     
     for(var i=0; i<INPUT.PROJECTION_YEARS; i++){
       forecastedOperatingCashFlow.push(forecastedRevenue[i] * INPUT._OPERATING_CASH_FLOW_MARGIN);
-      capitalExpenditure.push(forecastedRevenue[i] * capitalExpenditureMargin);
+      capitalExpenditure.push(forecastedRevenue[i] * INPUT._CAPITAL_EXPENDITURE_MARGIN);
     }
     forecastedOperatingCashFlow = forecast(forecastedOperatingCashFlow, 'operatingCashFlow');
     
