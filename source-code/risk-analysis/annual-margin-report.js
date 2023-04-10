@@ -87,7 +87,7 @@ $.when(
       y_ni.push((100*flows_ltm['netIncome']/flows_ltm['revenue']).toFixed(2));
       y_ce.push((-100*flows_ltm['capitalExpenditure']/flows_ltm['revenue']).toFixed(2));
     }
-    fillHistoricUsingList(y_revenue, 'revenue', parseInt(flows[0]['date']) - 1);
+    fillHistoricUsingList(y_revenue, 'revenue', parseInt(flows[0]['date']) + 1);
     fillHistoricUsingList(y_coa, 'netCashProvidedByOperatingActivities');
     fillHistoricUsingList(y_fcf, 'freeCashFlow');
     fillHistoricUsingList(y_ni, 'netIncome');
