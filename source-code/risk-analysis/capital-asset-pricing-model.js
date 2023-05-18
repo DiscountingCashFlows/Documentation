@@ -2,26 +2,44 @@
 //   Model: Capital Asset Pricing Model (CAPM)					
 //   © Copyright: https://discountingcashflows.com	
 // +------------------------------------------------------------+
-var INPUT = Input({_MARKET_PREMIUM: 5.5,
-  				   _RISK_FREE_RATE: '',
-                   BETA: ''}); 
+
+Input(
+  {
+    _MARKET_PREMIUM: '',
+    _RISK_FREE_RATE: '',
+    BETA: '',
+  }
+);
 
 $.when(
   get_profile(),
-  get_treasury()).done(
-  function(_profile, _treasury){
-    // Create deep copies of reports. This section is needed for watchlist compatibility.
-    var profile = deepCopy(_profile);
-    var treasury = deepCopy(_treasury);
-
-    setInputDefault('BETA', profile['beta']);
-	setInputDefault('_RISK_FREE_RATE', treasury['year10']);
+  get_treasury(),
+  get_fx(),
+  get_risk_premium()).done(
+  function(_profile, _treasury, _fx, _risk_premium){
+    var response = new Response({
+      profile: _profile,
+      treasury: _treasury,
+      risk_premium: _risk_premium,
+    });
+    
+    // +---------------- ASSUMPTIONS SECTION -----------------+
+    setAssumption('_MARKET_PREMIUM', response.risk_premium.totalEquityRiskPremium );
+	// Set beta (used in calculating the discount rate)
+    if(response.profile.beta){
+    	setAssumption('BETA', response.profile.beta);
+    }
+    else{
+    	setAssumption('BETA', 1);
+    }
+    // Risk free rate is the yield of the 10 year treasury note
+	setAssumption('_RISK_FREE_RATE', response.treasury.year10);
 	
     // Expected Return
-    var expectedReturn = INPUT._RISK_FREE_RATE + INPUT.BETA*INPUT._MARKET_PREMIUM;
+    var expectedReturn = getAssumption('_RISK_FREE_RATE') + getAssumption('BETA')*getAssumption('_MARKET_PREMIUM');
     
     // If we are calculating the value per share for a watch, we can stop right here.
-    if(_StopIfWatch(expectedReturn*100, '%')){
+    if(_StopIfWatch(toP(expectedReturn), '%')){
       return;
     }
     
