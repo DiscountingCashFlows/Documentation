@@ -2,167 +2,143 @@
 //   Model: Discounted Future Market Cap	
 //   © Copyright: https://discountingcashflows.com
 // +------------------------------------------------------------+
-
-Input(
-  {
-    _DISCOUNT_RATE: '',
-    _MARKET_PREMIUM: '',
-    _RISK_FREE_RATE: '',
-    BETA: '',
-    PE_RATIO: '',
-    PROJECTION_YEARS: 5,
-    HISTORICAL_YEARS: 10,
-    _REVENUE_GROWTH_RATE: '',
-    _NET_INCOME_MARGIN: '',
-  },
-  [{
-    parent:'_DISCOUNT_RATE',
-    children:['BETA', '_RISK_FREE_RATE', '_MARKET_PREMIUM']
-  }]
-); 
+var INPUT = Input({_DISCOUNT_RATE: 7.5,
+                   PE: '', 	
+                   PROJECTION_YEARS: 5,
+                   HISTORIC_YEARS: 10,
+                   PROJECTED_REVENUE_SLOPE: 1,
+                   _NET_INCOME_MARGIN: ''}); 
 
 $.when(
   get_income_statement(),
   get_income_statement_ltm(),
-  get_quote(),
-  get_profile(),
-  get_treasury(),
-  get_fx(),
-  get_risk_premium()).done(
-  function(_income, _income_ltm, _quote, _profile, _treasury, _fx, _risk_premium){
-  try{
-    var response = new Response({
-      income: _income,
-      income_ltm: _income_ltm,
-      quote: _quote,
-      profile: _profile,
-      treasury: _treasury,
-      risk_premium: _risk_premium,
-    }).toOneCurrency('income', _fx).merge('_ltm');
+  get_quote()).done(
+  function(_income, _income_ltm, _quote){
+    var income = deepCopy(_income);
+    var income_ltm = deepCopy(_income_ltm);
+    var quote = deepCopy(_quote);
     
-    // +---------------- ASSUMPTIONS SECTION -----------------+ 
-	setAssumption('PE_RATIO', response.quote.pe);
-    setAssumption('_MARKET_PREMIUM', response.risk_premium.totalEquityRiskPremium );
-    // Risk free rate is the yield of the 10 year treasury note
-	setAssumption('_RISK_FREE_RATE', response.treasury.year10);
-    // Set beta (used in calculating the discount rate)
-    if(response.profile.beta){
-    	setAssumption('BETA', response.profile.beta);
-    }
-    else{
-    	setAssumption('BETA', 1);
-    }
-    var costOfEquity = getAssumption('_RISK_FREE_RATE') + getAssumption('BETA')*getAssumption('_MARKET_PREMIUM');
-    setAssumption('_DISCOUNT_RATE', toP(costOfEquity));
+    income = income.slice(0, INPUT.HISTORIC_YEARS);
+    income = replaceWithLTM(income, income_ltm);
     
-     // Setup Original Data
-    var original_data = new DateValueData({
-      'revenue': new DateValueList(response.income, 'revenue'),
-      'costOfRevenue': new DateValueList(response.income, 'costOfRevenue'),
-      'grossProfit': new DateValueList(response.income, 'grossProfit'),
-      'operatingIncome': new DateValueList(response.income, 'operatingIncome'),
-      'netIncome': new DateValueList(response.income, 'netIncome'),
-      'weightedAverageShsOut': new DateValueList(response.income, 'weightedAverageShsOut'),
-    });
-    
-    var currentDate = original_data.lastDate();
-    var nextYearDate = currentDate + 1;
-    var startDate = nextYearDate - getAssumption('HISTORICAL_YEARS');
-    var forecastEndDate = currentDate + getAssumption('PROJECTION_YEARS');
-    
-    // Compute historical values and ratios
-    var historical_computed_data = original_data.setFormula({
-      '_grossMargin': ['grossProfit:0', '/', 'revenue:0'],
-      '_operatingMargin': ['operatingIncome:0', '/', 'revenue:0'],
-      '_netMargin': ['netIncome:0', '/', 'revenue:0'],
-      '_revenueGrowthRate': ['function:growth_rate', 'revenue'],
-    }).compute();
-    
-	setAssumption('_NET_INCOME_MARGIN', toP(historical_computed_data.get('_netMargin').sublist(startDate).average()));
-	setAssumption('_REVENUE_GROWTH_RATE', toP(historical_computed_data.get('_revenueGrowthRate').sublist(startDate).average()));
-    
-    // Compute forecasted values and ratios
-    var forecasted_data = historical_computed_data.removeDate('LTM').setFormula({
-      'linearRegressionRevenue': ['function:linear_regression', 'revenue', {slope: 1, start_date: startDate}],
-      'revenue': ['function:compound', 'linearRegressionRevenue:start_date', {rate: getAssumption('_REVENUE_GROWTH_RATE'), start_date: nextYearDate}],
-      '_revenueGrowthRate': ['function:growth_rate', 'revenue'],
-      'netIncome': ['revenue:0', '*', getAssumption('_NET_INCOME_MARGIN')],
-    }).setEditable(_edit(), {
-      start_date: nextYearDate,
-      keys: ['revenue', 'netIncome'],
-    }).compute({'forecast_end_date': forecastEndDate}); 
-    // +------------- END OF ASSUMPTIONS SECTION -------------+
-    
-    // +---------------- MODEL VALUES SECTION ----------------+
-    var projectedRevenue = forecasted_data.get('revenue').lastValue();
-    var projectedNetIncome = forecasted_data.get('netIncome').lastValue();
+    var linRevenue = linearRegressionGrowthRate(income, 'revenue', INPUT.PROJECTION_YEARS, INPUT.PROJECTED_REVENUE_SLOPE);
+    var projectedRevenue = linRevenue[linRevenue.length - 1];
 	
-    var sharesOutstanding = original_data.get('weightedAverageShsOut').valueAtDate('LTM');
-    var futureMarketCap = getAssumption('PE_RATIO') * projectedNetIncome;
-    var discountedFutureMarketCap = futureMarketCap / Math.pow(1 + getAssumption('_DISCOUNT_RATE'), getAssumption('PROJECTION_YEARS'));
-    var presentValue = discountedFutureMarketCap / sharesOutstanding;
-	var currency = response.currency;
+	setInputDefault('_NET_INCOME_MARGIN', 100 * averageMargin('netIncome', 'revenue', income));
+    var projectedNetIncome = projectedRevenue * INPUT._NET_INCOME_MARGIN;
+	
+	setInputDefault('PE', quote['pe']);
+    var presentValue = INPUT.PE * projectedNetIncome / Math.pow(1 + INPUT._DISCOUNT_RATE, INPUT.PROJECTION_YEARS);
+    
+	var currency = income[0]['convertedCurrency'];
 	
     // If we are calculating the value per share for a watch, we can stop right here.
-    if(_StopIfWatch(presentValue, currency)){
+    if(_StopIfWatch(presentValue/quote['sharesOutstanding'], currency)){
       return;
     }
-    _SetEstimatedValue(presentValue, currency);
     
-    print(presentValue, 'Present Value', '#', currency);
-    print(projectedNetIncome, 'Estimated Net Income in ' + forecastEndDate, '#', currency);
-    print(futureMarketCap, 'Estimated Market Capitalisation in ' + forecastEndDate, '#', currency);
-    print(discountedFutureMarketCap, 'Market Capitalisation discounted to present', '#', currency);
-    print(sharesOutstanding, 'Shares Outstanding', '#');
-    // +------------- END OF MODEL VALUES SECTION ------------+
-	
-    // +------------------- CHARTS SECTION -------------------+
-    forecasted_data.renderChart({
-      start_date: startDate,
-      keys: ['revenue', 'netIncome', 'linearRegressionRevenue'],
-      properties: {
-        title: 'Historical and forecasted data',
-        currency: currency,
-      	number_format: 'M',
-        disabled_keys: ['linearRegressionRevenue']
-      }
-    });
-	// +---------------- END OF CHARTS SECTION ---------------+ 
-	
-    // +------------------- TABLES SECTION -------------------+
-    // Estimated Future Data
-    forecasted_data.renderTable({
-      start_date: currentDate,
-      keys: ['revenue', '_revenueGrowthRate', 'netIncome'],
-      rows: ['Revenue', '{%} Revenue Growth Rate', 'Net Income'],
-      properties: {
-        'title': 'Estimated Future Data',
-        'currency': currency,
-        'column_order': 'ascending',
-      	'number_format': 'M',
-      }
-    });
+    _SetEstimatedValue(presentValue/quote['sharesOutstanding'], currency);
+    print(presentValue/quote['sharesOutstanding'], 'Present Value', '#', currency);
+    print(projectedNetIncome, 'Estimated Net Income ' + String(parseInt(income[0]['date']) + INPUT.PROJECTION_YEARS), '#', currency);
+    print(INPUT.PE * projectedNetIncome, 'Estimated Market Capitalisation ' + String(parseInt(income[0]['date']) + INPUT.PROJECTION_YEARS), '#', currency);
+    print(INPUT.PE * projectedNetIncome / Math.pow(1 + INPUT._DISCOUNT_RATE, INPUT.PROJECTION_YEARS), 'Market Capitalisation discounted to present', '#', currency);
+    print(quote['sharesOutstanding'], 'Shares Outstanding', '#');
+
+    var context = [];
+    var lastYear = parseInt(income[0]['date']);
+    
+    // Table of estimations
+    const revenue = income[0]['revenue']/1000000;
+    var rows = ['Revenue', 'Revenue Growth Rate%', 'Net Income'];
+    var columns = [];
+    var data = [[], [], []];
+    for(var i = 1; i <= INPUT.PROJECTION_YEARS; i++){
+      columns.push(lastYear + i);
+      // revenue
+      data[0].push((linRevenue[income.length + i - 1]/1000000).toFixed(2));
+      // revenue growth rate
+      data[1].push((100*(linRevenue[income.length + i - 1] - linRevenue[income.length + i - 2])/linRevenue[income.length + i - 2]).toFixed(2) + '%');
+      // net income = revenue * netIncome margin
+      data[2].push((data[0][i-1] * INPUT._NET_INCOME_MARGIN).toFixed(2));
+    }
+    contextItem = {name:'Projections Table (Mil. ' + currency + ')', display:'table', rows:rows, columns:columns, data:data};
+    context.push(contextItem);
     
     // Historical Table
-    historical_computed_data.renderTable({
-      start_date: startDate,
-      keys: ['revenue', '_revenueGrowthRate', 'costOfRevenue', 'grossProfit', '_grossMargin',
-             'operatingIncome', '_operatingMargin', 'netIncome', '_netMargin'],
-      rows: ['Revenue', '{%} Revenue Growth Rate', 'Cost of Revenue', 'Gross Profit', '{%} Gross Margin', 
-                'Operating Income', '{%} Operating Margin', 'Net Income', '{%} Net Margin'],
-      properties: {
-        'title': 'Historical data',
-        'currency': currency,
-        'number_format': 'M',
-        'display_averages': true,
-        'column_order': 'descending',
-      },
-    });
-    // +---------------- END OF TABLES SECTION ---------------+
-  }
-  catch (error) {
-    throwError(error);
-  }
+    var rows = ['Revenue', 'Revenue Growth Rate%', 'Cost of Revenue', 
+                'Gross Margin%', 'Gross Profit','Operating Expenses',
+                'Operating Margin%', 'Operating Income', 'Tax Expenses', 'Net Income'];
+    var columns = [];
+    var data = [[], [], [], [], [], [], [], [], [], []];
+    var firstYear = parseInt(income[income.length-1]['date']);
+    
+    for(var i = 0; i<income.length; i++){
+      var i_inverse = income.length - i - 1;
+      if(i == income.length - 1){columns.push('LTM');}
+      else{columns.push(firstYear + i);}
+      
+      // revenue
+      data[0].push((income[i_inverse]['revenue']/1000000).toFixed(2));
+      // revenue growth rate
+      if(i > 0){
+      	data[1].push((100*(data[0][i] - data[0][i-1])/data[0][i-1]).toFixed(2) + '%');
+      }
+      else{
+        data[1].push('');
+      }
+      // cost of revenue 
+      data[2].push((income[i_inverse]['costOfRevenue']/1000000).toFixed(2));
+      data[3].push((100 * income[i_inverse]['grossProfit']/income[i_inverse]['revenue']).toFixed(2) + '%');
+      // gross profit 
+      data[4].push((income[i_inverse]['grossProfit']/1000000).toFixed(2));
+      // operating expenses
+      data[5].push((income[i_inverse]['operatingExpenses']/1000000).toFixed(2));
+      // operating income
+      data[6].push((100 * income[i_inverse]['operatingIncome']/income[i_inverse]['revenue']).toFixed(2) + '%');
+      data[7].push((income[i_inverse]['operatingIncome']/1000000).toFixed(2));
+      // tax expenses
+      data[8].push(((income[i_inverse]['incomeTaxExpense'])/1000000).toFixed(2));
+      // net income 
+      data[9].push((income[i_inverse]['netIncome']/1000000).toFixed(2));
+    }    
+    contextItem = {name:'Historical Table (Mil. ' + currency + ')', display:'table', rows:rows, columns:columns, data:data};
+    context.push(contextItem);
+    
+    // Chart for Revenues
+    var x_dates = [];
+    var y_prev_values = [];
+    var y_est_values = [];
+    for(var i = income.length - 1; i >= 0; i--){
+      x_dates.push(parseInt(income[i]['date']));
+      y_prev_values.push((income[i]['revenue']/1000000).toFixed(2));
+      y_est_values.push((linRevenue[income.length - i - 1]/1000000).toFixed(2));
+    }
+
+    for(var i = 1; i <= INPUT.PROJECTION_YEARS; i++){
+      x_dates.push(lastYear + i);
+      y_est_values.push((linRevenue[income.length + i - 1]/1000000).toFixed(2));
+    }
+    context.push(
+      {name:'Previous Revenues and Estimations', display:'chart', x:x_dates, y:[y_prev_values, y_est_values], labels:['Previous', 'Estimated']}
+    );
+    
+    // Chart for Net Income
+    var y_netIncome = [];
+    var y_revenue = [];
+    for(var i = income.length - 1; i >= 0; i--){
+      y_netIncome.push(income[i]['netIncome']/1000000);
+      y_revenue.push(income[i]['revenue']/1000000);
+    }
+
+    for(var i = 1; i <= INPUT.PROJECTION_YEARS; i++){
+      var i_netIncome = linRevenue[income.length + i - 1] * INPUT._NET_INCOME_MARGIN;
+      y_netIncome.push(i_netIncome/1000000);
+      y_revenue.push(linRevenue[income.length + i - 1]/1000000);
+    }
+    fillHistoricUsingList(y_netIncome, 'netIncome', lastYear + INPUT.PROJECTION_YEARS);
+    fillHistoricUsingList(y_revenue, 'revenue');
+    renderChart('Historical and Forecasted Net Income (In Mill. of ' + currency + ')');
+    monitor(context);
 });
 
 Description(`<h5>Discounted Future Market Cap</h5>

@@ -1,26 +1,36 @@
 // +----------------------------------------------------------+
-//   Model: Discounted Free Cash Flow - Perpetuity
+//   Model: Discounted Free Cash Flow 
 //   © Copyright: https://discountingcashflows.com
 // +----------------------------------------------------------+
 
-Input(
-  {
-    _DISCOUNT_RATE: '',
-    _GROWTH_IN_PERPETUITY: '',
-    PROJECTION_YEARS: 5, 			
-    HISTORICAL_YEARS: 10,
-    REVENUE_REGRESSION_SLOPE: 1,
-    _OPERATING_CASH_FLOW_MARGIN: '',
-    _CAPITAL_EXPENDITURE_MARGIN: '',
-    BETA:'',
-    _RISK_FREE_RATE: '',
-    _MARKET_PREMIUM: '',
-  },
-  [{
-    parent:'_DISCOUNT_RATE',
-    children:['BETA', '_RISK_FREE_RATE', '_MARKET_PREMIUM']
-  }]
-);
+var INPUT = Input({_DISCOUNT_RATE: '',
+                   _GROWTH_IN_PERPETUITY: '',
+                   PROJECTION_YEARS: 5, 			
+                   HISTORIC_YEARS: 10,
+                   REVENUE_REGRESSION_SLOPE: 1,
+                   _OPERATING_CASH_FLOW_MARGIN: '',
+                   _CAPITAL_EXPENDITURE_MARGIN: '',
+                   BETA:'',
+                   _RISK_FREE_RATE: '',
+                   _MARKET_PREMIUM: 5.5,
+                   }); 
+
+function GetIncomeSlicePeriods(RawIncomeReport){
+  // Remove Zero Revenue Periods From Income Statement
+  var income = RawIncomeReport[0];
+  var zero = false;
+  for(var i = 0; i < income.length && i < INPUT.HISTORIC_YEARS; i++){
+    if(income[i]['revenue'] == 0){
+      if(!zero){
+      	zero = true;
+      }else{
+        // if two periods have 0 revenue, return
+        return i - 1;
+      }
+    }
+  }
+  return INPUT.HISTORIC_YEARS;
+}
 
 $.when(
   get_income_statement(),
@@ -30,139 +40,142 @@ $.when(
   get_cash_flow_statement_ltm(),
   get_profile(),
   get_treasury(),
-  get_fx(),
-  get_risk_premium()).done(
-  function(_income, _income_ltm, _balance_quarterly, _flows, _flows_ltm, _profile, _treasury, _fx, _risk_premium){
-  try{
-    // +------------------- PREPARING DATA -------------------+
-    var response = new Response({
-      income: _income,
-      income_ltm: _income_ltm,
-      balance_quarterly: _balance_quarterly,
-      balance_ltm: 'balance_quarterly:0',
-      flows: _flows,
-      flows_ltm: _flows_ltm,
-      profile: _profile,
-      treasury: _treasury,
-      risk_premium: _risk_premium,
-    }).toOneCurrency('income', _fx).merge('_ltm');
-    response.balance_ltm['date'] = 'LTM';
-    // +--------------- END OF PREPARING DATA ----------------+
+  get_fx()).done(
+  function(_income, _income_ltm, _balance_quarterly, _flows, _flows_ltm, _profile, _treasury, _fx){
+    var context = [];
+    // Create deep copies of reports. This section is needed for watchlist compatibility.
+    var income = deepCopy(_income);
+    var income_ltm = deepCopy(_income_ltm);
+    var balance_last_quarter = deepCopy(_balance_quarterly);
+    var flows = deepCopy(_flows);
+    var flows_ltm = deepCopy(_flows_ltm);
+    var profile = deepCopy(_profile);
+    var treasury = deepCopy(_treasury);
+    var fx = deepCopy(_fx);
+    checkIncomeFlowsIntegrity(income, income_ltm, flows, flows_ltm);
     
-    // +---------------- ASSUMPTIONS SECTION -----------------+ 
-    setAssumption('_MARKET_PREMIUM', response.risk_premium.totalEquityRiskPremium );
+    var numberOfPeriods = GetIncomeSlicePeriods(income);
+    income = income.slice(0, numberOfPeriods);
+    flows = flows.slice(0, numberOfPeriods);
+    balance_last_quarter = balance_last_quarter[0];
+    
+    // Add the revenue key to the flows report
+    flows = addKey('revenue', income, flows);
+    flows_ltm['revenue'] = income_ltm['revenue'];
+    
+    // Append the LTMs to the income and flows
+    income.unshift(income_ltm);
+    flows.unshift(flows_ltm);
+    
+    // Check if the currency is being converted 
+    // The profile can have a different currency from the reports.
+	var currency = income[0]['convertedCurrency'];
+    var currencyProfile = profile['convertedCurrency'];
+    var ccyRate = currencyRate(fx,  currency, currencyProfile);
+    
+    // ---------------- SETTING ASSUMPTIONS SECTION ---------------- 
     // Set the growth in perpetuity to the 10Y Treasury Yield
-    setAssumption('_GROWTH_IN_PERPETUITY', response.treasury.year10);
-    // Risk free rate is the yield of the 10 year treasury note
-	setAssumption('_RISK_FREE_RATE', response.treasury.year10);
+    setInputDefault('_GROWTH_IN_PERPETUITY', treasury.year10);
     
     // Set beta (used in calculating the discount rate)
-    if(response.profile.beta){
-    	setAssumption('BETA', response.profile.beta);
+    if(profile.beta){
+    	setInputDefault('BETA', profile.beta);
     }
     else{
-    	setAssumption('BETA', 1);
+    	setInputDefault('BETA', 1);
     }
+    // Risk free rate is the yield of the 10 year treasury note
+	setInputDefault('_RISK_FREE_RATE', treasury.year10);
     
     // Calculate the discount rate using the wacc formula
-    var costOfEquity = getAssumption('_RISK_FREE_RATE') + getAssumption('BETA')*getAssumption('_MARKET_PREMIUM');
-    var costOfDebt = response.income_ltm['interestExpense'] / response.balance_ltm['totalDebt'];
-    var taxRate = response.income_ltm['incomeTaxExpense'] / response.income_ltm['incomeBeforeTax'];
+    var costOfEquity = INPUT._RISK_FREE_RATE + INPUT.BETA * INPUT._MARKET_PREMIUM;
+    var costOfDebt = income_ltm['interestExpense'] / balance_last_quarter['totalDebt'];
+    var taxRate = income_ltm['incomeTaxExpense'] / income_ltm['incomeBeforeTax'];
     if(taxRate < 0)
     {
 		taxRate = 0;
     }
-    var marketCap = response.profile['mktCap'];
+    var marketCap = profile['mktCap'] / ccyRate; // get the market cap in reports currency
     
-    var debtWeight = response.balance_ltm['totalDebt'] / (marketCap + response.balance_ltm['totalDebt']);
-    var equityWeight = marketCap / (marketCap + response.balance_ltm['totalDebt']);
+    var debtWeight = balance_last_quarter['totalDebt'] / (marketCap + balance_last_quarter['totalDebt']);
+    var equityWeight = marketCap / (marketCap + balance_last_quarter['totalDebt']);
     var wacc = debtWeight * costOfDebt * (1 - taxRate) + equityWeight * costOfEquity;
     
-    // Set the Discount Rate
-    setAssumption('_DISCOUNT_RATE', toP(wacc));
-    
-    // Setup Original Data
-    var original_data = new DateValueData({
-      'revenue': new DateValueList(response.income, 'revenue'),
-      'costOfRevenue': new DateValueList(response.income, 'costOfRevenue'),
-      'grossProfit': new DateValueList(response.income, 'grossProfit'),
-      'operatingIncome': new DateValueList(response.income, 'operatingIncome'),
-      'netIncome': new DateValueList(response.income, 'netIncome'),
-      'weightedAverageShsOut': new DateValueList(response.income, 'weightedAverageShsOut'),
-      'eps': new DateValueList(response.income, 'eps'),
-      'operatingCashFlow': new DateValueList(response.flows, 'operatingCashFlow'),
-      'capitalExpenditure': new DateValueList(response.flows, 'capitalExpenditure'),
-      'freeCashFlow': new DateValueList(response.flows, 'freeCashFlow'),
-    });
-    var currentDate = original_data.lastDate();
-    var nextYear = currentDate + 1;
-    var forecastEndDate = currentDate + getAssumption('PROJECTION_YEARS');
-    
-    // Compute historical values and ratios
-    var historical_computed_data = original_data.setFormula({
-      '_operatingCashFlowMargin': ['operatingCashFlow:0', '/', 'revenue:0'],
-      '_capitalExpenditureMargin': ['capitalExpenditure:0', '/', 'revenue:0'],
-      '_grossMargin': ['grossProfit:0', '/', 'revenue:0'],
-      '_operatingMargin': ['operatingIncome:0', '/', 'revenue:0'],
-      '_netMargin': ['netIncome:0', '/', 'revenue:0'],
-      'discountedFreeCashFlow': ['freeCashFlow:0'],
-      '_revenueGrowthRate': ['function:growth_rate', 'revenue'],
-    }).compute();
-    
+    // Set the Discount Rate to 10Y Treasury Yield + 4%
+    setInputDefault('_DISCOUNT_RATE', 100*wacc);
+    var linRevenue = linearRegressionGrowthRate(income, 'revenue', INPUT.PROJECTION_YEARS, INPUT.REVENUE_REGRESSION_SLOPE).slice(0,-1);
+    for(var i in linRevenue){
+      linRevenue[i] = toM(linRevenue[i]);
+    }
     // Calculate the average historical margin of operatingCashFlow (Cash From Operating Activities)
-    const operatingCashFlowMargin = historical_computed_data.get('_operatingCashFlowMargin').sublist(nextYear - getAssumption('HISTORICAL_YEARS')).average();
-    setAssumption('_OPERATING_CASH_FLOW_MARGIN', toP(operatingCashFlowMargin));
-    // Is negative by default, se we need to make it positive
-    const capitalExpenditureMargin = -historical_computed_data.get('_capitalExpenditureMargin').sublist(nextYear - getAssumption('HISTORICAL_YEARS')).average(); 
-    setAssumption('_CAPITAL_EXPENDITURE_MARGIN', toP(capitalExpenditureMargin));
+    const operatingCashFlowMargin = averageMargin('operatingCashFlow', 'revenue', flows);
+    setInputDefault('_OPERATING_CASH_FLOW_MARGIN', operatingCashFlowMargin * 100);
+    const capitalExpenditureMargin = -averageMargin('capitalExpenditure', 'revenue', flows); // Is negative by default
+    setInputDefault('_CAPITAL_EXPENDITURE_MARGIN', capitalExpenditureMargin * 100);
+    // ---------------- END OF SETTING ASSUMPTIONS SECTION ----------------
     
-    // Compute forecasted values and ratios
-    var forecasted_data = historical_computed_data.removeDate('LTM').setFormula({
-      'linearRegressionRevenue': ['function:linear_regression', 'revenue', {slope: getAssumption('REVENUE_REGRESSION_SLOPE'), start_date: nextYear - getAssumption('HISTORICAL_YEARS')}],
-      'revenue': ['linearRegressionRevenue:0'],
-      '_revenueGrowthRate': ['function:growth_rate', 'revenue'],
-      'operatingCashFlow': ['revenue:0', '*', getAssumption('_OPERATING_CASH_FLOW_MARGIN')],
-      'computedCapitalExpenditure': ['revenue:0', '*', getAssumption('_CAPITAL_EXPENDITURE_MARGIN')],
-      'freeCashFlow': ['operatingCashFlow:0', '-', 'computedCapitalExpenditure:0'],
-      'capitalExpenditure': ['freeCashFlow:0', '-', 'operatingCashFlow:0'],
-      '_discountRate': [getAssumption('_DISCOUNT_RATE')],
-      'discountedFreeCashFlow': ['function:discount', 'freeCashFlow', {rate: getAssumption('_DISCOUNT_RATE'), start_date: nextYear}],
-      '_operatingCashFlowMargin': ['operatingCashFlow:0', '/', 'revenue:0'],
-      '_capitalExpenditureMargin': ['capitalExpenditure:0', '/', 'revenue:0'],
-      '_freeCashFlowMargin': ['freeCashFlow:0', '/', 'revenue:0'],
-    }).setEditable(_edit(), {
-      start_date: nextYear,
-      keys: ['revenue', 'operatingCashFlow', 'freeCashFlow'],
-    }).compute({'forecast_end_date': forecastEndDate}); 
-    // +------------- END OF ASSUMPTIONS SECTION -------------+
+    // ---------------- CHARTS SECTION ---------------- 
+    // Fill the chart with historical data (in M or Millions)
+    fillHistoricUsingReport(flows.slice(1), 'revenue', 'M');
+	fillHistoricUsingReport(flows.slice(1), 'operatingCashFlow', 'M');
+	fillHistoricUsingReport(flows.slice(1), 'freeCashFlow', 'M');
+    fillHistoricUsingList(linRevenue, 'linearRegressionRevenue');
     
-    // +---------------- MODEL VALUES SECTION ----------------+
+    // chart forecasted lists (revenue, operatingCashFlow and freeCashFlow)
+    var forecastedRevenue = [];
+    var forecastedOperatingCashFlow = [];
+    var capitalExpenditure = [];
+    var forecastedFreeCashFlow = [];
+    var discountedFreeCashFlow = [];
+    for(var i=0; i<INPUT.PROJECTION_YEARS; i++){
+      forecastedRevenue.push(linRevenue[flows.length + i - 1]);
+    }
+    forecastedRevenue = forecast(forecastedRevenue, 'revenue');
+    
+    for(var i=0; i<INPUT.PROJECTION_YEARS; i++){
+      forecastedOperatingCashFlow.push(forecastedRevenue[i] * INPUT._OPERATING_CASH_FLOW_MARGIN);
+      capitalExpenditure.push(forecastedRevenue[i] * INPUT._CAPITAL_EXPENDITURE_MARGIN);
+    }
+    forecastedOperatingCashFlow = forecast(forecastedOperatingCashFlow, 'operatingCashFlow');
+    
+    for(var i=0; i<INPUT.PROJECTION_YEARS; i++){
+      forecastedFreeCashFlow.push(forecastedOperatingCashFlow[i] - capitalExpenditure[i]);
+    }
+    forecastedFreeCashFlow = forecast(forecastedFreeCashFlow, 'freeCashFlow');
+    for(var i=0; i<INPUT.PROJECTION_YEARS; i++){
+      discountedFreeCashFlow.push(forecastedFreeCashFlow[i] / Math.pow(1 + INPUT._DISCOUNT_RATE, i + 1));
+    }
+    // ---------------- END OF CHARTS SECTION ---------------- 
+    
+    // ---------------- VALUES OF INTEREST SECTION ---------------- 
     // Calculating the Terminal Value
     // TV = FCF * (1 + Growth in Perpetuity) / (Discount Rate - Growth in Perpetuity)
-    var terminalValue = forecasted_data.get('freeCashFlow').valueAtDate(forecastEndDate) * (1 + getAssumption('_GROWTH_IN_PERPETUITY') ) / (getAssumption('_DISCOUNT_RATE') - getAssumption('_GROWTH_IN_PERPETUITY') );
+    var terminalValue = forecastedFreeCashFlow[forecastedFreeCashFlow.length - 1] * (1 + INPUT._GROWTH_IN_PERPETUITY) / (INPUT._DISCOUNT_RATE - INPUT._GROWTH_IN_PERPETUITY );
     // Discount the terminal value into the present
-    var discountedTerminalValue = terminalValue/Math.pow(1 + getAssumption('_DISCOUNT_RATE'), getAssumption('PROJECTION_YEARS'));
+    var discountedTerminalValue = terminalValue/Math.pow(1 + INPUT._DISCOUNT_RATE, INPUT.PROJECTION_YEARS);
     // Add all Discounted FCFs and the Discounted Terminal Value to calculate the Projected Enterprise Value
-	var projectedEnterpriseValue = discountedTerminalValue + forecasted_data.get('discountedFreeCashFlow').sublist(nextYear).sum();
+	var projectedEnterpriseValue = discountedTerminalValue;
+    for(var i = 0; i < discountedFreeCashFlow.length; i++){
+      projectedEnterpriseValue += discountedFreeCashFlow[i];
+    }
     // Equity value is calculated by adding cash and subtracting total debt
-    var equityValue = projectedEnterpriseValue + response.balance_ltm['cashAndShortTermInvestments'] - response.balance_ltm['totalDebt'];
-    var valuePerShare = equityValue/original_data.get('weightedAverageShsOut').valueAtDate('ltm');
+    var equityValue = projectedEnterpriseValue + toM(balance_last_quarter['cashAndShortTermInvestments'] - balance_last_quarter['totalDebt']);
+    var valuePerShare = equityValue/toM(income[0]['weightedAverageShsOut']);
     
-      var currency = response.currency;
     // If we are calculating the value per share for a watch, we can stop right here.
-    if(_StopIfWatch(valuePerShare, currency)){
+    if(_StopIfWatch(ccyRate*valuePerShare, currencyProfile)){
       return;
     }
-    print(terminalValue, 'Terminal Value', '#', currency);
-    print(discountedTerminalValue, 'Discounted Terminal Value', '#', currency);
-    print((projectedEnterpriseValue-discountedTerminalValue), 'Sum of Discounted Free Cash Flow', '#', currency);
-    print(projectedEnterpriseValue, 'Enterprise Value', '#', currency);
-    print(response.balance_ltm['cashAndShortTermInvestments'], 'Cash and Equivalents', '#', currency);
-    print(response.balance_ltm['totalDebt'], 'Total Debt', '#', currency);
-    print(equityValue, 'Equity Value', '#', currency);
-    print(original_data.get('weightedAverageShsOut').valueAtDate('ltm'), 'Shares Outstanding','#');
+    print(terminalValue/toM(1), 'Terminal Value', '#', currency);
+    print(discountedTerminalValue/toM(1), 'Discounted Terminal Value', '#', currency);
+    print((projectedEnterpriseValue-discountedTerminalValue)/toM(1), 'Sum of Discounted Free Cash Flow', '#', currency);
+    print(projectedEnterpriseValue/toM(1), 'Enterprise Value', '#', currency);
+    print(balance_last_quarter['cashAndShortTermInvestments'], 'Cash and Equivalents', '#', currency);
+    print(balance_last_quarter['totalDebt'], 'Total Debt', '#', currency);
+    print(equityValue/toM(1), 'Equity Value', '#', currency);
+    print(income[0]['weightedAverageShsOut'], 'Shares Outstanding','#');
     print(valuePerShare, 'Estimated Value per Share', '#', currency);
-    print(response.treasury.year10/100,'Yield of the U.S. 10 Year Treasury Note', '%');
+    print(treasury.year10/100,'Yield of the U.S. 10 Year Treasury Note', '%');
     print(operatingCashFlowMargin, 'Average Cash from Operating Activities Margin', '%');
     print(capitalExpenditureMargin, 'Average Capital Expenditure Margin', '%');
     print(costOfEquity, 'Cost of Equity', '%');
@@ -170,66 +183,95 @@ $.when(
     print(costOfDebt, 'Cost of Debt', '%');
     print(debtWeight, 'Debt Weight', '%');
     print(taxRate, 'Tax Rate', '%');
+	// ---------------- END OF VALUES OF INTEREST SECTION ---------------- 
+    
     // Print the value to the top of the model
-    _SetEstimatedValue(valuePerShare, response.currency);
-    // +------------- END OF MODEL VALUES SECTION ------------+
+    _SetEstimatedValue(ccyRate*valuePerShare, currencyProfile);
     
-    // +------------------- CHARTS SECTION -------------------+
-    // Fill the chart with historical and forecasted data (in M or Millions)
-    // The chart has editable forecasted points, so we need to make sure that
-    // we overwrite forecasted data with any user edited data
-    forecasted_data.removeDate('LTM').renderChart({
-      start_date: nextYear - getAssumption('HISTORICAL_YEARS'),
-      keys: ['revenue', 'operatingCashFlow', 'freeCashFlow', 'capitalExpenditure', 'linearRegressionRevenue', 'discountedFreeCashFlow'],
-      properties: {
-        title: 'Historical and forecasted data',
-        currency: currency,
-      	number_format: 'M',
-      	disabled_keys: ['linearRegressionRevenue', 'discountedFreeCashFlow'],
-      }
-    });
-	// +---------------- END OF CHARTS SECTION ---------------+  
-    
-    // +------------------- TABLES SECTION -------------------+
-    // Estimated Future Data
-    forecasted_data.removeDate('LTM').renderTable({
-      start_date: nextYear - 1,
-      keys: ['revenue', '_revenueGrowthRate', 'operatingCashFlow', '_operatingCashFlowMargin', 'capitalExpenditure', 
-             '_capitalExpenditureMargin', 'freeCashFlow', '_freeCashFlowMargin', '_discountRate', 'discountedFreeCashFlow'],
-      rows: ['Revenue', '{%} Revenue Growth Rate', 'Operating Cash Flow', '{%} Operating Cash Flow Margin', 'Capital Expendtiture', 
-                '{%} Capital Expendtiture Margin', 'Free Cash Flow', '{%} Free Cash Flow Margin', '{%} Discount Rate', 'Discounted Free Cash Flow'],
-      properties: {
-        'title': 'Estimated Future Data',
-        'currency': currency,
-        'column_order': 'ascending',
-      	'number_format': 'M',
-      }
-    });
+    // ---------------- TABLES SECTION ---------------- 
+    // Free Cash Flow Table
+    var rows = ['Revenue', 'Operating Cash Flow', 'Operating Cash Flow Margin', 'Capital Expendtiture', 
+                'Capital Expendtiture Margin', 'Free Cash Flow', 'Free Cash Flow Margin', 'Discounted Free Cash Flow'];
+    var columns = [];
+    var data = [];
+    for(var i=0; i<rows.length; i++){
+      data.push([]);
+    }
+    var lastYear = parseInt(income[0]['date']);
+    for(var i=0; i<INPUT.PROJECTION_YEARS; i++){
+      var col = 0;
+      columns.push(lastYear + i);
+      // revenue
+      data[col++].push((forecastedRevenue[i]).toFixed(2));
+      // operating cash flow
+      data[col++].push((forecastedOperatingCashFlow[i]).toFixed(2));
+      // operating cash flow margin
+      data[col++].push((100*forecastedOperatingCashFlow[i]/forecastedRevenue[i]).toFixed(2) + '%');
+      // capital expenditure
+      data[col++].push(forecastedOperatingCashFlow[i] - forecastedFreeCashFlow[i]);
+      // capital expenditure margin
+      data[col++].push((100*(forecastedOperatingCashFlow[i] - forecastedFreeCashFlow[i]) / forecastedRevenue[i]).toFixed(2) + '%');
+      // free cash flow
+      data[col++].push((forecastedFreeCashFlow[i]).toFixed(2));
+      // free cash flow margin
+      data[col++].push((100*forecastedFreeCashFlow[i]/forecastedRevenue[i]).toFixed(2) + '%');
+      // discounted free cash flow
+      data[col++].push((discountedFreeCashFlow[i]).toFixed(2));
+    }
+    contextItem = {name:'Estimated Future Data (Mil. ' + currency + ')', display:'table', rows:rows, columns:columns, data:data};
+    context.push(contextItem);
     
     // Historical Table
-    historical_computed_data.renderTable({
-      start_date: nextYear - getAssumption('HISTORICAL_YEARS'),
-      keys: ['revenue', '_revenueGrowthRate', 'costOfRevenue', 'grossProfit', '_grossMargin',
-             'operatingIncome', '_operatingMargin', 'netIncome', '_netMargin',
-             'operatingCashFlow', '_operatingCashFlowMargin',
-             'capitalExpenditure', 'freeCashFlow'],
-      rows: ['Revenue', '{%} Revenue Growth Rate', 'Cost of Revenue', 'Gross Profit', '{%} Gross Margin', 
-                'Operating Income', '{%} Operating Margin', 'Net Income', '{%} Net Margin', 
-                'Cash from Operating Activities', '{%} Cash from Operating Activities Margin',
-                'Capital Expenditure', 'Free Cash Flow'],
-      properties: {
-        'title': 'Historical data',
-        'currency': currency,
-        'number_format': 'M',
-        'display_averages': true,
-        'column_order': 'descending',
-      },
-    });
-    // +---------------- END OF TABLES SECTION ---------------+ 
-  }
-  catch (error) {
-    throwError(error);
-  }
+    var rows = ['Revenue', 'Revenue Growth Rate', 'Cost of Revenue', 'Gross Profit', 'Gross Margin', 
+                'Operating Income', 'Operating Margin', 'Net Income', 'Net Margin', 
+                'Cash from Operating Activities', 'Cash from Operating Activities Margin',
+                'Capital Expenditure', 'Free Cash Flow'];
+    var columns = [];
+    var data = [];
+    for(var i=0; i<rows.length; i++){
+      data.push([]);
+    }
+    var firstYear = parseInt(income[income.length-1]['date']);
+    
+    for(var i = 0; i<income.length && i<flows.length; i++){
+      var i_inverse = income.length - i - 1;
+      var col = 0;
+      if(i == income.length - 1){columns.push('LTM');}
+      else{columns.push(firstYear + i);}
+      // revenue
+      data[col++].push(toM(income[i_inverse]['revenue']).toFixed(2));
+      // revenue growth rate
+      if(i > 0){
+      	data[col++].push((100*(data[0][i] - data[0][i-1])/data[0][i-1]).toFixed(2) + '%');
+      }
+      else{
+        data[col++].push('');
+      }
+      // cost of revenue 
+      data[col++].push((toM(income[i_inverse]['costOfRevenue'])).toFixed(2));
+      // gross profit 
+      data[col++].push((toM(income[i_inverse]['grossProfit'])).toFixed(2));
+      data[col++].push((100 * income[i_inverse]['grossProfit']/income[i_inverse]['revenue']).toFixed(2) + '%');
+      // operating income
+      data[col++].push((toM(income[i_inverse]['operatingIncome'])));
+      data[col++].push((100 * income[i_inverse]['operatingIncome']/income[i_inverse]['revenue']).toFixed(2) + '%');
+      // net income 
+      data[col++].push((toM(income[i_inverse]['netIncome'])));
+      data[col++].push((100*income[i_inverse]['netIncome']/income[i_inverse]['revenue']).toFixed(2) + '%');
+      // cash from operating activities
+      data[col++].push(toM(flows[i_inverse]['netCashProvidedByOperatingActivities']));
+      data[col++].push((100*flows[i_inverse]['netCashProvidedByOperatingActivities']/income[i_inverse]['revenue']).toFixed(2) + '%');
+      // Capital Expenditure(+Margin) 
+      data[col++].push((toM(-flows[i_inverse]['capitalExpenditure'])));
+      // Free Cash Flows
+      data[col++].push((toM(flows[i_inverse]['freeCashFlow'])));
+    }
+    
+    contextItem = {name:'Historical Data (Mil. ' + currency + ')', display:'table', rows:rows, columns:columns, data:data};
+    context.push(contextItem);
+    // ---------------- END OF TABLES SECTION ---------------- 
+	renderChart('Historical and Forecasted Data(In Mill. of ' + currency + ')');
+    monitor(context);
 });
 
 Description(`<h5>Discounted Free Cash Flow Model</h5>
