@@ -2,57 +2,54 @@
 //   Model: WACC (Weighted Average Cost of Capital)				
 //   © Copyright: https://discountingcashflows.com
 // +------------------------------------------------------------+
-
-Input(
-  {
-    _MARKET_PREMIUM: '',
-    _RISK_FREE_RATE: '',
-    BETA: '',
-  }
-);
+var INPUT = Input({_MARKET_PREMIUM: 5.5,
+                   _RISK_FREE_RATE: '',
+                   BETA: ''}); 
 
 $.when(
   get_income_statement_ltm(),
   get_balance_sheet_statement_quarterly(),
   get_profile(),
   get_treasury(),
-  get_fx(),
-  get_risk_premium()).done(
-  function(_income_ltm, _balance_quarterly, _profile, _treasury, _fx, _risk_premium){
-  try{
-    var response = new Response({
-      income_ltm: _income_ltm,
-      balance_quarterly: _balance_quarterly,
-      balance_ltm: 'balance_quarterly:0',
-      profile: _profile,
-      treasury: _treasury,
-      risk_premium: _risk_premium,
-    }).toOneCurrency('income_ltm', _fx);
+  get_fx()).done(
+  function(_income_ltm, _balance_quarterly, _profile, _treasury, _fx){
+    var context = [];
+    // Create deep copies of reports. This section is needed for watchlist compatibility.
+    var income_ltm = deepCopy(_income_ltm);
+    var balance_last_quarter = deepCopy(_balance_quarterly);
+    var profile = deepCopy(_profile);
+    var treasury = deepCopy(_treasury);
+    var fx = deepCopy(_fx);
     
-    // +---------------- ASSUMPTIONS SECTION -----------------+ 
-	var currency = response.currency;    
-    setAssumption('_MARKET_PREMIUM', response.risk_premium.totalEquityRiskPremium );
-	setAssumption('BETA', response.profile.beta);
-	setAssumption('_RISK_FREE_RATE', response.treasury.year10);
-    // +------------- END OF ASSUMPTIONS SECTION -------------+
+    balance_last_quarter = balance_last_quarter[0];
     
-    // +---------------- MODEL VALUES SECTION ----------------+
-    // Cost of Debt 
-    // Total Debt = Short Term Debt + Long Term Debt
-    var costOfDebt = response.income_ltm['interestExpense'] / response.balance_ltm['totalDebt'];
+    // Check if the currency is being converted 
+    // The profile can have a different currency from the reports.
+	var currency = balance_last_quarter['convertedCurrency'];
+    var currencyProfile = profile['convertedCurrency'];
+    var ccyRate = currencyRate(fx,  currency, currencyProfile);
+    
+	// ---------------- SETTING ASSUMPTIONS SECTION ---------------- 
+	setInputDefault('BETA', profile['beta']);
+	setInputDefault('_RISK_FREE_RATE', treasury['year10']);
+    // ---------------- END OF SETTING ASSUMPTIONS SECTION ----------------
+    
+    // ---------------- VALUES OF INTEREST SECTION ---------------- 
+    // Cost of Debt
+    var costOfDebt = income_ltm['interestExpense'] / balance_last_quarter['totalDebt']; // Total Debt = Short Term Debt + Long Term Debt
 	
     // Tax Rate
-    var taxRate = response.income_ltm['incomeTaxExpense'] / response.income_ltm['incomeBeforeTax'];
+    var taxRate = income_ltm['incomeTaxExpense'] / income_ltm['incomeBeforeTax'];
     if(taxRate < 0){
 		taxRate = 0;
     }
     
     // Cost of Equity
-    var costOfEquity = getAssumption('_RISK_FREE_RATE') + getAssumption('BETA')*getAssumption('_MARKET_PREMIUM');
+    var costOfEquity = INPUT._RISK_FREE_RATE + INPUT.BETA*INPUT._MARKET_PREMIUM;
     
     // Weights
-    var totalDebt = response.balance_ltm['shortTermDebt'] + response.balance_ltm['longTermDebt'];
-    var marketCap = response.profile['mktCap']; // get the market cap in reports currency
+    var totalDebt = balance_last_quarter['shortTermDebt'] + balance_last_quarter['longTermDebt'];
+    var marketCap = profile['mktCap'] / ccyRate; // get the market cap in reports currency
     
     var debtWeight = totalDebt / (marketCap + totalDebt);
     var equityWeight = marketCap / (marketCap + totalDebt);
@@ -60,28 +57,39 @@ $.when(
     var wacc = debtWeight * costOfDebt * (1 - taxRate) + equityWeight * costOfEquity;
     
     // If we are calculating the value per share for a watch, we can stop right here.
-    if(_StopIfWatch(toP(wacc), '%')){
+    if(_StopIfWatch(wacc*100, '%')){
       return;
     }
     
 	print(wacc, "WACC", '%');
-	print(marketCap, "Market Cap", '#', currency);
-	print(response.income_ltm['interestExpense'], "Interest Expense", '#', currency);
-	print(response.balance_ltm['shortTermDebt'], "Short Term Debt", '#', currency);
-	print(response.balance_ltm['longTermDebt'], "Long Term Debt", '#', currency);
-	print(response.balance_ltm['totalDebt'], "Total Debt", '#', currency);
     print(equityWeight, 'Equity Weight', '%');
     print(costOfEquity, "Cost of Equity", '%');
     print(debtWeight, 'Debt Weight', '%');
     print(costOfDebt, "Cost of Debt", '%');
-	print(response.income_ltm['incomeTaxExpense'], "Income Tax Expense", '#', currency);
-	print(response.income_ltm['incomeBeforeTax'], "Income Before Tax", '#', currency);
     print(taxRate, "Tax Rate", '%');
-    // +------------- END OF MODEL VALUES SECTION ------------+
-  }
-  catch (error) {
-    throwError(error);
-  }
+	// ---------------- END OF VALUES OF INTEREST SECTION ---------------- 
+    
+	// ---------------- TABLES SECTION ---------------- 
+    contextItem = {name:'WACC Calculation (In Millions of ' + currency + ' except for rates)', display:'table', 
+                   rows:['WACC%','Interest Expense', 'Short Term Debt', 'Long Term Debt', 'Total Debt', 
+                         'Cost of Debt%', 'Cost of Equity%', 'Market Cap', 'Debt Weight%', 'Equity Weight%', 'Income Tax Expense', 'Income Before Tax', 'Tax Rate%'], 
+                   columns:['Values'], data:[[(100 * wacc).toFixed(2) + '%'], 
+                                             [toM(income_ltm['interestExpense'])], 
+                                             [toM(balance_last_quarter['shortTermDebt'])], 
+                                             [toM(balance_last_quarter['longTermDebt'])], 
+                                             [toM(balance_last_quarter['totalDebt'])], 
+                                             [(100 * costOfDebt).toFixed(2) + '%'],
+                                             [(100 * costOfEquity).toFixed(2) + '%'],
+                                             [(toM(marketCap)).toFixed(2)], 
+                                             [(100 * debtWeight).toFixed(2) + '%'],
+                                             [(100 * equityWeight).toFixed(2) + '%'],
+                                             [toM(income_ltm['incomeTaxExpense'])], 
+                                             [toM(income_ltm['incomeBeforeTax'])],
+                                             [(100 * taxRate).toFixed(2) + '%']
+                                            ]};
+    context.push(contextItem);
+    monitor(context);
+    // ---------------- END OF TABLES SECTION ---------------- 
 });
 
 Description(`
