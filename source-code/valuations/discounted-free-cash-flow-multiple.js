@@ -1,20 +1,21 @@
 // +----------------------------------------------------------+
-//   Model: Discounted Free Cash Flow - Perpetuity
+//   Model: Discounted Free Cash Flow - Exit Multiple
 //   © Copyright: https://discountingcashflows.com
 // +----------------------------------------------------------+
 
 Input(
   {
     _DISCOUNT_RATE: '',
-    _GROWTH_IN_PERPETUITY: '',
-    PROJECTION_YEARS: 5, 			
-    HISTORICAL_YEARS: 10,
-    REVENUE_REGRESSION_SLOPE: 1,
-    _OPERATING_CASH_FLOW_MARGIN: '',
-    _CAPITAL_EXPENDITURE_MARGIN: '',
+    _REVENUE_GROWTH_RATE: '',
+    EXIT_EBITDA_MULTIPLE: '',
+    _EBITDA_MARGIN: '',
+    _CAPITAL_EXPENDITURE_TO_EBITDA: '',
+    _OPERATING_CASH_FLOW_TO_EBITDA: '',
     BETA:'',
     _RISK_FREE_RATE: '',
     _MARKET_PREMIUM: '',
+    PROJECTION_YEARS: 5,
+    HISTORICAL_YEARS: 10,
   },
   [{
     parent:'_DISCOUNT_RATE',
@@ -34,7 +35,6 @@ $.when(
   get_risk_premium()).done(
   function(_income, _income_ltm, _balance_quarterly, _flows, _flows_ltm, _profile, _treasury, _fx, _risk_premium){
   try{
-    // +------------------- PREPARING DATA -------------------+
     var response = new Response({
       income: _income,
       income_ltm: _income_ltm,
@@ -47,15 +47,8 @@ $.when(
       risk_premium: _risk_premium,
     }).toOneCurrency('income', _fx).merge('_ltm');
     response.balance_ltm['date'] = 'LTM';
-    // +--------------- END OF PREPARING DATA ----------------+
-    
+	var currency = response.currency;
     // +---------------- ASSUMPTIONS SECTION -----------------+ 
-    setAssumption('_MARKET_PREMIUM', response.risk_premium.totalEquityRiskPremium );
-    // Set the growth in perpetuity to the 10Y Treasury Yield
-    setAssumption('_GROWTH_IN_PERPETUITY', response.treasury.year10);
-    // Risk free rate is the yield of the 10 year treasury note
-	setAssumption('_RISK_FREE_RATE', response.treasury.year10);
-    
     // Set beta (used in calculating the discount rate)
     if(response.profile.beta){
     	setAssumption('BETA', response.profile.beta);
@@ -63,6 +56,9 @@ $.when(
     else{
     	setAssumption('BETA', 1);
     }
+    // Risk free rate is the yield of the 10 year treasury note
+	setAssumption('_RISK_FREE_RATE', response.treasury.year10);
+    setAssumption('_MARKET_PREMIUM', response.risk_premium.totalEquityRiskPremium );
     
     // Calculate the discount rate using the wacc formula
     var costOfEquity = getAssumption('_RISK_FREE_RATE') + getAssumption('BETA')*getAssumption('_MARKET_PREMIUM');
@@ -89,10 +85,10 @@ $.when(
       'operatingIncome': new DateValueList(response.income, 'operatingIncome'),
       'netIncome': new DateValueList(response.income, 'netIncome'),
       'weightedAverageShsOut': new DateValueList(response.income, 'weightedAverageShsOut'),
-      'eps': new DateValueList(response.income, 'eps'),
       'operatingCashFlow': new DateValueList(response.flows, 'operatingCashFlow'),
       'capitalExpenditure': new DateValueList(response.flows, 'capitalExpenditure'),
       'freeCashFlow': new DateValueList(response.flows, 'freeCashFlow'),
+      'calculatedEbitda': new DateValueList(response.income, 'calculatedEbitda'),
     });
     var currentDate = original_data.lastDate();
     var nextYear = currentDate + 1;
@@ -100,87 +96,96 @@ $.when(
     
     // Compute historical values and ratios
     var historical_computed_data = original_data.setFormula({
-      '_operatingCashFlowMargin': ['operatingCashFlow:0', '/', 'revenue:0'],
-      '_capitalExpenditureMargin': ['capitalExpenditure:0', '/', 'revenue:0'],
+      '_operatingCashFlowToEbitda': ['operatingCashFlow:0', '/', 'calculatedEbitda:0'],
+      '_capitalExpenditureToEbitda': ['capitalExpenditure:0', '/', 'calculatedEbitda:0'],
+      '_netIncomeToEbitda': ['netIncome:0', '/', 'calculatedEbitda:0'],
+      '_freeCashFlowToEbitda': ['freeCashFlow:0', '/', 'calculatedEbitda:0'],
       '_grossMargin': ['grossProfit:0', '/', 'revenue:0'],
       '_operatingMargin': ['operatingIncome:0', '/', 'revenue:0'],
-      '_netMargin': ['netIncome:0', '/', 'revenue:0'],
+      '_ebitdaMargin': ['calculatedEbitda:0', '/', 'revenue:0'],
       'discountedFreeCashFlow': ['freeCashFlow:0'],
       '_revenueGrowthRate': ['function:growth_rate', 'revenue'],
     }).compute();
     
+    const ebitdaMargin = historical_computed_data.get('_ebitdaMargin').sublist(nextYear - getAssumption('HISTORICAL_YEARS')).average();
+    setAssumption('_EBITDA_MARGIN', toP(ebitdaMargin) );
     // Calculate the average historical margin of operatingCashFlow (Cash From Operating Activities)
-    const operatingCashFlowMargin = historical_computed_data.get('_operatingCashFlowMargin').sublist(nextYear - getAssumption('HISTORICAL_YEARS')).average();
-    setAssumption('_OPERATING_CASH_FLOW_MARGIN', toP(operatingCashFlowMargin));
+    const operatingCashFlowMargin = historical_computed_data.get('_operatingCashFlowToEbitda').sublist(nextYear - getAssumption('HISTORICAL_YEARS')).average();
+    setAssumption('_OPERATING_CASH_FLOW_TO_EBITDA', toP(operatingCashFlowMargin));
     // Is negative by default, se we need to make it positive
-    const capitalExpenditureMargin = -historical_computed_data.get('_capitalExpenditureMargin').sublist(nextYear - getAssumption('HISTORICAL_YEARS')).average(); 
-    setAssumption('_CAPITAL_EXPENDITURE_MARGIN', toP(capitalExpenditureMargin));
+    const capitalExpenditureMargin = -historical_computed_data.get('_capitalExpenditureToEbitda').sublist(nextYear - getAssumption('HISTORICAL_YEARS')).average(); 
+    setAssumption('_CAPITAL_EXPENDITURE_TO_EBITDA', toP(capitalExpenditureMargin));
+    const averageRevenueGrowthRate = historical_computed_data.get('_revenueGrowthRate').sublist(nextYear - getAssumption('HISTORICAL_YEARS')).average();
+    setAssumption('_REVENUE_GROWTH_RATE',  toP(averageRevenueGrowthRate));
+    var ev = marketCap + response.balance_ltm['totalDebt'] - response.balance_ltm['cashAndShortTermInvestments'];
+    setAssumption('EXIT_EBITDA_MULTIPLE', ev/response.income_ltm['calculatedEbitda']);
     
     // Compute forecasted values and ratios
     var forecasted_data = historical_computed_data.removeDate('LTM').setFormula({
-      'linearRegressionRevenue': ['function:linear_regression', 'revenue', {slope: getAssumption('REVENUE_REGRESSION_SLOPE'), start_date: nextYear - getAssumption('HISTORICAL_YEARS')}],
-      'revenue': ['linearRegressionRevenue:0'],
+      'linearRegressionRevenue': ['function:linear_regression', 'revenue', {slope: 1, start_date: nextYear - getAssumption('HISTORICAL_YEARS')}],
+      'revenue': ['function:compound', 'linearRegressionRevenue:start_date', {rate: getAssumption('_REVENUE_GROWTH_RATE'), start_date: nextYear}],
+      'calculatedEbitda': ['revenue', '*',  getAssumption('_EBITDA_MARGIN')],
       '_revenueGrowthRate': ['function:growth_rate', 'revenue'],
-      'operatingCashFlow': ['revenue:0', '*', getAssumption('_OPERATING_CASH_FLOW_MARGIN')],
-      'computedCapitalExpenditure': ['revenue:0', '*', getAssumption('_CAPITAL_EXPENDITURE_MARGIN')],
+      'operatingCashFlow': ['calculatedEbitda', '*', getAssumption('_OPERATING_CASH_FLOW_TO_EBITDA')],
+      'computedCapitalExpenditure': ['calculatedEbitda', '*', getAssumption('_CAPITAL_EXPENDITURE_TO_EBITDA')],
       'freeCashFlow': ['operatingCashFlow:0', '-', 'computedCapitalExpenditure:0'],
       'capitalExpenditure': ['freeCashFlow:0', '-', 'operatingCashFlow:0'],
-      '_discountRate': [getAssumption('_DISCOUNT_RATE')],
-      'discountedFreeCashFlow': ['function:discount', 'freeCashFlow', {rate: getAssumption('_DISCOUNT_RATE'), start_date: nextYear}],
-      '_operatingCashFlowMargin': ['operatingCashFlow:0', '/', 'revenue:0'],
-      '_capitalExpenditureMargin': ['capitalExpenditure:0', '/', 'revenue:0'],
-      '_freeCashFlowMargin': ['freeCashFlow:0', '/', 'revenue:0'],
+      'discountedFreeCashFlow': ['function:discount', 'freeCashFlow', {rate: getAssumption('_DISCOUNT_RATE'), start_date: currentDate}],
+      '_operatingCashFlowToEbitda': ['operatingCashFlow:0', '/', 'calculatedEbitda:0'],
+      '_capitalExpenditureToEbitda': ['capitalExpenditure:0', '/', 'calculatedEbitda:0'],
+      '_freeCashFlowToEbitda': ['freeCashFlow:0', '/', 'calculatedEbitda:0'],
+      '_ebitdaMargin': ['calculatedEbitda:0', '/', 'revenue:0'],
     }).setEditable(_edit(), {
       start_date: nextYear,
-      keys: ['revenue', 'operatingCashFlow', 'freeCashFlow'],
-    }).compute({'forecast_end_date': forecastEndDate}); 
+      keys: ['revenue', 'operatingCashFlow', 'freeCashFlow', 'calculatedEbitda'],
+    }).compute({'forecast_end_date': forecastEndDate});
     // +------------- END OF ASSUMPTIONS SECTION -------------+
     
     // +---------------- MODEL VALUES SECTION ----------------+
     // Calculating the Terminal Value
-    // TV = FCF * (1 + Growth in Perpetuity) / (Discount Rate - Growth in Perpetuity)
-    var terminalValue = forecasted_data.get('freeCashFlow').valueAtDate(forecastEndDate) * (1 + getAssumption('_GROWTH_IN_PERPETUITY') ) / (getAssumption('_DISCOUNT_RATE') - getAssumption('_GROWTH_IN_PERPETUITY') );
+    // TV = EV/EBITDA * EBITDA = INPUT.EXIT_EBITDA_MULTIPLE * Last Forecasted EBITDA
+    var terminalValue = getAssumption('EXIT_EBITDA_MULTIPLE') * forecasted_data.get('calculatedEbitda').valueAtDate(forecastEndDate);
     // Discount the terminal value into the present
     var discountedTerminalValue = terminalValue/Math.pow(1 + getAssumption('_DISCOUNT_RATE'), getAssumption('PROJECTION_YEARS'));
     // Add all Discounted FCFs and the Discounted Terminal Value to calculate the Projected Enterprise Value
-	var projectedEnterpriseValue = discountedTerminalValue + forecasted_data.get('discountedFreeCashFlow').sublist(nextYear).sum();
+    var projectedEnterpriseValue = discountedTerminalValue + forecasted_data.get('discountedFreeCashFlow').sublist(nextYear).sum();
     // Equity value is calculated by adding cash and subtracting total debt
     var equityValue = projectedEnterpriseValue + response.balance_ltm['cashAndShortTermInvestments'] - response.balance_ltm['totalDebt'];
     var valuePerShare = equityValue/original_data.get('weightedAverageShsOut').valueAtDate('ltm');
     
-      var currency = response.currency;
     // If we are calculating the value per share for a watch, we can stop right here.
     if(_StopIfWatch(valuePerShare, currency)){
       return;
     }
-    print(terminalValue, 'Terminal Value', '#', currency);
-    print(discountedTerminalValue, 'Discounted Terminal Value', '#', currency);
-    print((projectedEnterpriseValue-discountedTerminalValue), 'Sum of Discounted Free Cash Flow', '#', currency);
-    print(projectedEnterpriseValue, 'Enterprise Value', '#', currency);
+    _SetEstimatedValue(valuePerShare, currency);
+    // print(ev, 'Current Enterprise Value', '#', currency);
+    // print(income_ltm['calculatedEbitda'], 'EBITDA', '#', currency);
+    print(ev/response.income_ltm['calculatedEbitda'], 'Exit EBITDA Multiple (EV/EBITDA)', '#');
+    print(forecasted_data.get('calculatedEbitda').valueAtDate(forecastEndDate), 'Terminal EBITDA', '#', currency);
+    print(terminalValue, 'Terminal Enterprise Value', '#', currency);
+    print(discountedTerminalValue, 'Discounted Terminal Enterprise Value', '#', currency);
+    print(projectedEnterpriseValue-discountedTerminalValue, 'Sum of Discounted Free Cash Flow', '#', currency);
+    print(projectedEnterpriseValue, 'Present Enterprise Value', '#', currency);
     print(response.balance_ltm['cashAndShortTermInvestments'], 'Cash and Equivalents', '#', currency);
     print(response.balance_ltm['totalDebt'], 'Total Debt', '#', currency);
-    print(equityValue, 'Equity Value', '#', currency);
+    print(equityValue, 'Present Equity Value', '#', currency);
     print(original_data.get('weightedAverageShsOut').valueAtDate('ltm'), 'Shares Outstanding','#');
     print(valuePerShare, 'Estimated Value per Share', '#', currency);
     print(response.treasury.year10/100,'Yield of the U.S. 10 Year Treasury Note', '%');
-    print(operatingCashFlowMargin, 'Average Cash from Operating Activities Margin', '%');
-    print(capitalExpenditureMargin, 'Average Capital Expenditure Margin', '%');
     print(costOfEquity, 'Cost of Equity', '%');
     print(equityWeight, 'Equity Weight', '%');
     print(costOfDebt, 'Cost of Debt', '%');
     print(debtWeight, 'Debt Weight', '%');
-    print(taxRate, 'Tax Rate', '%');
-    // Print the value to the top of the model
-    _SetEstimatedValue(valuePerShare, response.currency);
+    print(taxRate, 'EBIT Tax Rate', '%');
     // +------------- END OF MODEL VALUES SECTION ------------+
     
-    // +------------------- CHARTS SECTION -------------------+
+    // +------------------- CHARTS SECTION -------------------+    
     // Fill the chart with historical and forecasted data (in M or Millions)
     // The chart has editable forecasted points, so we need to make sure that
     // we overwrite forecasted data with any user edited data
-    forecasted_data.removeDate('LTM').renderChart({
+    forecasted_data.renderChart({
       start_date: nextYear - getAssumption('HISTORICAL_YEARS'),
-      keys: ['revenue', 'operatingCashFlow', 'freeCashFlow', 'capitalExpenditure', 'linearRegressionRevenue', 'discountedFreeCashFlow'],
+      keys: ['revenue', 'operatingCashFlow', 'calculatedEbitda', 'freeCashFlow', 'capitalExpenditure', 'linearRegressionRevenue', 'discountedFreeCashFlow'],
       properties: {
         title: 'Historical and forecasted data',
         currency: currency,
@@ -188,16 +193,19 @@ $.when(
       	disabled_keys: ['linearRegressionRevenue', 'discountedFreeCashFlow'],
       }
     });
-	// +---------------- END OF CHARTS SECTION ---------------+  
+    // +---------------- END OF CHARTS SECTION ---------------+ 
     
     // +------------------- TABLES SECTION -------------------+
-    // Estimated Future Data
     forecasted_data.removeDate('LTM').renderTable({
-      start_date: nextYear - 1,
-      keys: ['revenue', '_revenueGrowthRate', 'operatingCashFlow', '_operatingCashFlowMargin', 'capitalExpenditure', 
-             '_capitalExpenditureMargin', 'freeCashFlow', '_freeCashFlowMargin', '_discountRate', 'discountedFreeCashFlow'],
-      rows: ['Revenue', '{%} Revenue Growth Rate', 'Operating Cash Flow', '{%} Operating Cash Flow Margin', 'Capital Expendtiture', 
-                '{%} Capital Expendtiture Margin', 'Free Cash Flow', '{%} Free Cash Flow Margin', '{%} Discount Rate', 'Discounted Free Cash Flow'],
+      start_date: currentDate,
+      keys: ['revenue', '_revenueGrowthRate', 'calculatedEbitda', '_ebitdaMargin', 'operatingCashFlow', 
+             '_operatingCashFlowToEbitda', 'capitalExpenditure', 
+             '_capitalExpenditureToEbitda', 'freeCashFlow', 
+             '_freeCashFlowToEbitda', 'discountedFreeCashFlow'],
+      rows: ['Revenue', '{%} Revenue Growth Rate', 'EBITDA', '{%} EBITDA Margin', 'Operating Cash Flow', 
+                '{%} Operating Cash Flow to EBITDA', 'Capital Expendtiture', 
+                '{%} Capital Expendtiture to EBITDA', 'Free Cash Flow', 
+                '{%} Free Cash Flow to EBITDA', 'Discounted Free Cash Flow'],
       properties: {
         'title': 'Estimated Future Data',
         'currency': currency,
@@ -210,13 +218,15 @@ $.when(
     historical_computed_data.renderTable({
       start_date: nextYear - getAssumption('HISTORICAL_YEARS'),
       keys: ['revenue', '_revenueGrowthRate', 'costOfRevenue', 'grossProfit', '_grossMargin',
-             'operatingIncome', '_operatingMargin', 'netIncome', '_netMargin',
-             'operatingCashFlow', '_operatingCashFlowMargin',
-             'capitalExpenditure', 'freeCashFlow'],
+             'calculatedEbitda', '_ebitdaMargin', 'netIncome', '_netIncomeToEbitda',
+             'operatingCashFlow', '_operatingCashFlowToEbitda',
+             'capitalExpenditure', '_capitalExpenditureToEbitda', 
+             'freeCashFlow', '_freeCashFlowToEbitda'],
       rows: ['Revenue', '{%} Revenue Growth Rate', 'Cost of Revenue', 'Gross Profit', '{%} Gross Margin', 
-                'Operating Income', '{%} Operating Margin', 'Net Income', '{%} Net Margin', 
-                'Cash from Operating Activities', '{%} Cash from Operating Activities Margin',
-                'Capital Expenditure', 'Free Cash Flow'],
+                'EBITDA', '{%} EBITDA Margin', 'Net Income', '{%} Net Income to EBITDA', 
+             	'Cash from Operating Activities', '{%} Cash from Operating Activities to EBITDA', 
+             'Capital Expenditure', '{%} Capital Expenditure to EBITDA', 
+                'Free Cash Flow', '{%} Free Cash Flow to EBITDA'],
       properties: {
         'title': 'Historical data',
         'currency': currency,
@@ -232,7 +242,6 @@ $.when(
   }
 });
 
-Description(`<h5>Discounted Free Cash Flow Model</h5>
-			<p>Discounted Free Cash Flow calculates the value of a share based on the company's estimated future Free Cash Flow figures.</p>
+Description(`<p>Discounted Free Cash Flow calculates the value of a share based on the company's estimated future Free Cash Flow figures.</p>
 			<p class='text-center'>Read more: <a href='https://github.com/DiscountingCashFlows/Documentation/blob/main/models-documentation/discounted-free-cash-flow.md#discounted-free-cash-flow-model-source-code' target='_blank'><i class="fab fa-github"></i> GitHub Documentation</a></p>
 			`);
