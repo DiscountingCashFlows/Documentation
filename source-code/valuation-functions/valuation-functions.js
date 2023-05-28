@@ -1,3 +1,4 @@
+// Used only in company_valuation and valuation
 var _income_statement;
 var _income_statement_quarterly;
 var _income_statement_ltm;
@@ -19,6 +20,8 @@ var _dividends_reported;
 var _prices_daily;
 var _prices_annual;
 var _fx;
+var _risk_premium;
+var _institutional_holders={};
 
 var _INPUT_GLOBAL;
 
@@ -32,7 +35,11 @@ _chart_data['y_historic'] = {};
 _chart_data['y_forecasted'] = {};
 _chart_data['y_forecasted_chart_hidden'] = {};
 _chart_data['name'] = 'My Chart';
+_chart_data['subtitle'] = '';
 _chart_data['hidden_series'] = [];
+_chart_data['hide_growth'] = [];
+_chart_data['added_properties'] = false;
+_chart_data['number_format'] = '';
 
 var global_str = '';  // used by the code editor
 var _CodeMirror_output = undefined;
@@ -64,153 +71,330 @@ function unsetAllData(){
     _prices_daily = undefined;
     _prices_annual = undefined;
     _fx = undefined;
+    _risk_premium = undefined;
+    _institutional_holders = {};
 }
+
+function getUrl(URL, ErrorMessage=''){
+    var request = $.get( URL );
+    request.fail(function (jqXHR, textStatus, errorThrown){
+        // Log the error to the console
+        alertify.notify(ErrorMessage+" not found.", 'error', 0);
+        console.error(
+            textStatus, errorThrown
+        );
+    });
+    return request;
+}
+
 
 function get_income_statement(){
     if (!_income_statement){
-        _income_statement = $.get( "/api/income-statement/" + $("#valuation-ticker").val() + "/");
+        _income_statement = getUrl(
+            "/api/income-statement/" + $("#valuation-ticker").val() + "/",
+            "Company Income Statements"
+        );
     }
     return _income_statement;
 }
 
 function get_income_statement_quarterly(){
     if (!_income_statement_quarterly){
-        _income_statement_quarterly = $.get( "/api/income-statement/quarterly/" + $("#valuation-ticker").val() + "/");
+        _income_statement_quarterly = getUrl(
+            "/api/income-statement/quarterly/" + $("#valuation-ticker").val() + "/",
+            "Company Income Quarterly Statements"
+        );
     }
     return _income_statement_quarterly;
 }
 
 function get_income_statement_ltm(){
     if (!_income_statement_ltm){
-        _income_statement_ltm = $.get( "/api/income-statement/ltm/" + $("#valuation-ticker").val() + "/");
+        _income_statement_ltm = getUrl(
+            "/api/income-statement/ltm/" + $("#valuation-ticker").val() + "/",
+            "Company Income LTM Statements"
+        );
     }
     return _income_statement_ltm;
 }
 
 function get_balance_sheet_statement(){
     if (!_balance_sheet_statement){
-        _balance_sheet_statement = $.get( "/api/balance-sheet-statement/" + $("#valuation-ticker").val() + "/");
+        _balance_sheet_statement = getUrl(
+            "/api/balance-sheet-statement/" + $("#valuation-ticker").val() + "/",
+            "Company Balance Sheet Statements"
+        );
     }
     return _balance_sheet_statement;
 }
 
 function get_balance_sheet_statement_quarterly(){
     if (!_balance_sheet_statement_quarterly){
-        _balance_sheet_statement_quarterly = $.get( "/api/balance-sheet-statement/quarterly/" + $("#valuation-ticker").val() + "/");
+        _balance_sheet_statement_quarterly = getUrl(
+            "/api/balance-sheet-statement/quarterly/" + $("#valuation-ticker").val() + "/",
+            "Company Balance Sheet Quarterly Statements"
+        );
     }
     return _balance_sheet_statement_quarterly;
 }
 
 function get_cash_flow_statement(){
     if (!_cash_flow_statement){
-        _cash_flow_statement = $.get( "/api/cash-flow-statement/" + $("#valuation-ticker").val() + "/");
+        _cash_flow_statement = getUrl(
+            "/api/cash-flow-statement/" + $("#valuation-ticker").val() + "/",
+            "Company Cash Flow Statements"
+        );
     }
     return _cash_flow_statement;
 }
 
 function get_cash_flow_statement_quarterly(){
     if (!_cash_flow_statement_quarterly){
-        _cash_flow_statement_quarterly = $.get( "/api/cash-flow-statement/quarterly/" + $("#valuation-ticker").val() + "/");
+        _cash_flow_statement_quarterly = getUrl(
+            "/api/cash-flow-statement/quarterly/" + $("#valuation-ticker").val() + "/",
+            "Company Cash Flow Quarterly Statements"
+        );
     }
     return _cash_flow_statement_quarterly;
 }
 
 function get_cash_flow_statement_ltm(){
     if (!_cash_flow_statement_ltm){
-        _cash_flow_statement_ltm = $.get( "/api/cash-flow-statement/ltm/" + $("#valuation-ticker").val() + "/");
+        _cash_flow_statement_ltm = getUrl(
+            "/api/cash-flow-statement/ltm/" + $("#valuation-ticker").val() + "/",
+            "Company Cash Flow LTM Statements"
+        );
     }
     return _cash_flow_statement_ltm;
 }
 
 function get_ratios(){
     if (!_ratios){
-        _ratios = $.get( "/api/ratios/" + $("#valuation-ticker").val() + "/");
+        _ratios = getUrl(
+            "/api/ratios/" + $("#valuation-ticker").val() + "/",
+            "Company Ratios Data"
+        );
     }
     return _ratios;
 }
 
 function get_dividends_annual(){
     if (!_dividends_annual){
-        _dividends_annual = $.get( "/api/dividends/" + $("#valuation-ticker").val() + "/");
+        _dividends_annual = getUrl(
+            "/api/dividends/" + $("#valuation-ticker").val() + "/",
+            "Company Annual Dividend Data"
+        );
     }
     return _dividends_annual;
 }
 
 function get_dividends_reported(){
     if (!_dividends_reported){
-        _dividends_reported = $.get( "/api/dividends/reported/" + $("#valuation-ticker").val() + "/");
+        _dividends_reported = getUrl(
+            "/api/dividends/reported/" + $("#valuation-ticker").val() + "/",
+            "Company Reported Dividend Data"
+        );
     }
     return _dividends_reported;
 }
 
 function get_prices_daily(){
     if (!_prices_daily){
-        _prices_daily = $.get( "/api/prices/daily/" + $("#valuation-ticker").val() + "/");
+        _prices_daily = getUrl(
+            "/api/prices/daily/" + $("#valuation-ticker").val() + "/",
+            "Company Daily Historic Prices"
+        );
     }
     return _prices_daily;
 }
 
 function get_prices_annual(){
     if (!_prices_annual){
-        _prices_annual = $.get( "/api/prices/annual/" + $("#valuation-ticker").val() + "/");
+        _prices_annual = getUrl(
+            "/api/prices/annual/" + $("#valuation-ticker").val() + "/",
+            "Company Annual Historic Prices"
+        );
     }
     return _prices_annual;
 }
 
 function get_quote(){
     if (!_quote){
-        _quote = $.get( "/api/quote/" + $("#valuation-ticker").val() + "/");
+        _quote = getUrl(
+            "/api/quote/" + $("#valuation-ticker").val() + "/",
+            "Company Quote"
+        );
     }
     return _quote;
 }
 
 function get_profile(){
     if (!_profile){
-        _profile = $.get( "/api/profile/" + $("#valuation-ticker").val() + "/");
+        _profile = getUrl(
+            "/api/profile/" + $("#valuation-ticker").val() + "/",
+            "Company Profile"
+        );
     }
     return _profile;
 }
 
 function get_treasury(){
     if (!_treasury){
-        _treasury = $.get( "/api/treasury/");
+        _treasury = getUrl(
+            "/api/treasury/",
+            "Last Treasury Yield"
+        );
     }
     return _treasury;
 }
 
 function get_treasury_daily(length=0){
     if (!_treasury_daily){
-        _treasury_daily = $.get( "/api/treasury/daily/" + appendTreasuriesLength(length));
+        _treasury_daily = getUrl(
+            "/api/treasury/daily/" + appendTreasuriesLength(length),
+            "Daily Treasury Yields"
+        );
     }
     return _treasury_daily;
 }
 
 function get_treasury_monthly(length=0){
     if (!_treasury_monthly){
-        _treasury_monthly = $.get( "/api/treasury/monthly/" + appendTreasuriesLength(length));
+        _treasury_monthly = getUrl(
+            "/api/treasury/monthly/" + appendTreasuriesLength(length),
+            "Monthly Treasury Yields"
+        );
     }
     return _treasury_monthly;
 }
 
 function get_treasury_annual(length=0){
     if (!_treasury_annual){
-        _treasury_annual = $.get( "/api/treasury/annual/" + appendTreasuriesLength(length));
+        _treasury_annual = getUrl(
+            "/api/treasury/annual/" + appendTreasuriesLength(length),
+            "Annual Treasury Yields"
+        );
     }
     return _treasury_annual;
 }
 
 function get_analyst_estimates(){
     if (!_estimates){
-        _estimates = $.get( "/api/analyst-estimates/" + $("#valuation-ticker").val() + "/");
+        _estimates = getUrl(
+            "/api/analyst-estimates/" + $("#valuation-ticker").val() + "/",
+            "Analyst Estimates"
+        );
     }
     return _estimates;
 }
 
 function get_fx(){
     if (!_fx){
-        _fx = $.get( "/api/fx/");
+        _fx = getUrl(
+            "/api/fx/",
+            "FX Data"
+        );
     }
     return _fx;
+}
+
+function get_risk_premium(){
+    if (!_risk_premium){
+        _risk_premium = getUrl(
+            "/api/risk-premium/" + $("#valuation-ticker").val() + "/",
+            "Country Risk Premium"
+        );
+    }
+    return _risk_premium;
+}
+
+// api/institutional-holders/<str:ticker>/<str:date>/
+function get_institutional_holders(date){
+    if (!(date in _institutional_holders)){
+        _institutional_holders[date] = getUrl(
+            "/api/institutional-holders/" + $("#valuation-ticker").val() + "/" + date + "/",
+            "Institutional Holders"
+        );
+    }
+    return _institutional_holders[date];
+}
+
+var inputDescriptionHasBeenSet = false;
+
+function appendInputRow(key, value, parentsChildren=[], editedParams=[]){
+    var $inputSection = $('.modal-inputs');
+    var childOrParent = 'parent-input';
+    var childOf = '';
+    var arrow = '';
+    for(var i in parentsChildren){
+        if('children' in parentsChildren[i] && parentsChildren[i].children.includes(key)){
+            childOrParent = 'child-input';
+            childOf = parentsChildren[i].parent;
+            arrow = '↳ ';
+        }
+        if(key == parentsChildren[i].parent && !inputDescriptionHasBeenSet){
+            /*$('.modal-inputs-description').append(
+                parentsChildren[i].description
+            );*/
+            inputDescriptionHasBeenSet = true;
+            break;
+        }
+    }
+
+    var iteration = 0;
+    iteration += 1;
+
+    var step = '';
+    var $inputFieldDiv = $('<div/>').append(
+                $('<input/>').attr('step', step).attr('type', 'number').css(
+                    {}//{"margin-bottom": "2px", "margin-top": "2px"}
+                ).addClass(
+                    textColor
+                ).addClass(
+                    'input-assumption text-right form-control'
+                ).addClass(key).attr('value', value).attr('name', key).attr('id', key)
+            ).addClass('input-container shadow-sm input-group input-group-sm');
+    var percentage = '#';
+    if(key.charAt(0) == '_'){
+        percentage = '%';
+        /*$inputFieldDiv.append(
+                $('<div/>').append(
+                    $('<span/>').text('%').addClass('input-group-text')
+                ).addClass('input-group-append')
+            );*/
+        step = 0.1;
+        if ( $.isNumeric(_INPUT_GLOBAL[key]) ){
+            // affects returned dict
+            _INPUT_GLOBAL[key] /= 100;
+        }
+    }
+    $inputFieldDiv.append(
+                $('<div/>').append(
+                    $('<span/>').text(percentage).addClass('input-group-text text-center').css({'width': '29', 'height': '31'})
+                ).addClass('input-group-append')
+            );
+    var textColor = '';
+    if(editedParams.includes(key)){
+        textColor = 'text-primary';
+    }
+    var appendInput = $('<div/>').append(
+        $('<div/>').append(
+            $('<label/>').text(
+                arrow + key.toString().toLowerCase().replace(/_/g, ' ')
+            ).attr('for', key).addClass('my-auto p-0 text-capitalize')
+        ).addClass('col align-self-center')
+    ).append(
+        $('<div/>').append(
+            $inputFieldDiv
+        ).addClass('col-auto d-flex')
+    ).addClass('dynamic-size-row row form-group').addClass(childOrParent).attr('id', key);
+    // see where you need to append it
+    if(childOf){
+        $('#'+childOf).after(appendInput);
+    }
+    else{
+        $inputSection.append(appendInput);
+    }
 }
 
 // Add a description to the top of the window
@@ -269,9 +453,16 @@ $("#export-tables").click(function() {
 });
 
 function appendTable(item, modalTablesSection, tablesCount){
-    let nf = new Intl.NumberFormat('en-US');
-    modalTablesSection.append('<h5 class="text-center mt-3">' + item.name + '</h5>');
-    var tableString = '<div class="table-responsive"><table class="table table-sticky border table-hover-custom text-dark" header="'+ item.name +'"><thead class="bg-white"><tr>';
+    var nf = new Intl.NumberFormat('en-US');
+    modalTablesSection.append('<h5 class="mt-3 mb-0">' + item.name + '</h5>');
+    if(item.subtitle){
+        modalTablesSection.append('<p class="text-secondary mb-2">' + item.subtitle + '</p>');
+    }
+    var display_averages = '';
+    if(item.display_averages){
+        display_averages = ' table-averaged ';
+    }
+    var tableString = '<div class="table-responsive border-top"><table class="table table-sticky border table-hover-custom text-dark' + display_averages + '" header="'+ item.name +'"><thead class="bg-white"><tr>';
     if(item.columns){
         tableString += '<th></th>';
         for(var i = 0; i < item.columns.length; i++){
@@ -288,7 +479,11 @@ function appendTable(item, modalTablesSection, tablesCount){
                 if ($.isNumeric(dataItem[j])){
                     valueData = nf.format(valueData);
                 }
-                tableString += '<td class="py-1">' + valueData + '</td>';
+                var isRateClass = '';
+                if( String(valueData).includes('%') ){
+                    isRateClass = ' cell-is-rate ';
+                }
+                tableString += '<td class="py-1 ' + isRateClass + '">' + valueData + '</td>';
             }
             tableString += '</tr>';
         }
@@ -299,13 +494,6 @@ function appendTable(item, modalTablesSection, tablesCount){
     }
     tableString += '</tbody></table></div>';
     modalTablesSection.append(tableString);
-}
-
-function isRate(key){
-    if(key.charAt(0) == '_'){
-        return true;
-    }
-    return false;
 }
 
 function getKeyName(key){
@@ -319,15 +507,23 @@ function getKeyName(key){
 
 function resetChartInput(key, category){
     if (location.hash){
-        var topPos = document.documentElement.scrollTop || document.body.scrollTop || 0;
+        //var topPos = document.documentElement.scrollTop || document.body.scrollTop || 0;
         var hashParams = window.location.hash.substr(1).split('&'); // substr(1) to remove the `#`
         var buildHash = '';
         for(var i = 0; i < hashParams.length; i++){
             var p = hashParams[i].split('=');
             if(p[0].charAt(0) == '!'){
-                indexOfParameter =  p[0].indexOf('_');
-                if( String(key) == p[0].substr(1, indexOfParameter - 1) &&
-                    String(category) == p[0].substr(indexOfParameter + 1) ){
+                var indexOfParameter = 0;
+                if(isRate(p[0].slice(1))){
+                    indexOfParameter =  p[0].slice(2).indexOf('_') + 2;
+                }
+                else{
+                    indexOfParameter =  p[0].indexOf('_');
+                }
+                var compare_key = p[0].substr(1, indexOfParameter - 1);
+                var compare_category = p[0].substr(indexOfParameter + 1);
+                if(String(key) == compare_key &&
+                   String(category) == compare_category){
                     continue;
                 }
             }
@@ -339,7 +535,7 @@ function resetChartInput(key, category){
             }
         }
         location.hash = buildHash;
-        document.documentElement.scrollTop = topPos;
+        //document.documentElement.scrollTop = topPos;
     }
 }
 
@@ -357,7 +553,41 @@ function indexOfCategory(key){
     return 0;
 }
 
+function addNumberFormatToHash(){
+    var number_format = _chart_data['number_format'];
+    if(number_format){
+        if (location.hash && !location.hash.includes('!number_format')){
+            location.hash += `&!number_format=${number_format}`;
+        }
+        else if(!location.hash){
+            location.hash = `!number_format=${number_format}`;
+        }
+    }
+    return number_format;
+}
+
+// type == chart -> all edited points on the chart
+//      !revenue_2023=12345
+function getHashParameters(type){
+    var hash_params = window.location.hash.substr(1).split('&'); // substr(1) to remove the `#`
+    var return_params = [];
+    if(type == 'chart'){
+        for(var i in hash_params){
+            var param = hash_params[i];
+            if(param.charAt(0) == '!'){
+                return_params.push(param);
+            }
+        }
+    }
+    // remove the number_format
+    return return_params;
+}
+
+// key = revenue
+// category = 2024
+// value = 102312.4
 function chartPointDrop(key, category, value){
+    addNumberFormatToHash();
     // when modifying the forecasted values, update hash
     if (location.hash){
         // if there is at least 1 param
@@ -397,101 +627,152 @@ function chartPointDrop(key, category, value){
     $( "#modal-charts" ).trigger( "chartPointDrop" );
 }
 
-// copy paste
-var timerValues = 0;
-$('#chart-table').on("keyup change", '.chart-table-value', function(){
-    if (timerValues) {
-        clearTimeout(timerValues);
+function getPreviousValue(key, index){
+    var prevValue = 0;
+    if(index == 0){
+        prevValue = _chart_data['y_historic'][key][_chart_data['y_historic'][key].length - 1];
     }
-    var obj = $(this);
-    var obj_id = $(this).attr('id');
-    timerValues = setTimeout(function(){
-        if(obj.val() || obj.val() === 0){
-            // if new value is different from the old one
-            if( roundValue(Number(obj.val())) != roundValue(_chart_data['y_forecasted'][obj.attr('key')][obj.attr('index')]) ){
-                chartPointDrop(obj.attr('key'), obj.attr('category'), roundValue(Number(obj.val())));
-                $('#' + obj_id).focus();
-            }
+    else{
+        prevValue = _chart_data['y_forecasted'][key][index - 1];
+    }
+    /*
+    if(isRate(key)){
+        prevValue = toR(prevValue);
+    }
+    */
+    return prevValue;
+}
+function getValueFromForecastedInput(obj){
+    var value = obj.val().replace('%', '');
+    /*
+    var key = obj.attr('key');
+    if(isRate(key)){
+        value = value.replace('%', '');
+    }
+    */
+    return value;
+}
+function isBeingReset(value){
+    if(value === ''){
+        return true;
+    }
+    return false;
+}
+function keyupChangeForecastTable(obj, type){
+    var key = obj.attr('key');
+    var category = obj.attr('category');
+    var index = Number(obj.attr('index'));
+    var value = roundValue(Number(getValueFromForecastedInput(obj)));
+    var dropValue = 0;
+    var compare_value = 0;
+    if(type == 'value'){
+        if(isRate(key)){
+            compare_value = roundValue(toP(_chart_data['y_forecasted'][key][index]), '%');
         }
+        else{
+            compare_value = roundValue(_chart_data['y_forecasted'][key][index]);
+        }
+        dropValue = value;
+    }
+    else if(type == 'growth'){
+        // Triggered when a forecast Growth Rate is changed
+        var previousValue = roundValue(getPreviousValue(key, index));
+        var currentValue = roundValue(getPreviousValue(key, index + 1));
+        compare_value = roundValue(toP((currentValue - previousValue)/previousValue), '%');
+        dropValue = roundValue(previousValue * (1 + value/100));
+    }
+    if(isValidNumber(value)){
+        // if new value is different from the old one compare_value
+        if( value == compare_value ){
+            return;
+        }
+    }
+    chartPointDrop(key, category, dropValue);
+}
+
+// copy paste
+var timerForecasted = 0;
+function keyupChangeHandler(obj, type){
+    if (timerForecasted) {
+        clearTimeout(timerForecasted);
+    }
+    timerForecasted = setTimeout(function(){
+        var value = getValueFromForecastedInput(obj);
+        if(isBeingReset(value)){
+            return;
+        }
+        keyupChangeForecastTable(obj, type);
+        var obj_id = obj.attr('id');
+        $('#' + obj_id).focus();
     }, 500);
+}
+function focusoutHandler(obj, type){
+    if(timerForecasted) {
+        clearTimeout(timerForecasted);
+    }
+    var value = getValueFromForecastedInput(obj);
+    if(isBeingReset(value)){
+        var key = obj.attr('key');
+        var category = obj.attr('category');
+        resetChartInput(key, category);
+        $( "#modal-charts" ).trigger( "chartPointDrop" );
+    }
+    else{
+        keyupChangeForecastTable(obj, type);
+    }
+}
+
+$('#chart-table').on("keyup change", '.chart-table-value', function(){
+    keyupChangeHandler($(this), 'value');
 });
 $('#chart-table').on("focusout", '.chart-table-value', function(){
-    var obj = $(this);
-    var obj_id = $(this).attr('id');
-    if(obj.val() === '' || obj.val() === '-'){
-        // reset input in hash
-        resetChartInput(obj.attr('key'), obj.attr('category'));
-        $( "#modal-charts" ).trigger( "chartPointDrop" );
-    }
-    else if(obj.val() || obj.val() === 0){
-        if( roundValue(Number(obj.val())) != roundValue(_chart_data['y_forecasted'][obj.attr('key')][obj.attr('index')]) ){
-            chartPointDrop(obj.attr('key'), obj.attr('category'), roundValue(Number(obj.val())));
-        }
-    }
+    focusoutHandler($(this), 'value');
 });
-
-var timerPercentages = 0;
-$('#chart-table').on("keyup", '.chart-table-percentage', function(){
-    if (timerPercentages) {
-        clearTimeout(timerPercentages);
-    }
-    var obj = $(this);
-    var obj_id = $(this).attr('id');
-    timerPercentages = setTimeout(function(){
-        if(obj.val() || obj.val() === 0){
-            var value = Number(obj.val().replace('%', ''));
-            if(obj.attr('index') == 0){
-                var prevValue = _chart_data['y_historic'][obj.attr('key')][_chart_data['y_historic'][obj.attr('key')].length - 1];
-            }
-            else{
-                var prevValue = _chart_data['y_forecasted'][obj.attr('key')][Number(obj.attr('index')) - 1];
-            }
-            chartPointDrop(obj.attr('key'), obj.attr('category'), roundValue(prevValue * (1 + value/100)));
-            obj.val(value + '%');
-            $('#' + obj_id).focus();
-        }
-    }, 500);
+$('#chart-table').on("keyup change", '.chart-table-percentage', function(){
+    keyupChangeHandler($(this), 'growth');
 });
 $('#chart-table').on("focusout", '.chart-table-percentage', function(){
-    if($(this).val() === '' || $(this).val() === '-'){
-        $( "#modal-charts" ).trigger( "chartPointDrop" );
-    }
+    focusoutHandler($(this), 'growth');
 });
 
-var timerValuesHidden = 0;
-$('#chart-table').on("keyup", '.hidden-chart-table-value', function(){
-var topPos = document.documentElement.scrollTop || document.body.scrollTop || 0;
-    if (timerValuesHidden) {
-        clearTimeout(timerValuesHidden);
-    }
-    var obj = $(this);
-    var obj_id = $(this).attr('id');
-    timerValuesHidden = setTimeout(function(){
-        if(obj.val() || obj.val() === 0){
-            var value = Number(obj.val().replace('%', ''));
-            chartPointDrop(obj.attr('key'), obj.attr('category'), roundValue(value));
-            obj.val(value + '%');
-            $('#' + obj_id).focus();
+function addProperties(object){
+    var properties = object.properties;
+    // add properties only once, at page load
+    if(!_chart_data['added_properties']){
+        if('disabled_keys' in properties){
+            // used in renderChart() -> disabled_keys: ['linearRegressionRevenue', 'discountedFreeCashFlow'],
+            _chart_data['hidden_series'] = _chart_data['hidden_series'].concat(
+                listOrderedDifference(properties.disabled_keys, _chart_data['hidden_series'])
+            );
         }
-    }, 500);
-        window.pageYOffset = topPos;
-
-});
-$('#chart-table').on("focusout", '.hidden-chart-table-value', function(){
-var topPos = document.documentElement.scrollTop || document.body.scrollTop || 0;
-    if($(this).val() === '' || $(this).val() === '-'){
-        $( "#modal-charts" ).trigger( "chartPointDrop" );
+        if('hide_growth' in properties){
+            if(typeof(properties.hide_growth) == 'object'){
+                // used to hide the growth of specific keys { hide_growth: ['_payoutRatio', '_returnOnEquity'], }
+                _chart_data['hide_growth'] = properties.hide_growth;
+            }
+            else if(properties.hide_growth === true){
+                // hide all growth for all keys
+                if('keys' in object){
+                    _chart_data['hide_growth'] = object.keys;
+                }
+            }
+        }
+        _chart_data['added_properties'] = true;
     }
-        window.pageYOffset = topPos;
-});
+}
 
 function appendChart(modalChartsSection){
     modalChartsSection.append('<div id="model-chart"></div>');
 
-    var chart = new Highcharts.chart('model-chart', {
-        title: {text: _chart_data['name']},
+    var chart = Highcharts.chart('model-chart', {
+        title: {text: _chart_data['name'],align: 'left'},
+        subtitle: {text: _chart_data['subtitle'],align: 'left'},
         xAxis: {
-            categories: _chart_data['x_historic'].concat(_chart_data['x_forecasted'])
+            categories: _chart_data['x_historic'].concat(_chart_data['x_forecasted']),
+            gridLineWidth: 1
+        },
+        yAxis: {
+            minorTickInterval:"auto"
         },
         plotOptions: {
             series: {
@@ -501,11 +782,15 @@ function appendChart(modalChartsSection){
         exporting: {
             buttons: {
                 contextButton: {
-                    align: 'left',
+                    align: 'right',
                     symbolStroke: "#4e73df",
-                    x: 30
+                    verticalAlign: 'top'
+                    // x: 30
                 }
             }
+        },
+        accessibility: {
+            enabled: false
         },
         series: [
         ]
@@ -534,14 +819,44 @@ function appendChart(modalChartsSection){
             visible = false;
         }
         var tooltipSuffix = '';
-        if(isRate(key)){tooltipSuffix='%';}
+        if(isRate(key)){
+            tooltipSuffix='%';
+            for(var i in data){
+                data[i] = toR(data[i]);
+            }
+        }
+        var tooltip_valueDecimals = 2;
+        var dragDrop_dragPrecisionY = 0.01;
+        if(_chart_data['number_format']){
+            tooltip_valueDecimals = 0;
+            var minValue = minimum(reportKeyToList(forecasted_data, 'y'));
+            minValue = absolute(minValue, _chart_data['number_format']);
+            if(!minValue && minValue < 1){
+                // keep dragDrop_dragPrecisionY = 0.01
+            }
+            else if(minValue < 10){
+                dragDrop_dragPrecisionY = 0.1;
+            }
+            else if(minValue < 100){
+                dragDrop_dragPrecisionY = 1;
+            }
+            else if(minValue < 1000){
+                dragDrop_dragPrecisionY = 10;
+            }
+            else if(minValue < 10000){
+                dragDrop_dragPrecisionY = 100;
+            }
+            else{
+                dragDrop_dragPrecisionY = 1000;
+            }
+        }
         chart.addSeries({
                 name: getKeyName(key),
                 key_name: key,
                 visible: visible,
                 dragDrop: {
                     draggableY: true,
-                    dragPrecisionY: 0.01
+                    dragPrecisionY: dragDrop_dragPrecisionY
                 },
                 point: {
                     events: {
@@ -560,7 +875,7 @@ function appendChart(modalChartsSection){
                 },
                 tooltip: {
                     valueSuffix: tooltipSuffix,
-                    valueDecimals: 2
+                    valueDecimals: tooltip_valueDecimals
                 },
                 data: data,
                 zoneAxis: 'x',
@@ -618,7 +933,7 @@ function appendChart(modalChartsSection){
                 }
                 forecastedPoints[key].forEach(function(val, i){
                     if(isRate(key)){
-                        val = roundValue(val, '%') + '%';
+                        val = roundValue(toP(val), '%') + '%';
                     }
                     else{
                         val = roundValue(val);
@@ -636,7 +951,7 @@ function appendChart(modalChartsSection){
                 $tableBody.append($tbodyTrValues);
 
                 // if the key is not in the y_historic, we shouldn't show % growth
-                if(key in _chart_data['y_historic']){
+                if(key in _chart_data['y_historic'] && !_chart_data['hide_growth'].includes(key)){
                     $tbodyPercentages = $('<tr/>').append(
                         $('<td/>').addClass('row-description').append(
                             $('<p/>').text('↳ ').append($('<span/>').text('Growth Rate').addClass('small')).addClass('text-center')
@@ -647,18 +962,21 @@ function appendChart(modalChartsSection){
                     if(_chart_data['y_historic'][key].length > 2){
                         lastHistoricValue = _chart_data['y_historic'][key][_chart_data['y_historic'][key].length - 1];
                     }
-                    var firstValue = lastHistoricValue;//_chart_data['y_forecasted'][key][0];
+                    var firstValue = roundValue(lastHistoricValue);
+                    var secondValue = 0;
+                    var percentage = 0;
                     var percentageClassName = 'chart-table-percentage';
                     for(var i=0; i<_chart_data['y_forecasted'][key].length; i++){
-                        var percentage = 100 * (_chart_data['y_forecasted'][key][i] - firstValue) / firstValue;
-                        firstValue = _chart_data['y_forecasted'][key][i];
+                        secondValue = roundValue(_chart_data['y_forecasted'][key][i]);
+                        percentage = roundValue(toP((secondValue - firstValue) / firstValue), '%');
+                        firstValue = secondValue;
                         $tbodyPercentages.append(
                             $('<td/>').append(
                                 $('<input/>').attr('type', 'text').addClass(
                                     'text-center form-control form-control-sm border-0 rounded-0 ' + percentageClassName // watch the space
                                 ).attr(
                                     'id', percentageClassName + '-' + key + '-' + i
-                                ).attr('key', key).attr('index', i).attr('category', _chart_data['x_forecasted'][i]).val(roundValue(percentage/100, '%') + '%')
+                                ).attr('key', key).attr('index', i).attr('category', _chart_data['x_forecasted'][i]).val(String(percentage) + '%')
                             )
                         );
                     }
@@ -711,9 +1029,10 @@ function deleteAllChartPoints(e){
         _INPUT_GLOBAL[val] = '';
     });
     _chart_data['hidden_series'] = [];
+    _chart_data['added_properties'] = false;
 }
 
-// this function is called only on #btn-delete-all-chart-points clicked()
+// this function is called only on #btn-delete-all-assumptions clicked()
 function deleteAllAssumptions(e){
     e.preventDefault();
     if (location.hash){
@@ -747,9 +1066,29 @@ function valuationEnd(){
     }
 }
 
-function renderChart(name){
+/*
+    object = {
+        'title': '...',
+        'subtitle': '...',
+        'number_format': 'M',
+    }
+*/
+function renderChart(object){
     if(_chart_data['x_historic'].length){ // means that the chart x axis has been filled
-        _chart_data['name'] = name;
+        if(typeof(object) == 'string'){
+            _chart_data['name'] = object;
+        }
+        else{
+            if('title' in object){
+                _chart_data['name'] = object.title;
+            }
+            if('subtitle' in object){
+                _chart_data['subtitle'] = object.subtitle;
+            }
+            if('subtitle' in object){
+                _chart_data['number_format'] = object.number_format;
+            }
+        }
         $('.heading-charts').show();
         appendChart($('.modal-charts'));
     }
@@ -761,7 +1100,7 @@ function monitor(context){
         var modalTablesSection = $('.modal-tables');
         var modalChartsSection = $('.modal-charts');
         var tablesCount = 0;
-        let nf = new Intl.NumberFormat('en-US');
+        var nf = new Intl.NumberFormat('en-US');
         for(var i = 0; i < context.length; i++){
             var item = context[i];
             if(item.display == 'value'){
@@ -811,10 +1150,199 @@ function monitor(context){
     }
 }
 
-function renderTable(name, data, rows, columns){
-  var context = [];
-  context.push({name: name, display: 'table', rows: rows, columns: columns, data: data});
-  monitor(context);
+function typeOfHeader(header){
+    if(header.includes('{%}')){
+        // object is rate
+        return '%';
+    }
+    else{
+        // object is number
+        return '#';
+    }
+}
+
+function renderTable(table_object){
+    var context = [];
+    /*
+    for (var i = 0; i < arguments.length; i++) {
+        console.log(arguments[i]);
+    }
+    */
+    if (arguments.length > 1){
+        // [DEPRECATED] renderTable(name, data, rows, columns)
+        context.push({name: arguments[0], display: 'table', rows: arguments[2], columns: arguments[3], data: arguments[1]});
+    }
+    else{
+        var object = deepCopy(table_object);
+        if('properties' in object){
+            if('column_order' in object['properties']){
+                sortColumns(object['column_headers'], object['properties']['column_order']);
+            }
+        }
+        // table_object can be in one of the two formats:
+        /*
+            YearValue Format (recommended)
+            data = [
+                [
+                {
+                    'value': 123,
+                    'year': 2020
+                },
+                {
+                    'value': 234,
+                    'year': 2021
+                }
+                ],
+                ...
+            ]
+            or List Format
+            data = [123, 234]
+        */
+        // Let's bring all YearValue Format to List Format
+        var data_obj = newArrayFill(object['data'].length, newArrayFill(object['column_headers'].length, ''));
+        for(var col_index in object['column_headers']){
+            var col_name = String(object['column_headers'][col_index]);
+            for(var data_index in object['data']){
+                if(isObjectInYearValueFormat(object['data'][data_index])){
+                    for(var i in object['data'][data_index]){
+                        // item is in DateValue format
+                        var item = object['data'][data_index][i];
+                        //console.log(col_name);
+                        //console.log(item);
+                        if(typeof(item) === 'number'){continue;}
+                        if( String(item.year) == col_name ){
+                            data_obj[data_index][col_index] = item.value;
+                            //data_row[col_index] = item.value;
+                        }
+                    }
+                }
+            }
+        }
+        // add the rows that are in list format and have not been added because of isObjectInYearValueFormat check
+        for(var data_index in object['data']){
+            if(!isObjectInYearValueFormat(object['data'][data_index])){
+                data_obj[data_index] = object['data'][data_index];
+            }
+        }
+        object['data'] = data_obj;
+        // Recommended use
+        /*
+        input object structure should be
+        {
+            'data': data,
+            'row_headers': rows,
+            'column_headers': columns,
+            'properties': {
+                'title': 'Historical Data',
+                'currency': currency,
+                'number_format': 'M',
+                'display_averages': true,
+                'column_order': 'descending'
+            }
+        }
+        */
+        var tableSubtitle = 'In ';
+        var display_averages = false;
+        var table_has_per_share_items = false;
+        for(var i in object['row_headers']){
+            // see if there are any per share rows
+            if(object['row_headers'][i].includes('{PerShare}')){
+                table_has_per_share_items = true;
+                break;
+            }
+        }
+        if('properties' in object){
+            if('display_averages' in object['properties'] && object['properties']['display_averages']){
+                // need to send display_averages to appendTable() function
+                display_averages = true;
+                object['column_headers'].unshift('Averages');
+                // data: object['data']
+                for(var i in object['row_headers']){
+                    // console.log(object['data'][i]);
+                    // console.log(getListAverage(object['data'][i]));
+                    var average = getListAverage(object['data'][i]);
+                    var type_of_header = typeOfHeader(object['row_headers'][i]);
+                    if(type_of_header == '%'){
+                        // special percentage formatting
+                        average = roundValue(toP(average), type_of_header)/100;
+                    }
+                    else{
+                        average = roundValue(average);
+                    }
+                    object['data'][i].unshift(average);
+                }
+            }
+            if('number_format' in object['properties'] && object['properties']['number_format']){
+                if(object['properties']['number_format'] == 'M'){
+                    tableSubtitle += 'Millions of ';
+                }
+                else if(object['properties']['number_format'] == 'K'){
+                    tableSubtitle += 'Thousands of ';
+                }
+
+                for(var i in object['row_headers']){
+                    // format only numbers, and not the rates
+                    if(!object['row_headers'][i].includes('{%}') && !object['row_headers'][i].includes('{PerShare}')){
+                        // Remove the '{%}': object['row_headers'][i] = object['row_headers'][i].replace('{%}', '').trim();
+                        // Convert the whole row to rate
+                        if(object['properties']['number_format'] == 'M'){
+                            object['data'][i] = roundValue(toM(object['data'][i]));
+                        }
+                        else if(object['properties']['number_format'] == 'K'){
+                            object['data'][i] = roundValue(toK(object['data'][i]));
+                        }
+                        else if(object['properties']['number_format'] == '1'){
+                            // just perform a normal round
+                            object['data'][i] = roundValue(object['data'][i]);
+                        }
+                    }
+                }
+            }
+            else{
+                // not specifying number_format property is equivalent to specifying number_format: 1
+                // just perform a normal round
+                for(var i in object['row_headers']){
+                    // format only numbers, and not the rates
+                    if(!object['row_headers'][i].includes('{%}')){
+                        object['data'][i] = roundValue(object['data'][i]);
+                    }
+                }
+            }
+            if('currency' in object['properties'] && object['properties']['currency']){
+                tableSubtitle += object['properties']['currency'];
+            }
+            if(table_has_per_share_items){
+                if('number_format' in object['properties'] && object['properties']['number_format']){
+                    tableSubtitle += ', except for (Per Share) items';
+                }
+            }
+        }
+        // Rate formatting
+        // {%} - Rate row
+        // {PerShare} - Per Share items, that don't get formatted
+        for(var i in object['row_headers']){
+            if(object['row_headers'][i].includes('{%}')){
+                // Remove the '{%}':
+                //object['row_headers'][i] = object['row_headers'][i].replace('{%}', '(%)');
+                // Convert the whole row to rate
+                object['data'][i] = arrayValuesToRates(object['data'][i]);
+            }
+            // see if there are any per share rows
+            else if(object['row_headers'][i].includes('{PerShare}')){
+                object['row_headers'][i] = object['row_headers'][i].replace('{PerShare}', '').concat(" ", '(Per Share)');;
+            }
+        }
+        context.push({
+            name: object['properties']['title'],
+            subtitle: tableSubtitle,
+            display_averages: display_averages,
+            display: 'table',
+            rows: object['row_headers'],
+            columns: object['column_headers'],
+            data: object['data']
+        });
+    }
+    monitor(context);
 }
 
 // Called only by fillHistoricUsingReport() only
@@ -863,12 +1391,163 @@ function fillHistoricUsingList(list, key, endingYear){
     else{
         list.forEach(function(value, i){
             _chart_data['y_historic'][key].push(value);
-            _chart_data['x_historic'].push(endingYear - listLength + i);
+            _chart_data['x_historic'].push(endingYear - listLength + i + 1);
         });
     }
     // fill the chart with historic data
     return _chart_data['y_historic'][key];
 }
+
+function chartFillHistorical(object, key){
+    if(isObjectInYearValueFormat(object)){
+        return chartFillHistorical(new DateValueList(object), key);
+    }
+    if(isDateValueList(object)){
+        _chart_data['y_historic'][key] = [];
+        _chart_data['y_forecasted'][key] = [];
+
+        if(_chart_data['x_historic'].length){
+            _chart_data['y_historic'][key] = newArrayFill(_chart_data['x_historic'].length, '');
+            var offset = 0;
+            for(var x_historic_index = 0; x_historic_index < _chart_data['x_historic'].length; x_historic_index++){
+                var date = _chart_data['x_historic'][x_historic_index];
+                var value = object.valueAtDate(date);
+                if(isValidNumber(value)){
+                    _chart_data['y_historic'][key][x_historic_index] = value;
+                }
+                else{
+                    _chart_data['y_historic'][key].splice(x_historic_index - offset, 1);
+                    offset += 1;
+                }
+            }
+            // maybe it has more than _chart_data['x_historic'] dates, let's append the rest
+            if(_chart_data['x_historic'].length < object.list.length){
+                var last_historical_date = _chart_data['x_historic'][_chart_data['x_historic'].length - 1];
+                for(var i in object.list){
+                    if(object.list[i].year > last_historical_date){
+                        _chart_data['y_historic'][key].push(object.valueAtDate(object.list[i].year));
+                        _chart_data['x_historic'].push(object.list[i].year);
+                    }
+                }
+            }
+        }
+        else{
+            var yearsList = object.dates();
+            for(var i in yearsList){
+                _chart_data['y_historic'][key].push(object.valueAtDate(yearsList[i]));
+                _chart_data['x_historic'].push(yearsList[i]);
+            }
+        }
+        // fill the chart with historic data
+        return _chart_data['y_historic'][key];
+    }
+    return fillHistoricUsingList(object, key);
+}
+
+function chartFillHistoricalCopy(object, key){
+    if(isDateValueList(object)){
+        return chartFillHistorical(object.getList(), key);
+    }
+    if(isObjectInYearValueFormat(object)){
+        _chart_data['y_historic'][key] = [];
+        _chart_data['y_forecasted'][key] = [];
+
+        if(_chart_data['x_historic'].length){
+            _chart_data['y_historic'][key] = newArrayFill(_chart_data['x_historic'].length, '');
+            object.forEach(function(item, i){
+                for(var x_historic_index in _chart_data['x_historic']){
+                    if( _chart_data['x_historic'][x_historic_index] == item.year ){
+                        _chart_data['y_historic'][key][x_historic_index] = item.value;
+                        break;
+                    }
+                }
+            });
+        }
+        else{
+            var yearsList = sortColumns(reportKeyToList(object, 'year'));
+            for(var i in yearsList){
+                _chart_data['y_historic'][key].push(getValueFromYearValue(object, yearsList[i]));
+                _chart_data['x_historic'].push(yearsList[i]);
+            }
+        }
+        // fill the chart with historic data
+        return _chart_data['y_historic'][key];
+    }
+    return fillHistoricUsingList(object, key);
+}
+
+// Only DateValueList objects are allowed to be passed in object
+function chartFillEditable(object, key, settings){
+    var forecastDataKey = 'y_forecasted';
+    if(settings == 'chartHidden'){
+        forecastDataKey = 'y_forecasted_chart_hidden';
+    }
+    _chart_data[forecastDataKey][key] = [];
+    // 'x_historic' member has to be filled
+    if(_chart_data['x_historic'].length){
+        // if x_forecasted has not been yet filled
+        if(!_chart_data['x_forecasted'].length){
+            var first_date = object.firstDate();
+            var end_date = object.lastDate('except_ltm');
+            // fill x_forecasted
+            _chart_data['x_forecasted'] = newArrayFill(end_date - first_date, first_date, 'increment')
+        }
+        _chart_data[forecastDataKey][key] = reportKeyToList(object.list, 'value');
+    }
+}
+
+function chartFill(object){
+    for (var key in object) {
+        // check if the property/key is defined in the object itself, not in parent
+        if (object.hasOwnProperty(key)) {
+            chartFillHistorical(object[key], key);
+        }
+    }
+}
+
+/*
+{
+  start_date: nextYear,
+  keys: ['revenue', 'operatingCashFlow', 'freeCashFlow'],
+}
+*/
+
+function _edit(){
+    return location.hash;
+}
+
+// Go through the url parameters and see if any !eps_2024=3.5
+// if it was found, return the value
+// else return null
+/*
+function getValueFromEditableKey(date, key){
+    var token = key + "_" + String(date);
+    if (location.hash && location.hash.includes(token)){
+        // var index_of_token = location.hash.indexOf(token);
+        // var remaining_string = location.hash.slice(index_of_token);
+        var value = location.hash.slice(location.hash.indexOf(token)).split('&')[0].split('=')[1];
+        if(isValidNumber(value)){
+            value = Number(value);
+            if(isRate(token)){
+                value = toN(value);
+            }
+            else{
+                var number_format = getNumberFormatFromHash();
+                if(number_format){
+                    if(number_format == 'M'){
+                        value /= toM(1);
+                    }
+                    else if(number_format == 'K'){
+                        value /= toK(1);
+                    }
+                }
+            }
+            return value;
+        }
+    }
+    return null;
+}
+*/
 
 // forecast() uses the 'x_historic' member's last date for correct indexing
 // forecast points in a separate table for rates like return on equity, discount rates, etc.
@@ -985,12 +1664,12 @@ function resetInput(key){
     _modified_inputs = modified_inputs;
 }
 
-function setInputDefault(Key, Value){
-    let roundedVal = 0;
+function setAssumption(Key, Value){
+    var roundedVal = 0;
     if (!_modified_inputs.includes(Key)){
         if(Key.charAt(0) == '_'){
             // Is rate, divide by 100
-            roundedVal = roundValue(Value/100, '%');
+            roundedVal = roundValue(Value, '%');
             _INPUT_GLOBAL[Key] = roundedVal / 100;
         }
         else{
@@ -1003,6 +1682,14 @@ function setInputDefault(Key, Value){
     return;
 }
 
+function getAssumption(key){
+    if(key in _INPUT_GLOBAL && isValidNumber(_INPUT_GLOBAL[key])){
+        return _INPUT_GLOBAL[key];
+    }
+    throwError("Assumption '"+key+"' is used, but it hasn't been set. Please set it using setAssumption() first.");
+    return '';
+}
+
 // print function
 function print(str, label='', type='', currency=''){
     var nf = new Intl.NumberFormat('en-US');
@@ -1013,18 +1700,18 @@ function print(str, label='', type='', currency=''){
     {
         if(type == '%')
         {
-            string = roundValue(str, '%');
+            string = roundValue(toP(str), '%');
             string += '%';
         }
         else if(type == '#')
         {
             if (str >= 1000000){
-                string = nf.format(toM(str));
+                string = nf.format(roundValue(toM(str)));
                 string += ' Mil.';
             }
             else if (str >= 1000){
-                string = nf.format(toK(str));
-                string += ' K';
+                string = nf.format(roundValue(toK(str)));
+                string += ' Thou.';
             }
             else{
                 string = nf.format(str);
@@ -1047,6 +1734,32 @@ function print(str, label='', type='', currency=''){
     }
     monitor(context);
     return;
+}
+
+function throwError(message){
+    var err;
+    if(typeof(message) == 'string'){
+        err = new Error();
+    }
+    else if(typeof(message) == 'object'){
+        err = message;
+    }
+    var caller_line = err.stack;
+    var index = caller_line.indexOf("eval:") + 5;
+    var end = caller_line.slice(index).indexOf(':');
+    var clean = caller_line.slice(index, index + end);
+    console.error(message+"\nValuation Code Line:"+clean);
+    alertify.notify(message+"\nValuation Code Line:"+clean, 'error', 0);
+}
+
+function throwWarning(message){
+    var err = new Error();
+    var caller_line = err.stack;
+    var index = caller_line.indexOf("eval:") + 5;
+    var end = caller_line.slice(index).indexOf(':');
+    var clean = caller_line.slice(index, index + end);
+    console.warn(message+"\nValuation Code Line:"+clean);
+    alertify.notify(message, 'warning', 0);
 }
 
 // New utility functions go into new-valuation-functions.js!
