@@ -808,7 +808,7 @@ DateValueData.prototype.computeMutable = function(properties) {
                     }
                     else{
                         // check if the key refers to a function
-                        var result = '';
+                        var result = null;
                         // check if the key is in forecasted URL hash parameters
                         if( this.editable() && year >= this.editable().start_date && this.editable().keys.includes(key) ){
                             var edited_value = this.getValueFromEditableKey(year, key);
@@ -817,8 +817,7 @@ DateValueData.prototype.computeMutable = function(properties) {
                                 result = edited_value;
                             }
                         }
-                        // cannot use if(result === '') ??
-                        if(result === ''){
+                        if(result === null){
                             if(this.functions().includes(key)){
                                 // execute the function
                                 // get the function name, this is the first argument of the formula
@@ -1025,7 +1024,7 @@ DateValueData.prototype.computeMutable = function(properties) {
                             values_list.push(this.formula()[key][i]);
                         }
                     }
-                    var result = '';
+                    var result = null;
                     if(values_list.length == 2){
                         if(isValidNumber(values_list[0]) && isValidNumber(values_list[1])){
                             result = operation(values_list[0], operator, values_list[1]);
@@ -1326,16 +1325,25 @@ function DateValueList() {
     }
     else if(arguments.length == 2){
         if(isValidNumber(arguments[1])){
-            //
             this.list = newDateValueItem(arguments[0], arguments[1]);
         }
-        else if(typeof(arguments[1]) == 'string'){
+        else if(typeof(arguments[1]) == 'string' && arguments[1] != ''){
             // Report was passed reportKeyToTableRow(income_report, 'revenue')
             this.list = reportKeyToTableRow(arguments[0], arguments[1]);
         }
         else{
-            console.warn(arguments[1] + ' is not a valid number at ' + arguments[0]);
+            console_warning(arguments[1] + ' is not a valid number at ' + arguments[0]);
             this.list = newDateValueItem(arguments[0], null);
+        }
+    }
+    // For data in percentages, like treasury
+    else if(arguments.length == 3 && arguments[2] == '%'){
+        if(isValidNumber(arguments[1])){
+            this.list = newDateValueItem(toN(arguments[0]), arguments[1]);
+        }
+        else if(typeof(arguments[1]) == 'string' && arguments[1] != ''){
+            // Report was passed reportKeyToTableRow(income_report, 'revenue')
+            this.list = toN(reportKeyToTableRow(arguments[0], arguments[1]));
         }
     }
 }
@@ -1770,8 +1778,13 @@ function rateToNumber(obj){
 
 function toFormat(obj, format){
     if(isValidNumber(format)){
-        // if obj is a list
-        if(typeof(obj) == 'object' && obj !== null){
+        if(typeof(obj) == 'object' && isObjectInYearValueFormat(obj)){
+            for(var i=0; i<obj.length; i++){
+                obj[i].value *= format;
+            }
+        }
+        else if(typeof(obj) == 'object' && obj !== null){
+            // if obj is a list
             if(obj.length){
                 for(var i=0; i<obj.length; i++){
                     obj[i] *= format;
@@ -2338,7 +2351,7 @@ function operation(object1, operation_type, object2){
         else if(operation_type == '^'){
             return Math.pow(Number(object1), Number(object2));
         }
-        return '';
+        return null;
     }
     // if objects are both in YearValue format
     if(isObjectInYearValueFormat(object1) && isObjectInYearValueFormat(object2)){
