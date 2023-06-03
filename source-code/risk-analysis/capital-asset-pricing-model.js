@@ -16,11 +16,11 @@ $.when(
   get_treasury(),
   get_fx(),
   get_risk_premium()).done(
-  function(_profile, _treasury, _fx, _risk_premium){
+  function($profile, $treasury, $fx, $risk_premium){
     var response = new Response({
-      profile: _profile,
-      treasury: _treasury,
-      risk_premium: _risk_premium,
+      profile: $profile,
+      treasury: $treasury,
+      risk_premium: $risk_premium,
     });
     
     // +---------------- ASSUMPTIONS SECTION -----------------+

@@ -29,16 +29,16 @@ $.when(
   get_treasury(),
   get_fx(),
   get_risk_premium()).done(
-  function(_income, _income_ltm, _quote, _profile, _treasury, _fx, _risk_premium){
+  function($income, $income_ltm, $quote, $profile, $treasury, $fx, $risk_premium){
   try{
     var response = new Response({
-      income: _income,
-      income_ltm: _income_ltm,
-      quote: _quote,
-      profile: _profile,
-      treasury: _treasury,
-      risk_premium: _risk_premium,
-    }).toOneCurrency('income', _fx).merge('_ltm');
+      income: $income,
+      income_ltm: $income_ltm,
+      quote: $quote,
+      profile: $profile,
+      treasury: $treasury,
+      risk_premium: $risk_premium,
+    }).toOneCurrency('income', $fx).merge('_ltm');
     
     // +---------------- ASSUMPTIONS SECTION -----------------+ 
 	setAssumption('PE_RATIO', response.quote.pe);

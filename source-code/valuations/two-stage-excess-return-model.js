@@ -30,19 +30,19 @@ $.when(
   get_treasury(),
   get_fx(),
   get_risk_premium()).done(
-  function(_income, _income_ltm, _balance, _balance_quarterly, _profile, _dividends, _treasury, _fx, _risk_premium){
+  function($income, $income_ltm, $balance, $balance_quarterly, $profile, $dividends, $treasury, $fx, $risk_premium){
   try{    
     var response = new Response({
-      income: _income,
-      income_ltm: _income_ltm,
-      balance: _balance,
-      balance_quarterly: _balance_quarterly,
+      income: $income,
+      income_ltm: $income_ltm,
+      balance: $balance,
+      balance_quarterly: $balance_quarterly,
       balance_ltm: 'balance_quarterly:0',
-      profile: _profile,
-      treasury: _treasury,
-      dividends: _dividends,
-      risk_premium: _risk_premium,
-    }).toOneCurrency('income', _fx).merge('_ltm');
+      profile: $profile,
+      treasury: $treasury,
+      dividends: $dividends,
+      risk_premium: $risk_premium,
+    }).toOneCurrency('income', $fx).merge('_ltm');
     response.balance[0]['date'] = 'LTM';
     
     // +---------------- ASSUMPTIONS SECTION -----------------+
