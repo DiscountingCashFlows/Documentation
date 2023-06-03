@@ -1762,4 +1762,8 @@ function throwWarning(message){
     alertify.notify(message, 'warning', 0);
 }
 
+function console_warning(text){
+    console.warn(text);
+}
+
 // New utility functions go into new-valuation-functions.js!
