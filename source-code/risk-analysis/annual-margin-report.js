@@ -16,15 +16,15 @@ $.when(
   get_cash_flow_statement(),
   get_cash_flow_statement_ltm(),
   get_fx()).done(
-  function(_income, _income_ltm, _balance, _flows, _flows_ltm, _fx){
+  function($income, $income_ltm, $balance, $flows, $flows_ltm, $fx){
   try{
     var response = new Response({
-      income: _income,
-      income_ltm: _income_ltm,
-      balance: _balance,
-      flows: _flows,
-      flows_ltm: _flows_ltm,
-    }).toOneCurrency('income', _fx).merge('_ltm');
+      income: $income,
+      income_ltm: $income_ltm,
+      balance: $balance,
+      flows: $flows,
+      flows_ltm: $flows_ltm,
+    }).toOneCurrency('income', $fx).merge('_ltm');
     var currency = response.currency;
     
     var original_data = new DateValueData({
