@@ -13,7 +13,7 @@ Input(
 
 $.when(
   get_income_statement_ltm(),
-  get_balance_sheet_statement_quarterly(),
+  get_balance_sheet_statement_quarterly('length:2'),
   get_profile(),
   get_treasury(),
   get_fx(),
@@ -52,7 +52,7 @@ $.when(
     
     // Weights
     var totalDebt = response.balance_ltm['shortTermDebt'] + response.balance_ltm['longTermDebt'];
-    var marketCap = response.profile['mktCap']; // get the market cap in reports currency
+    var marketCap = response.profile['price'] * response.income_ltm['weightedAverageShsOut'];
     
     var debtWeight = totalDebt / (marketCap + totalDebt);
     var equityWeight = marketCap / (marketCap + totalDebt);
