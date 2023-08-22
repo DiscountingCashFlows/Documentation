@@ -23,7 +23,7 @@ $.when(
   get_income_statement(),
   get_income_statement_ltm(),
   get_balance_sheet_statement(),
-  get_balance_sheet_statement_quarterly(),
+  get_balance_sheet_statement_quarterly('length:2'),
   get_cash_flow_statement(),
   get_cash_flow_statement_ltm(),
   get_profile(),
