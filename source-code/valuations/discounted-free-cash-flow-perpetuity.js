@@ -25,7 +25,7 @@ Input(
 $.when(
   get_income_statement(),
   get_income_statement_ltm(),
-  get_balance_sheet_statement_quarterly(),
+  get_balance_sheet_statement_quarterly('length:2'),
   get_cash_flow_statement(),
   get_cash_flow_statement_ltm(),
   get_profile(),
@@ -72,7 +72,7 @@ $.when(
     {
 		taxRate = 0;
     }
-    var marketCap = response.profile['mktCap'];
+    var marketCap = response.profile['price'] * response.income_ltm['weightedAverageShsOut'];
     
     var debtWeight = response.balance_ltm['totalDebt'] / (marketCap + response.balance_ltm['totalDebt']);
     var equityWeight = marketCap / (marketCap + response.balance_ltm['totalDebt']);

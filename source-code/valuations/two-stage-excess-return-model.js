@@ -24,7 +24,7 @@ $.when(
   get_income_statement(),
   get_income_statement_ltm(),
   get_balance_sheet_statement(),
-  get_balance_sheet_statement_quarterly(),
+  get_balance_sheet_statement_quarterly('length:2'),
   get_profile(),
   get_dividends_annual(),
   get_treasury(),
