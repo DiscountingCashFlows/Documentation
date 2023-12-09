@@ -1,7 +1,10 @@
-// +----------------------------------------------------------+
-//   Model: Discounted Free Cash Flow - Perpetuity
-//   © Copyright: https://discountingcashflows.com
-// +----------------------------------------------------------+
+/*
+    Model: Discounted Free Cash Flow - Perpetuity
+    
+    © Copyright: 
+        Discounting Cash Flows Inc. (discountingcashflows.com)
+        8 The Green, Dover, DE 19901
+*/
 
 Input(
   {
