@@ -1,28 +1,3 @@
-// Used only in company_valuation and valuation
-var _income_statement;
-var _income_statement_quarterly;
-var _income_statement_ltm;
-var _balance_sheet_statement;
-var _balance_sheet_statement_quarterly;
-var _cash_flow_statement;
-var _cash_flow_statement_quarterly;
-var _cash_flow_statement_ltm;
-var _ratios;
-var _quote;
-var _profile;
-var _treasury;
-var _treasury_daily;
-var _treasury_monthly;
-var _treasury_annual;
-var _estimates;
-var _dividends_annual;
-var _dividends_reported;
-var _prices_daily;
-var _prices_annual;
-var _fx;
-var _risk_premium;
-var _institutional_holders={};
-
 var _INPUT_GLOBAL;
 
 var _modified_inputs = [];
@@ -42,393 +17,12 @@ _chart_data['added_properties'] = false;
 _chart_data['number_format'] = '';
 
 var global_str = '';  // used by the code editor
-var _CodeMirror_output = undefined;
+var code_log = undefined;
 
 function resetChartData(){
     _chart_data['x_historic'] = [];
     _chart_data['x_forecasted'] = [];
 }
-
-function unsetAllData(){
-    _income_statement = undefined;
-    _income_statement_quarterly = undefined;
-    _income_statement_ltm = undefined;
-    _balance_sheet_statement = undefined;
-    _balance_sheet_statement_quarterly = undefined;
-    _cash_flow_statement = undefined;
-    _cash_flow_statement_quarterly = undefined;
-    _cash_flow_statement_ltm = undefined;
-    _ratios = undefined;
-    _quote = undefined;
-    _profile = undefined;
-    _treasury = undefined;
-    _treasury_daily = undefined;
-    _treasury_monthly = undefined;
-    _treasury_annual = undefined;
-    _estimates = undefined;
-    _dividends_annual = undefined;
-    _dividends_reported = undefined;
-    _prices_daily = undefined;
-    _prices_annual = undefined;
-    _fx = undefined;
-    _risk_premium = undefined;
-    _institutional_holders = {};
-}
-
-function getUrl(URL, ErrorMessage=''){
-    var request = $.get( URL );
-    request.fail(function (jqXHR, textStatus, errorThrown){
-        // Log the error to the console
-        alertify.notify(ErrorMessage+" not found.", 'error', 0);
-        console.error(
-            textStatus, errorThrown
-        );
-    });
-    return request;
-}
-
-
-function get_income_statement(){
-    if (!_income_statement){
-        _income_statement = getUrl(
-            "/api/income-statement/" + $("#valuation-ticker").val() + "/",
-            "Company Income Statements"
-        );
-    }
-    return _income_statement;
-}
-
-function get_income_statement_quarterly(){
-    if (!_income_statement_quarterly){
-        _income_statement_quarterly = getUrl(
-            "/api/income-statement/quarterly/" + $("#valuation-ticker").val() + "/",
-            "Company Income Quarterly Statements"
-        );
-    }
-    return _income_statement_quarterly;
-}
-
-function get_income_statement_ltm(){
-    if (!_income_statement_ltm){
-        _income_statement_ltm = getUrl(
-            "/api/income-statement/ltm/" + $("#valuation-ticker").val() + "/",
-            "Company Income LTM Statements"
-        );
-    }
-    return _income_statement_ltm;
-}
-
-function get_balance_sheet_statement(){
-    if (!_balance_sheet_statement){
-        _balance_sheet_statement = getUrl(
-            "/api/balance-sheet-statement/" + $("#valuation-ticker").val() + "/",
-            "Company Balance Sheet Statements"
-        );
-    }
-    return _balance_sheet_statement;
-}
-
-function get_balance_sheet_statement_quarterly(){
-    if (!_balance_sheet_statement_quarterly){
-        _balance_sheet_statement_quarterly = getUrl(
-            "/api/balance-sheet-statement/quarterly/" + $("#valuation-ticker").val() + "/",
-            "Company Balance Sheet Quarterly Statements"
-        );
-    }
-    return _balance_sheet_statement_quarterly;
-}
-
-function get_cash_flow_statement(){
-    if (!_cash_flow_statement){
-        _cash_flow_statement = getUrl(
-            "/api/cash-flow-statement/" + $("#valuation-ticker").val() + "/",
-            "Company Cash Flow Statements"
-        );
-    }
-    return _cash_flow_statement;
-}
-
-function get_cash_flow_statement_quarterly(){
-    if (!_cash_flow_statement_quarterly){
-        _cash_flow_statement_quarterly = getUrl(
-            "/api/cash-flow-statement/quarterly/" + $("#valuation-ticker").val() + "/",
-            "Company Cash Flow Quarterly Statements"
-        );
-    }
-    return _cash_flow_statement_quarterly;
-}
-
-function get_cash_flow_statement_ltm(){
-    if (!_cash_flow_statement_ltm){
-        _cash_flow_statement_ltm = getUrl(
-            "/api/cash-flow-statement/ltm/" + $("#valuation-ticker").val() + "/",
-            "Company Cash Flow LTM Statements"
-        );
-    }
-    return _cash_flow_statement_ltm;
-}
-
-function get_ratios(){
-    if (!_ratios){
-        _ratios = getUrl(
-            "/api/ratios/" + $("#valuation-ticker").val() + "/",
-            "Company Ratios Data"
-        );
-    }
-    return _ratios;
-}
-
-function get_dividends_annual(){
-    if (!_dividends_annual){
-        _dividends_annual = getUrl(
-            "/api/dividends/" + $("#valuation-ticker").val() + "/",
-            "Company Annual Dividend Data"
-        );
-    }
-    return _dividends_annual;
-}
-
-function get_dividends_reported(){
-    if (!_dividends_reported){
-        _dividends_reported = getUrl(
-            "/api/dividends/reported/" + $("#valuation-ticker").val() + "/",
-            "Company Reported Dividend Data"
-        );
-    }
-    return _dividends_reported;
-}
-
-function get_prices_daily(){
-    if (!_prices_daily){
-        _prices_daily = getUrl(
-            "/api/prices/daily/" + $("#valuation-ticker").val() + "/",
-            "Company Daily Historic Prices"
-        );
-    }
-    return _prices_daily;
-}
-
-function get_prices_annual(){
-    if (!_prices_annual){
-        _prices_annual = getUrl(
-            "/api/prices/annual/" + $("#valuation-ticker").val() + "/",
-            "Company Annual Historic Prices"
-        );
-    }
-    return _prices_annual;
-}
-
-function get_quote(){
-    if (!_quote){
-        _quote = getUrl(
-            "/api/quote/" + $("#valuation-ticker").val() + "/",
-            "Company Quote"
-        );
-    }
-    return _quote;
-}
-
-function get_profile(){
-    if (!_profile){
-        _profile = getUrl(
-            "/api/profile/" + $("#valuation-ticker").val() + "/",
-            "Company Profile"
-        );
-    }
-    return _profile;
-}
-
-function get_treasury(){
-    if (!_treasury){
-        _treasury = getUrl(
-            "/api/treasury/",
-            "Last Treasury Yield"
-        );
-    }
-    return _treasury;
-}
-
-function get_treasury_daily(length=0){
-    if (!_treasury_daily){
-        _treasury_daily = getUrl(
-            "/api/treasury/daily/" + appendTreasuriesLength(length),
-            "Daily Treasury Yields"
-        );
-    }
-    return _treasury_daily;
-}
-
-function get_treasury_monthly(length=0){
-    if (!_treasury_monthly){
-        _treasury_monthly = getUrl(
-            "/api/treasury/monthly/" + appendTreasuriesLength(length),
-            "Monthly Treasury Yields"
-        );
-    }
-    return _treasury_monthly;
-}
-
-function get_treasury_annual(length=0){
-    if (!_treasury_annual){
-        _treasury_annual = getUrl(
-            "/api/treasury/annual/" + appendTreasuriesLength(length),
-            "Annual Treasury Yields"
-        );
-    }
-    return _treasury_annual;
-}
-
-function get_analyst_estimates(){
-    if (!_estimates){
-        _estimates = getUrl(
-            "/api/analyst-estimates/" + $("#valuation-ticker").val() + "/",
-            "Analyst Estimates"
-        );
-    }
-    return _estimates;
-}
-
-function get_fx(){
-    if (!_fx){
-        _fx = getUrl(
-            "/api/fx/",
-            "FX Data"
-        );
-    }
-    return _fx;
-}
-
-function get_risk_premium(){
-    if (!_risk_premium){
-        _risk_premium = getUrl(
-            "/api/risk-premium/" + $("#valuation-ticker").val() + "/",
-            "Country Risk Premium"
-        );
-    }
-    return _risk_premium;
-}
-
-// api/institutional-holders/<str:ticker>/<str:date>/
-function get_institutional_holders(date){
-    if (!(date in _institutional_holders)){
-        _institutional_holders[date] = getUrl(
-            "/api/institutional-holders/" + $("#valuation-ticker").val() + "/" + date + "/",
-            "Institutional Holders"
-        );
-    }
-    return _institutional_holders[date];
-}
-
-var inputDescriptionHasBeenSet = false;
-
-function appendInputRow(key, value, parentsChildren=[], editedParams=[]){
-    var $inputSection = $('.modal-inputs');
-    var childOrParent = 'parent-input';
-    var childOf = '';
-    var arrow = '';
-    for(var i in parentsChildren){
-        if('children' in parentsChildren[i] && parentsChildren[i].children.includes(key)){
-            childOrParent = 'child-input';
-            childOf = parentsChildren[i].parent;
-            arrow = '↳ ';
-        }
-        if(key == parentsChildren[i].parent && !inputDescriptionHasBeenSet){
-            /*$('.modal-inputs-description').append(
-                parentsChildren[i].description
-            );*/
-            inputDescriptionHasBeenSet = true;
-            break;
-        }
-    }
-
-    var iteration = 0;
-    iteration += 1;
-
-    var step = '';
-    var $inputFieldDiv = $('<div/>').append(
-                $('<input/>').attr('step', step).attr('type', 'number').css(
-                    {}//{"margin-bottom": "2px", "margin-top": "2px"}
-                ).addClass(
-                    textColor
-                ).addClass(
-                    'input-assumption text-right form-control'
-                ).addClass(key).attr('value', value).attr('name', key).attr('id', key)
-            ).addClass('input-container shadow-sm input-group input-group-sm');
-    var percentage = '#';
-    if(key.charAt(0) == '_'){
-        percentage = '%';
-        /*$inputFieldDiv.append(
-                $('<div/>').append(
-                    $('<span/>').text('%').addClass('input-group-text')
-                ).addClass('input-group-append')
-            );*/
-        step = 0.1;
-        if ( $.isNumeric(_INPUT_GLOBAL[key]) ){
-            // affects returned dict
-            _INPUT_GLOBAL[key] /= 100;
-        }
-    }
-    $inputFieldDiv.append(
-                $('<div/>').append(
-                    $('<span/>').text(percentage).addClass('input-group-text text-center').css({'width': '29', 'height': '31'})
-                ).addClass('input-group-append')
-            );
-    var textColor = '';
-    if(editedParams.includes(key)){
-        textColor = 'text-primary';
-    }
-    var appendInput = $('<div/>').append(
-        $('<div/>').append(
-            $('<label/>').text(
-                arrow + key.toString().toLowerCase().replace(/_/g, ' ')
-            ).attr('for', key).addClass('my-auto p-0 text-capitalize')
-        ).addClass('col align-self-center')
-    ).append(
-        $('<div/>').append(
-            $inputFieldDiv
-        ).addClass('col-auto d-flex')
-    ).addClass('dynamic-size-row row form-group').addClass(childOrParent).attr('id', key);
-    // see where you need to append it
-    if(childOf){
-        $('#'+childOf).after(appendInput);
-    }
-    else{
-        $inputSection.append(appendInput);
-    }
-}
-
-// Add a description to the top of the window
-function Description(ShortDescription, ShowMore=''){
-    $('.heading-description').show();
-    var descriptionSection = $('.modal-description');
-    /* Show More is DEPRECATED
-    var showMoreHTML = '';
-    if (ShowMore != ''){
-        showMoreHTML = `
-        <p class='text-center pt-2'>
-          <a class="btn btn-outline-primary btn-sm" data-toggle="collapse" href="#collapseMoreText" role="button" aria-expanded="false" aria-controls="collapseMoreText">
-            <span class="collapsed">
-                Read More
-            </span>
-            <span class="expanded">
-                Read Less
-            </span>
-          </a>
-        </p>
-        <div class="collapse" id="collapseMoreText">
-          <div class="card card-body">
-            ` + ShowMore + `
-          </div>
-        </div>
-        `;
-    }
-    */
-    var appendDescription = '<span class="short-description">' + ShortDescription + '</span>';
-    descriptionSection.append(appendDescription);
-    // descriptionSection.append(showMoreHTML);
-    // MathJax.typeset();
-}
-
 function hideAllHeadings(){
     $('.section-estimated-value').css('display', 'none');
     $('.heading-description').css('display', 'none');
@@ -438,25 +32,11 @@ function hideAllHeadings(){
     $('.heading-charts').css('display', 'none');
 }
 
-$("#export-tables").click(function() {
-    var tables = $('.modal-tables').find('.table').not('.sticky-thead');
-    var wb = TableToExcel.initWorkBook();
-    for(var i = 0; i<tables.length; i++){
-        var opt = {
-           sheet: {
-              name: $(tables[i]).attr('header').slice(0, 30) // sheetName cannot exceed 30 chars
-           }
-        };
-        TableToExcel.tableToSheet(wb, tables[i], opt);
-    }
-    TableToExcel.save(wb, $('#hidden-ticker-name').val() +'_discountingcashflows.xlsx');
-});
-
 function appendTable(item, modalTablesSection, tablesCount){
     var nf = new Intl.NumberFormat('en-US');
     modalTablesSection.append('<h5 class="mt-3 mb-0">' + item.name + '</h5>');
     if(item.subtitle){
-        modalTablesSection.append('<p class="text-secondary mb-2">' + item.subtitle + '</p>');
+        modalTablesSection.append('<p class="text-body mb-2">' + item.subtitle + '</p>');
     }
     var display_averages = '';
     if(item.display_averages){
@@ -472,7 +52,7 @@ function appendTable(item, modalTablesSection, tablesCount){
         for(var i = 0; i < item.data.length; i++){
             var dataItem = item.data[i];
             tableString += '<tr>';
-            tableString += '<td class="row-description"><b><span class="row-description-text" nondev="'
+            tableString += '<td class="row-description"><b><span class="row-description-text" data-nondev="'
                         + item.rows[i] + '">' + item.rows[i] + '</span></b></td>';
             for(var j = 0; j < dataItem.length; j++){
                 var valueData = dataItem[j];
@@ -539,6 +119,16 @@ function resetChartInput(key, category){
     }
 }
 
+// convert a category like 2024 to an index like 1
+function forecastedCategoryToIndex(key, category){
+    for(var i=0; i<_chart_data['x_forecasted'].length; i++){
+        if(String(_chart_data['x_forecasted'][i]) == String(category)){
+            return i;
+        }
+    }
+    return -1;
+}
+
 // for splitting a chart input into key and category
 // example 1: !_returnOnEquity_2023; key='_returnOnEquity' and category=2023
 // example 2: !equity_2024; key='equity' and category=2024
@@ -583,12 +173,7 @@ function getHashParameters(type){
     return return_params;
 }
 
-// key = revenue
-// category = 2024
-// value = 102312.4
-function chartPointDrop(key, category, value){
-    addNumberFormatToHash();
-    // when modifying the forecasted values, update hash
+function updateHashWithSingleValue(key, category, value){
     if (location.hash){
         // if there is at least 1 param
         var inputFound = false;
@@ -602,6 +187,9 @@ function chartPointDrop(key, category, value){
                     String(category) == p[0].substr(indexOfParameter + 1) ){
                     // [Number(p[0].substr(indexOfParameter + 1))] = Number(p[1]);
                     p[1] = value;
+                    if(isValidNumber(p[1])){
+                        p[1] = roundValue(Number(p[1]));
+                    }
                     inputFound = true;
                 }
             }
@@ -624,6 +212,25 @@ function chartPointDrop(key, category, value){
         // if there are 0 params in the hash (no # present in url)
         location.hash = `!${key}_${category}=${value}`;
     }
+}
+
+// key = revenue
+// category = 2024
+// value = 102312.4
+function chartPointDrop(key, category, data){
+    addNumberFormatToHash();
+    // when modifying the forecasted values, update hash
+    if($.isArray(data)){
+        // data is multiples values have been passed
+        for(var i=0; i<data.length; i++){
+            // Update hash for every value in data
+            updateHashWithSingleValue(key, parseInt(category) + i, data[i]);
+        }
+    }
+    else{
+        // data is single value
+        updateHashWithSingleValue(key, category, data);
+    }
     $( "#modal-charts" ).trigger( "chartPointDrop" );
 }
 
@@ -635,21 +242,10 @@ function getPreviousValue(key, index){
     else{
         prevValue = _chart_data['y_forecasted'][key][index - 1];
     }
-    /*
-    if(isRate(key)){
-        prevValue = toR(prevValue);
-    }
-    */
     return prevValue;
 }
 function getValueFromForecastedInput(obj){
     var value = obj.val().replace('%', '');
-    /*
-    var key = obj.attr('key');
-    if(isRate(key)){
-        value = value.replace('%', '');
-    }
-    */
     return value;
 }
 function isBeingReset(value){
@@ -657,6 +253,17 @@ function isBeingReset(value){
         return true;
     }
     return false;
+}
+function getKeyGrowthRatesArray(key, index){
+    var rates = [];
+    var firstValue = roundValue(_chart_data['y_forecasted'][key][index]);
+    var secondValue = 0;
+    for(var i=index+1; i<_chart_data['y_forecasted'][key].length; i++){
+        secondValue = roundValue(_chart_data['y_forecasted'][key][i]);
+        rates.push(roundValue((secondValue - firstValue) / firstValue));
+        firstValue = secondValue;
+    }
+    return rates;
 }
 function keyupChangeForecastTable(obj, type){
     var key = obj.attr('key');
@@ -673,21 +280,33 @@ function keyupChangeForecastTable(obj, type){
             compare_value = roundValue(_chart_data['y_forecasted'][key][index]);
         }
         dropValue = value;
+        if(isValidNumber(value)){
+            // if new value is different from the old one compare_value
+            if( value == compare_value ){
+                return;
+            }
+        }
+        chartPointDrop(key, category, dropValue);
     }
     else if(type == 'growth'){
+        // We need to adjust all forward values to keep the same rates
+        // Store the rates
+        rates = getKeyGrowthRatesArray(key, index);
         // Triggered when a forecast Growth Rate is changed
         var previousValue = roundValue(getPreviousValue(key, index));
         var currentValue = roundValue(getPreviousValue(key, index + 1));
         compare_value = roundValue(toP((currentValue - previousValue)/previousValue), '%');
         dropValue = roundValue(previousValue * (1 + value/100));
-    }
-    if(isValidNumber(value)){
-        // if new value is different from the old one compare_value
-        if( value == compare_value ){
-            return;
+        percentage_value = roundValue(toP((dropValue - previousValue)/previousValue), '%');
+        // Compute values from rates
+        var values = [dropValue];
+        for(var i=0; i<rates.length; i++){
+            values.push(values[i] * (1 + rates[i]));
+        }
+        if(percentage_value != compare_value){
+            chartPointDrop(key, category, values);
         }
     }
-    chartPointDrop(key, category, dropValue);
 }
 
 // copy paste
@@ -714,26 +333,29 @@ function focusoutHandler(obj, type){
     if(isBeingReset(value)){
         var key = obj.attr('key');
         var category = obj.attr('category');
-        resetChartInput(key, category);
-        $( "#modal-charts" ).trigger( "chartPointDrop" );
+        if(type == 'growth'){
+            var index = forecastedCategoryToIndex(key, category);
+            // if type is growth, then we need to keep the same forward growth rates
+            var rates = getKeyGrowthRatesArray(key, index);
+            resetChartInput(key, category);
+            $("#modal-charts").trigger("chartPointDrop");
+            // update the remaining values
+            // get the value after reset
+            var values = [getPreviousValue(key, index + 1)];
+            for(var i=0; i<rates.length; i++){
+                values.push(values[i] * (1 + rates[i]));
+            }
+            chartPointDrop(key, category, values);
+        }
+        else{
+            resetChartInput(key, category);
+            $("#modal-charts").trigger("chartPointDrop");
+        }
     }
     else{
         keyupChangeForecastTable(obj, type);
     }
 }
-
-$('#chart-table').on("keyup change", '.chart-table-value', function(){
-    keyupChangeHandler($(this), 'value');
-});
-$('#chart-table').on("focusout", '.chart-table-value', function(){
-    focusoutHandler($(this), 'value');
-});
-$('#chart-table').on("keyup change", '.chart-table-percentage', function(){
-    keyupChangeHandler($(this), 'growth');
-});
-$('#chart-table').on("focusout", '.chart-table-percentage', function(){
-    focusoutHandler($(this), 'growth');
-});
 
 function addProperties(object){
     var properties = object.properties;
@@ -761,275 +383,89 @@ function addProperties(object){
     }
 }
 
-function appendChart(modalChartsSection){
-    modalChartsSection.append('<div id="model-chart"></div>');
+// print function
+function print(str, label='', type='', currency=''){
+    var nf = new Intl.NumberFormat('en-US');
+    var context = [];
+    var string = '';
 
-    var chart = Highcharts.chart('model-chart', {
-        title: {text: _chart_data['name'],align: 'left'},
-        subtitle: {text: _chart_data['subtitle'],align: 'left'},
-        xAxis: {
-            categories: _chart_data['x_historic'].concat(_chart_data['x_forecasted']),
-            gridLineWidth: 1
-        },
-        yAxis: {
-            minorTickInterval:"auto"
-        },
-        plotOptions: {
-            series: {
-                animation: false
-            }
-        },
-        exporting: {
-            buttons: {
-                contextButton: {
-                    align: 'right',
-                    symbolStroke: "#4e73df",
-                    verticalAlign: 'top'
-                    // x: 30
-                }
-            }
-        },
-        accessibility: {
-            enabled: false
-        },
-        series: [
-        ]
-    });
-    $.each(_chart_data['y_historic'], function(key,value){
-        // values are type string. needs conversion to Number()
-        var historic_data = value.map(str => {
-            return Number(str);
-        });
-        var forecasted_data = [];
-        if(_chart_data['y_forecasted'][key].length){
-            // values are type string. needs conversion to Number()
-            forecasted_data = _chart_data['y_forecasted'][key].map(str => {
-                return Number(str);
-            });
+    if(typeof(str) === 'number')
+    {
+        if(type == '%')
+        {
+            string = roundValue(toP(str), '%');
+            string += '%';
         }
-        forecasted_data.forEach(function (forecasted_value, forecasted_data_index){
-            forecasted_data[forecasted_data_index] = {
-                y: forecasted_value,
-                forecasted: true
+        else if(type == '#')
+        {
+            if (str >= 1000000 || str <= -1000000){
+                string = nf.format(roundValue(toM(str)));
+                string += ' Mil.';
             }
-        });
-        var data = historic_data.concat(forecasted_data);
-        var visible = true;
-        if(_chart_data['hidden_series'].includes(key)){
-            visible = false;
-        }
-        var tooltipSuffix = '';
-        if(isRate(key)){
-            tooltipSuffix='%';
-            for(var i in data){
-                data[i] = toR(data[i]);
-            }
-        }
-        var tooltip_valueDecimals = 2;
-        var dragDrop_dragPrecisionY = 0.01;
-        if(_chart_data['number_format']){
-            tooltip_valueDecimals = 0;
-            var minValue = minimum(reportKeyToList(forecasted_data, 'y'));
-            minValue = absolute(minValue, _chart_data['number_format']);
-            if(!minValue && minValue < 1){
-                // keep dragDrop_dragPrecisionY = 0.01
-            }
-            else if(minValue < 10){
-                dragDrop_dragPrecisionY = 0.1;
-            }
-            else if(minValue < 100){
-                dragDrop_dragPrecisionY = 1;
-            }
-            else if(minValue < 1000){
-                dragDrop_dragPrecisionY = 10;
-            }
-            else if(minValue < 10000){
-                dragDrop_dragPrecisionY = 100;
+            else if (str >= 1000 || str <= -1000){
+                string = nf.format(roundValue(toK(str)));
+                string += ' Thou.';
             }
             else{
-                dragDrop_dragPrecisionY = 1000;
+                string = nf.format(str);
             }
         }
-        chart.addSeries({
-                name: getKeyName(key),
-                key_name: key,
-                visible: visible,
-                dragDrop: {
-                    draggableY: true,
-                    dragPrecisionY: dragDrop_dragPrecisionY
-                },
-                point: {
-                    events: {
-                        drag: function(e) {
-                            if (!this.forecasted) {
-                                return false;
-                            }
-                        },
-                        drop: function() {
-                            if (!this.forecasted) {
-                                return false;
-                            }
-                            chartPointDrop(this.series.userOptions.key_name, this.category, Highcharts.numberFormat(this.y, 2).replace(/ /g,''));
-                        }
-                    }
-                },
-                tooltip: {
-                    valueSuffix: tooltipSuffix,
-                    valueDecimals: tooltip_valueDecimals
-                },
-                data: data,
-                zoneAxis: 'x',
-                zones: [{
-                    value: historic_data.length - 1
-                }, {
-                    dashStyle: 'dot'
-                }],
-                events: {
-                    hide: function () {
-                        if(!(_chart_data['hidden_series'].includes(this.userOptions.key_name))){
-                            _chart_data['hidden_series'].push(this.userOptions.key_name);
-                        }
-                    },
-                    show: function () {
-                        var hidden_series = [];
-                        var key_name = this.userOptions.key_name;
-                        _chart_data['hidden_series'].forEach(function(val, i){
-                            if(val != key_name){
-                                hidden_series.push(val);
-                            }
-                        });
-                        _chart_data['hidden_series'] = hidden_series;
-                    }
-                }
-        });
-    });
-
-    // create the forecast table only if there are forecasted points on the chart
-    if(_chart_data['x_forecasted'].length){
-        // build <thead>
-        $tableHead = $('<tr/>').append( $('<th/>').addClass('bg-light').css('font-weight', 'normal').text('Forecast Years').prepend(
-            $('<i/>').addClass('fas fa-edit fa-sm mr-1')
-        ) );
-        _chart_data['x_forecasted'].forEach(function(val, i){
-            $tableHead.append(
-                $('<th/>').attr('scope', 'col').addClass('bg-light text-center').append(
-                    $('<span/>').text(val)
-                )
-            );
-        });
-        $tableHead = $('<thead/>').append( $tableHead ).addClass('thead-light');
-
-        // build tbody
-        $tableBody = $('<tbody/>');
-        var forecastedPoints = Object.assign({}, _chart_data['y_forecasted'], _chart_data['y_forecasted_chart_hidden']);
-        Object.keys(forecastedPoints).forEach(function(key){
-            if(forecastedPoints[key].length){
-                $tbodyTrValues = $('<tr>').append(
-                    $('<td/>').attr('scope', 'row').addClass('align-middle row-description').text(getKeyName(key))
-                );
-                var valueClassName = 'chart-table-value';
-                if(key in _chart_data['y_forecasted_chart_hidden']){
-                    valueClassName = 'hidden-chart-table-value';
-                }
-                forecastedPoints[key].forEach(function(val, i){
-                    if(isRate(key)){
-                        val = roundValue(toP(val), '%') + '%';
-                    }
-                    else{
-                        val = roundValue(val);
-                    }
-                    $tbodyTrValues.append(
-                        $('<td/>').append(
-                            $('<input/>').attr('type', 'text').addClass(
-                                'text-center form-control form-control-sm border-0 rounded-0 ' + valueClassName
-                            ).attr(
-                                'id', valueClassName + '-' + key + '-' + i
-                            ).attr('key', key).attr('index', i).attr('category', _chart_data['x_forecasted'][i]).val(val)
-                        )
-                    );
-                });
-                $tableBody.append($tbodyTrValues);
-
-                // if the key is not in the y_historic, we shouldn't show % growth
-                if(key in _chart_data['y_historic'] && !_chart_data['hide_growth'].includes(key)){
-                    $tbodyPercentages = $('<tr/>').append(
-                        $('<td/>').addClass('row-description').append(
-                            $('<p/>').text('↳ ').append($('<span/>').text('Growth Rate').addClass('small')).addClass('text-center')
-                        )
-                    ).addClass('border-left-light');
-
-                    var lastHistoricValue = 0;
-                    if(_chart_data['y_historic'][key].length > 2){
-                        lastHistoricValue = _chart_data['y_historic'][key][_chart_data['y_historic'][key].length - 1];
-                    }
-                    var firstValue = roundValue(lastHistoricValue);
-                    var secondValue = 0;
-                    var percentage = 0;
-                    var percentageClassName = 'chart-table-percentage';
-                    for(var i=0; i<_chart_data['y_forecasted'][key].length; i++){
-                        secondValue = roundValue(_chart_data['y_forecasted'][key][i]);
-                        percentage = roundValue(toP((secondValue - firstValue) / firstValue), '%');
-                        firstValue = secondValue;
-                        $tbodyPercentages.append(
-                            $('<td/>').append(
-                                $('<input/>').attr('type', 'text').addClass(
-                                    'text-center form-control form-control-sm border-0 rounded-0 ' + percentageClassName // watch the space
-                                ).attr(
-                                    'id', percentageClassName + '-' + key + '-' + i
-                                ).attr('key', key).attr('index', i).attr('category', _chart_data['x_forecasted'][i]).val(String(percentage) + '%')
-                            )
-                        );
-                    }
-                    $tableBody.append($tbodyPercentages);
-                }
-            }
-        });
-
-        // Chart table section id="chart-table"
-        $('#chart-table').empty();
-        $table = $('<table/>').append(
-            $tableHead
-        ).append(
-            $tableBody
-        ).addClass('table table-sticky border table-sm text-dark forecast-table');
-         $('#chart-table').append($table);
-         var cellHeight = $('#chart-table').find('tr:nth-child(2)').first().height();
-         $('#chart-table').find('td').each(function(){
-            // $(this).height(cellHeight-7); // don't know where the extra 7px come from
-            $(this).height(32);
-         });
+        else
+        {
+            string = String(str);
+        }
+    }
+    else
+    {
+        string = String(str);
+    }
+    if (label){
+        context.push({name:label, display:'value', data:string, currency: currency});
     }
     else{
-        // hide delete all chart points button #212
-        $('#btn-delete-all-chart-points').hide();
+        context.push({name:string, display:'value', data:'', currency:currency});
     }
+    monitor(context);
+    return;
 }
 
-// this function is called only on #btn-delete-all-chart-points clicked()
-function deleteAllChartPoints(e){
-    e.preventDefault();
-    if (location.hash){
-        var hashParams = window.location.hash.substr(1).split('&'); // substr(1) to remove the `#`
-        var buildHash = '';
-        for(var i = 0; i < hashParams.length; i++){
-            var p = hashParams[i].split('=');
-            if(p[0].charAt(0) == '!'){
-                continue;
-            }
-            if(buildHash){
-                buildHash += `&${p[0]}=${p[1]}`;
-            }
-            else{
-                buildHash = `${p[0]}=${p[1]}`;
-            }
-        }
-        location.hash = buildHash;
+function throwError(message){
+    var err;
+    if(typeof(message) == 'string'){
+        err = new Error();
     }
-    _bound_inputs.forEach(function(val, i){
-        _INPUT_GLOBAL[val] = '';
-    });
-    _chart_data['hidden_series'] = [];
-    _chart_data['added_properties'] = false;
+    else if(typeof(message) == 'object'){
+        err = message;
+    }
+    var caller_line = err.stack;
+    var index = caller_line.indexOf("eval:") + 5;
+    var end = caller_line.slice(index).indexOf(':');
+    var clean = caller_line.slice(index, index + end);
+    console.error(message+"\nValuation Code Line:"+clean);
+    alertify.notify(message+"\nValuation Code Line:"+clean, 'error', 0);
+}
+
+function throwWarning(message){
+    var err = new Error();
+    var caller_line = err.stack;
+    var index = caller_line.indexOf("eval:") + 5;
+    var end = caller_line.slice(index).indexOf(':');
+    var clean = caller_line.slice(index, index + end);
+    console.warn(message+"\nValuation Code Line:"+clean);
+    alertify.notify(message, 'warning', 0);
+}
+
+function console_warning(text){
+    console.warn(text);
+}
+function warning(message){
+    $('#warning-alert').show();
+    $('#warning-alert-message').text(message);
+}
+
+function error(message){
+    $('#error-alert').show();
+    $('#error-alert-message').text(message);
 }
 
 // this function is called only on #btn-delete-all-assumptions clicked()
@@ -1105,23 +541,30 @@ function monitor(context){
             var item = context[i];
             if(item.display == 'value'){
                 var textColor = '';
-                if (item.name.toUpperCase() == 'ERROR'){
-                    textColor = 'text-danger';
+                console.log(item.name);
+                if(item.name.includes('{Success}')){
+                    textColor = 'text-success';
+                    item.name = item.name.replace('{Success}', '').trim();
                 }
+                else if(item.name.includes('{Danger}')){
+                    textColor = 'text-danger';
+                    item.name = item.name.replace('{Danger}', '').trim();
+                }
+
+                // if (item.name == 'ERROR'){}
                 $('.heading-values').show();
                 modalValuesSection.append('<li class="dynamic-size-row list-group-item py-1 px-0 ' + textColor + ' ">' + item.name +
-                                 '<div class="float-right"><span class="mr-1">' + item.data + '</span><span>' + item.currency + '</span></li>');
+                                 '<div class="float-end"><span class="me-1">' + item.data + '</span><span>' + item.currency + '</span></li>');
 
-                // Will soon be DEPRECATED
                 if(item.name){
-                    global_str += '>>> ' + item.name + ': ' + item.data + ' ' + item.currency + '\n';
+                    global_str += '> "' + item.name + '": ' + item.data + ' ' + item.currency + '\n';
                 }
                 else{
-                    global_str += '>>> ' + item.data + ' ' + item.currency + '\n';
+                    global_str += '> ' + item.data + ' ' + item.currency + '\n';
                 }
                 // Dummy class
-                if(_CodeMirror_output != undefined){
-                    _CodeMirror_output.setValue(global_str);
+                if(code_log != undefined){
+                    code_log.setValue(global_str);
                 }
             }
             else if(item.display == 'table'){
@@ -1135,15 +578,12 @@ function monitor(context){
                 //appendChart(item, modalChartsSection);
             }
             else{
-                modalValuesSection.append('<li class="list-group-item text-danger">Error: No display type! <span class="float-right">' + String(item) + '</span></li>');
+                modalValuesSection.append('<li class="list-group-item text-danger">Error: No display type! <span class="float-end">' + String(item) + '</span></li>');
             }
         }
         // this function will set the width of the row-description elements
         // call this before the stickyTable calculates the width value
         setTableRowDescriptionWidth(true);
-
-        // After all tables have been appended, make their headers sticky
-        $(".table-sticky, .table-hover-custom").stickyTable({overflowy: true});
     }
     else{
         console.log("Error: Empty context passed!")
@@ -1282,7 +722,10 @@ function renderTable(table_object){
 
                 for(var i in object['row_headers']){
                     // format only numbers, and not the rates
-                    if(!object['row_headers'][i].includes('{%}') && !object['row_headers'][i].includes('{PerShare}')){
+                    if(!object['row_headers'][i].includes('{%}') &&
+                    !object['row_headers'][i].includes('{Boolean}') &&
+                    !object['row_headers'][i].includes('{PerShare}') &&
+                    !object['row_headers'][i].includes('{Unit}')){
                         // Remove the '{%}': object['row_headers'][i] = object['row_headers'][i].replace('{%}', '').trim();
                         // Convert the whole row to rate
                         if(object['properties']['number_format'] == 'M'){
@@ -1311,6 +754,9 @@ function renderTable(table_object){
             if('currency' in object['properties'] && object['properties']['currency']){
                 tableSubtitle += object['properties']['currency'];
             }
+            else{
+                tableSubtitle = '';
+            }
             if(table_has_per_share_items){
                 if('number_format' in object['properties'] && object['properties']['number_format']){
                     tableSubtitle += ', except for (Per Share) items';
@@ -1329,7 +775,11 @@ function renderTable(table_object){
             }
             // see if there are any per share rows
             else if(object['row_headers'][i].includes('{PerShare}')){
-                object['row_headers'][i] = object['row_headers'][i].replace('{PerShare}', '').concat(" ", '(Per Share)');;
+                // object['row_headers'][i] = object['row_headers'][i].replace('{PerShare}', '').concat(" ", '(Per Share)');
+            }
+            // see if there are any per share rows
+            else if(object['row_headers'][i].includes('{Boolean}')){
+                // object['row_headers'][i] = object['row_headers'][i].replace('{Boolean}', '').concat(" ", '(Boolean)');
             }
         }
         context.push({
@@ -1505,49 +955,9 @@ function chartFill(object){
     }
 }
 
-/*
-{
-  start_date: nextYear,
-  keys: ['revenue', 'operatingCashFlow', 'freeCashFlow'],
-}
-*/
-
 function _edit(){
     return location.hash;
 }
-
-// Go through the url parameters and see if any !eps_2024=3.5
-// if it was found, return the value
-// else return null
-/*
-function getValueFromEditableKey(date, key){
-    var token = key + "_" + String(date);
-    if (location.hash && location.hash.includes(token)){
-        // var index_of_token = location.hash.indexOf(token);
-        // var remaining_string = location.hash.slice(index_of_token);
-        var value = location.hash.slice(location.hash.indexOf(token)).split('&')[0].split('=')[1];
-        if(isValidNumber(value)){
-            value = Number(value);
-            if(isRate(token)){
-                value = toN(value);
-            }
-            else{
-                var number_format = getNumberFormatFromHash();
-                if(number_format){
-                    if(number_format == 'M'){
-                        value /= toM(1);
-                    }
-                    else if(number_format == 'K'){
-                        value /= toK(1);
-                    }
-                }
-            }
-            return value;
-        }
-    }
-    return null;
-}
-*/
 
 // forecast() uses the 'x_historic' member's last date for correct indexing
 // forecast points in a separate table for rates like return on equity, discount rates, etc.
@@ -1622,10 +1032,7 @@ function modifiedInput(key){
             _modified_inputs.push(key);
         }
     }
-    else{
-        // Comes from Input()->modifiedInput() company_valuation.js
-        // console.trace();
-    }
+    // else -> Comes from Input()->modifiedInput() company_valuation.js
 }
 
 // Delete Input from _modified_inputs list
@@ -1664,6 +1071,44 @@ function resetInput(key){
     _modified_inputs = modified_inputs;
 }
 
+function rerunWithInput(){
+    console.log('rerunWithInput...');
+    var topPos = document.documentElement.scrollTop || document.body.scrollTop || 0;
+    var modalDescriptionSection = $('.modal-description');
+    var modalValuesSection = $('.modal-values');
+    var modalTablesSection = $('.modal-tables');
+    var modalChartsSection = $('.modal-charts');
+    // Set a fixed height of each section to prevent Firefox scrolling through the page
+    modalDescriptionSection.height(modalDescriptionSection.height());
+    modalValuesSection.height(modalValuesSection.height());
+    modalTablesSection.height(modalTablesSection.height());
+    modalChartsSection.height(modalChartsSection.height());
+
+    modalDescriptionSection.empty();
+    modalValuesSection.empty();
+    modalTablesSection.empty();
+    modalChartsSection.empty();
+    //hideAllHeadings();
+    $('.heading-inputs').css('display', 'inherit');
+    // specific to company valuation
+    $('#warning-alert').css('display', 'none');
+    var valuation_ticker = $("#valuation-ticker").val();
+
+    if (valuation_ticker){
+        try {
+            eval($('#valuation_code_preload').val());
+        } catch (error) {
+            print(error);
+            console.error(error);
+        }
+    }
+    else{
+        print("Empty ticker");
+    }
+    document.documentElement.scrollTop = topPos;
+    SetUserEdits();
+}
+
 function setAssumption(Key, Value){
     var roundedVal = 0;
     if (!_modified_inputs.includes(Key)){
@@ -1690,80 +1135,778 @@ function getAssumption(key){
     return '';
 }
 
-// print function
-function print(str, label='', type='', currency=''){
-    var nf = new Intl.NumberFormat('en-US');
-    var context = [];
-    var string = '';
-
-    if(typeof(str) === 'number')
-    {
-        if(type == '%')
-        {
-            string = roundValue(toP(str), '%');
-            string += '%';
-        }
-        else if(type == '#')
-        {
-            if (str >= 1000000){
-                string = nf.format(roundValue(toM(str)));
-                string += ' Mil.';
+// this function is called only on #btn-delete-all-chart-points clicked()
+function deleteAllChartPoints(e){
+    e.preventDefault();
+    if (location.hash){
+        var hashParams = window.location.hash.substr(1).split('&'); // substr(1) to remove the `#`
+        var buildHash = '';
+        for(var i = 0; i < hashParams.length; i++){
+            var p = hashParams[i].split('=');
+            if(p[0].charAt(0) == '!'){
+                continue;
             }
-            else if (str >= 1000){
-                string = nf.format(roundValue(toK(str)));
-                string += ' Thou.';
+            if(buildHash){
+                buildHash += `&${p[0]}=${p[1]}`;
             }
             else{
-                string = nf.format(str);
+                buildHash = `${p[0]}=${p[1]}`;
             }
         }
-        else
-        {
-            string = String(str);
+        location.hash = buildHash;
+    }
+    _bound_inputs.forEach(function(val, i){
+        _INPUT_GLOBAL[val] = '';
+    });
+    _chart_data['hidden_series'] = [];
+    _chart_data['added_properties'] = false;
+}
+
+var _function_highcharts_init__properties = {
+    init: function(section){
+        // The section needs to be pushed first
+        if(section){
+            this.sections.push(section);
+        }
+        if(!this.enabled){
+            _function_highcharts_init(_function_highcharts_init__callback);
+            this.enabled = true;
+        }
+        else if(this.rerun_active){
+            _function_highcharts_init__callback();
+            return;
+        }
+    },
+    rerun_active: false,
+    enabled: false,
+    sections: []
+};
+var _function_highcharts_init__callback = function(){
+    _function_highcharts_init__properties.rerun_active = true;
+    const sections = _function_highcharts_init__properties.sections;
+    if(sections.includes('valueBarChart')){
+        $('#valueBarChart').remove();
+        $('#chart-container').append('<div id="valueBarChart" style="height:128px;"></div>');
+        // #valueBarChart Estimated Value Init
+        var valueBarChart = new Highcharts.Chart({
+            chart: {
+                type: 'bar',
+                renderTo: 'valueBarChart',
+                style: {
+                    fontFamily: 'Arial, sans-serif'
+                }
+            },
+            navigation: {
+                buttonOptions: {
+                    enabled: false
+                }
+            },
+            title: {
+                text: null
+            },
+            legend: {
+                enabled: false
+            },
+            xAxis: {
+                categories: _function_highcharts_init__properties.labels,
+                title: {
+                    text: null
+                },
+                labels: {
+                    formatter: function() {
+                        return this.value;
+                    }
+                }
+            },
+            yAxis: {
+                title: {
+                    text: null
+                },
+                labels: {
+                    enabled: false
+                },
+                gridLineWidth: 0
+            },
+            plotOptions: {
+                series: {
+                    borderWidth: 1,
+                    dataLabels: {
+                        enabled: true,
+                        formatter: function () {
+                            return this.y.toFixed(2) + ' ' + _function_highcharts_init__properties.currency;
+                        }
+                    }
+                },
+                bar: {
+                    pointPadding: 0.85,
+                    groupPadding: 1
+                }
+            },
+            tooltip: {
+                formatter: function () {
+                    return '<b>' + this.point.category + '</b><br/>' + Highcharts.numberFormat(this.y, 2) + ' ' + _function_highcharts_init__properties.currency;
+                }
+            },
+            series: [{
+                data: _function_highcharts_init__properties.data
+            }],
+            credits: {
+                enabled: false
+            }
+        });
+    }
+    if(sections.includes('model-chart')){
+        _function_highcharts_init__properties.modalChartsSection.append('<div id="model-chart"></div>');
+        // #model-chart Model Chart
+        var chart = Highcharts.chart('model-chart', {
+            title: {text: _chart_data['name'],align: 'left'},
+            subtitle: {text: _chart_data['subtitle'],align: 'left'},
+            xAxis: {
+                categories: _chart_data['x_historic'].concat(_chart_data['x_forecasted']),
+                gridLineWidth: 1
+            },
+            yAxis: {
+                minorTickInterval:"auto"
+            },
+            plotOptions: {
+                series: {
+                    animation: false
+                }
+            },
+            exporting: {
+                buttons: {
+                    contextButton: {
+                        align: 'right',
+                        symbolStroke: "#4e73df",
+                        verticalAlign: 'top'
+                        // x: 30
+                    }
+                }
+            },
+            accessibility: {
+                enabled: false
+            },
+            series: [
+            ]
+        });
+        $.each(_chart_data['y_historic'], function(key,value){
+            // values are type string. needs conversion to Number()
+            var historic_data = value.map(str => {
+                return Number(str);
+            });
+            var forecasted_data = [];
+            if(_chart_data['y_forecasted'][key].length){
+                // values are type string. needs conversion to Number()
+                forecasted_data = _chart_data['y_forecasted'][key].map(str => {
+                    return Number(str);
+                });
+            }
+            forecasted_data.forEach(function (forecasted_value, forecasted_data_index){
+                forecasted_data[forecasted_data_index] = {
+                    y: forecasted_value,
+                    forecasted: true
+                }
+            });
+            var data = historic_data.concat(forecasted_data);
+            var visible = true;
+            if(_chart_data['hidden_series'].includes(key)){
+                visible = false;
+            }
+            var tooltipSuffix = '';
+            if(isRate(key)){
+                tooltipSuffix='%';
+                for(var i in data){
+                    data[i] = toR(data[i]);
+                }
+            }
+            var tooltip_valueDecimals = 2;
+            var dragDrop_dragPrecisionY = 0.01;
+            if(_chart_data['number_format']){
+                tooltip_valueDecimals = 0;
+                var minValue = minimum(reportKeyToList(forecasted_data, 'y'));
+                minValue = absolute(minValue, _chart_data['number_format']);
+                if(!minValue && minValue < 1){
+                    // keep dragDrop_dragPrecisionY = 0.01
+                }
+                else if(minValue < 10){
+                    dragDrop_dragPrecisionY = 0.1;
+                }
+                else if(minValue < 100){
+                    dragDrop_dragPrecisionY = 1;
+                }
+                else if(minValue < 1000){
+                    dragDrop_dragPrecisionY = 10;
+                }
+                else if(minValue < 10000){
+                    dragDrop_dragPrecisionY = 100;
+                }
+                else{
+                    dragDrop_dragPrecisionY = 1000;
+                }
+            }
+            chart.addSeries({
+                    name: getKeyName(key),
+                    key_name: key,
+                    visible: visible,
+                    dragDrop: {
+                        draggableY: true,
+                        dragPrecisionY: dragDrop_dragPrecisionY
+                    },
+                    point: {
+                        events: {
+                            drag: function(e) {
+                                if (!this.forecasted) {
+                                    return false;
+                                }
+                            },
+                            drop: function() {
+                                if (!this.forecasted) {
+                                    return false;
+                                }
+                                chartPointDrop(this.series.userOptions.key_name, this.category, Highcharts.numberFormat(this.y, 2).replace(/ /g,''));
+                            }
+                        }
+                    },
+                    tooltip: {
+                        valueSuffix: tooltipSuffix,
+                        valueDecimals: tooltip_valueDecimals
+                    },
+                    data: data,
+                    zoneAxis: 'x',
+                    zones: [{
+                        value: historic_data.length - 1
+                    }, {
+                        dashStyle: 'dot'
+                    }],
+                    events: {
+                        hide: function () {
+                            if(!(_chart_data['hidden_series'].includes(this.userOptions.key_name))){
+                                _chart_data['hidden_series'].push(this.userOptions.key_name);
+                            }
+                        },
+                        show: function () {
+                            var hidden_series = [];
+                            var key_name = this.userOptions.key_name;
+                            _chart_data['hidden_series'].forEach(function(val, i){
+                                if(val != key_name){
+                                    hidden_series.push(val);
+                                }
+                            });
+                            _chart_data['hidden_series'] = hidden_series;
+                        }
+                    }
+            });
+        });
+
+        // create the forecast table only if there are forecasted points on the chart
+        if(_chart_data['x_forecasted'].length){
+            // build <thead>
+            $tableHead = $('<tr/>').append( $('<th/>').addClass('bg-light icon-aligned').css('font-weight', 'normal').text('Forecast Table').prepend(
+                $('<i/>').attr('data-feather', 'edit-3')
+            ) );
+            _chart_data['x_forecasted'].forEach(function(val, i){
+                $tableHead.append(
+                    $('<th/>').attr('scope', 'col').addClass('bg-light text-center').append(
+                        $('<span/>').text(val)
+                    )
+                );
+            });
+            $tableHead = $('<thead/>').append( $tableHead ).addClass('thead-light');
+
+            // build tbody
+            $tableBody = $('<tbody/>');
+            var forecastedPoints = Object.assign({}, _chart_data['y_forecasted'], _chart_data['y_forecasted_chart_hidden']);
+            Object.keys(forecastedPoints).forEach(function(key){
+                if(forecastedPoints[key].length){
+                    $tbodyTrValues = $('<tr>').append(
+                        $('<td/>').attr('scope', 'row').addClass('align-middle row-description').text(getKeyName(key))
+                    );
+                    var valueClassName = 'chart-table-value';
+                    if(key in _chart_data['y_forecasted_chart_hidden']){
+                        valueClassName = 'hidden-chart-table-value';
+                    }
+                    forecastedPoints[key].forEach(function(val, i){
+                        if(isRate(key)){
+                            val = roundValue(toP(val), '%') + '%';
+                        }
+                        else{
+                            val = roundValue(val);
+                        }
+                        $tbodyTrValues.append(
+                            $('<td/>').append(
+                                $('<input/>').attr('type', 'text').addClass(
+                                    'text-center form-control form-control-sm border-0 rounded-0 ' + valueClassName
+                                ).attr(
+                                    'id', valueClassName + '-' + key + '-' + i
+                                ).attr('key', key).attr('index', i).attr('category', _chart_data['x_forecasted'][i]).val(val)
+                            )
+                        );
+                    });
+                    $tableBody.append($tbodyTrValues);
+
+                    // if the key is not in the y_historic, we shouldn't show % growth
+                    if(key in _chart_data['y_historic'] && !_chart_data['hide_growth'].includes(key)){
+                        $tbodyPercentages = $('<tr/>').append(
+                            $('<td/>').addClass('row-description').append(
+                                $('<p/>').text('↳ ').append($('<span/>').text('Growth Rate').addClass('small')).addClass('text-center mb-0 mt-1')
+                            )
+                        ).addClass('border-left-light');
+
+                        var lastHistoricValue = 0;
+                        if(_chart_data['y_historic'][key].length > 2){
+                            lastHistoricValue = _chart_data['y_historic'][key][_chart_data['y_historic'][key].length - 1];
+                        }
+                        var firstValue = roundValue(lastHistoricValue);
+                        var secondValue = 0;
+                        var percentage = 0;
+                        var percentageClassName = 'chart-table-percentage';
+                        for(var i=0; i<_chart_data['y_forecasted'][key].length; i++){
+                            secondValue = roundValue(_chart_data['y_forecasted'][key][i]);
+                            percentage = roundValue(toP((secondValue - firstValue) / firstValue), '%');
+                            firstValue = secondValue;
+                            $tbodyPercentages.append(
+                                $('<td/>').append(
+                                    $('<input/>').attr('type', 'text').addClass(
+                                        'text-center form-control form-control-sm border-0 rounded-0 ' + percentageClassName // watch the space
+                                    ).attr(
+                                        'id', percentageClassName + '-' + key + '-' + i
+                                    ).attr('key', key).attr('index', i).attr('category', _chart_data['x_forecasted'][i]).val(String(percentage) + '%')
+                                )
+                            );
+                        }
+                        $tableBody.append($tbodyPercentages);
+                    }
+                }
+            });
+
+            // Chart table section id="chart-table"
+            $('#chart-table').empty();
+            $table = $('<table/>').append(
+                $tableHead
+            ).append(
+                $tableBody
+            ).addClass('table table-sticky border table-sm text-dark forecast-table');
+             $('#chart-table').append($table);
+             var cellHeight = $('#chart-table').find('tr:nth-child(2)').first().height();
+             $('#chart-table').find('td').each(function(){
+                // $(this).height(cellHeight-7); // don't know where the extra 7px come from
+                $(this).height(32);
+             });
+             feather.replace();
+        }
+        else{
+            // hide delete all chart points button #212
+            $('#btn-delete-all-chart-points').hide();
         }
     }
-    else
-    {
-        string = String(str);
+}
+function appendChart(modalChartsSection){
+    _function_highcharts_init__properties.modalChartsSection = modalChartsSection;
+    _function_highcharts_init__properties.init('model-chart');
+}
+function DisplayEstimatedValue(marketPrice, Value, Currency){
+    var backgroundColors = [];
+    var borderColors = [];
+    var percentage = overOrUndervaluedPercentage(marketPrice, Value);
+    if(Value < marketPrice){
+        $('#estimated-value-verdict').text(percentage + ' % Overvalued');
+        $('#estimated-value-verdict').removeClass('text-success').addClass('text-danger');
+        $('#estimated-value-verdict').attr('data-original-title',
+        'Market Price ('+ roundValue(marketPrice) +' '+ Currency +') is higher than the Estimated Value ('+ roundValue(Value) +' '+ Currency +'), which makes the stock Overvalued by ' +
+        roundValue(marketPrice - Value) +' '+ Currency +' ('+ percentage + '% Market Premium).');
+        backgroundColors = ["rgba(255, 99, 132, 0.2)", "rgba(78, 115, 223, 0.2)"];
+        borderColors = ["rgb(255, 99, 132)","rgb(78, 115, 223)"];
     }
-    if (label){
-        context.push({name:label, display:'value', data:string, currency: currency});
+    else if(Value > marketPrice){
+        $('#estimated-value-verdict').text(percentage + ' % Undervalued');
+        $('#estimated-value-verdict').removeClass('text-danger').addClass('text-success');
+        $('#estimated-value-verdict').attr('data-original-title',
+        'Market Price ('+ roundValue(marketPrice) +' '+ Currency +') is lower than the Estimated Value ('+ roundValue(Value) +' '+ Currency +'), which makes the stock Undervalued by ' +
+        roundValue(Value - marketPrice) +' '+ Currency +' ('+ percentage + '% Discount).');
+        backgroundColors = ["rgba(75, 192, 192, 0.2)", "rgba(78, 115, 223, 0.2)"];
+        borderColors = ["rgb(75, 192, 192)","rgb(78, 115, 223)"];
     }
     else{
-        context.push({name:'', display:'value', data:string, currency:currency});
+        $('#estimated-value-verdict').text('Market Price matches the Estimated Value');
+        backgroundColors = ["rgba(78, 115, 223, 0.2)", "rgba(78, 115, 223, 0.2)"];
+        borderColors = ["rgb(78, 115, 223)","rgb(78, 115, 223)"];
     }
-    monitor(context);
-    return;
+
+    // set the initial variables
+    _function_highcharts_init__properties.currency = Currency;
+    _function_highcharts_init__properties.labels = ["Market Price", "Estimated Value"];
+    _function_highcharts_init__properties.data = [
+        { y: marketPrice, color: backgroundColors[0], borderColor: borderColors[0] },
+        { y: parseFloat(Value.toFixed(2)), color: backgroundColors[1], borderColor: borderColors[1] }
+    ];
+    _function_highcharts_init__properties.init('valueBarChart');
+}
+function AnimateEstimatedValue(Value){
+    // function to animate the Estimated Value
+    $({someValue: 0}).animate({someValue: Value}, {
+      duration: 750,
+      easing:'swing', // can be anything
+      step: function() { // called on every step
+          // Update the element's text with rounded-up value:
+          $('#estimated-value').text(roundValue(this.someValue));
+      }
+    }).promise().done(function () {
+        // hard set the value after animation is done to be
+        // sure the value is correct
+        $('#estimated-value').text(roundValue(Value));
+    });
+}
+// This is the company valuation tab, not the watchlist. Allow valuation to continue by returning false.
+function _StopIfWatch(value, currency){return false;}
+function _SetEstimatedValue(value, currency){
+    // Could this be executed before page ready?
+    $('.section-estimated-value').show();
+    // we want to convert report currency USD to profile ccy CAD
+    $.when(
+      get_fx(),
+      get_profile()).done(function(response_fx, response_profile){
+        var profile = getDataFromResponse(response_profile);
+        // var originalCurrency = profile.originalCurrency;
+        var convertedCurrency = profile.convertedCurrency;
+        var profile = profile.report[0];
+
+        var fx = response_fx[0];
+        if(convertedCurrency != currency){
+            value = value * currencyRate(fx, currency, convertedCurrency);
+        }
+        AnimateEstimatedValue(value);
+        DisplayEstimatedValue(profile.price, value, convertedCurrency);
+
+        $('.estimated-value-currency').text(convertedCurrency);
+    });
+    return false; // false means "do not stop, since this is not a watch"
 }
 
-function throwError(message){
-    var err;
-    if(typeof(message) == 'string'){
-        err = new Error();
+// Description
+var _section_description__properties = {
+    init: function(){
+        if(this.enabled){
+            _section_description__callback();
+        }
+        return;
+    },
+    assumptions_descriptions_set: false,
+    enabled: false,
+};
+var _function_tippy_katex_init__callback = function(){
+    const ShortDescription = _section_description__properties.ShortDescription;
+    const AssumptionDescriptions = _section_description__properties.AssumptionDescriptions;
+    if(typeof(ShortDescription) == 'object' && ShortDescription.length){
+        // If the Short Description is an object, it should be in {Title}, {Paragraph}, etc. format
+        appendFormattedDescription($('.modal-description'), ShortDescription);
     }
-    else if(typeof(message) == 'object'){
-        err = message;
+    renderDescriptions({
+        data: AssumptionDescriptions,
+        selector: '.modal-description #{key}',  // {key} will be replaced with each key
+        placement: 'auto'
+    });
+    renderDescriptions({
+        data: AssumptionDescriptions,
+        selector: '#{key} .col label',  // {key} will be replaced with each key
+        placement: 'auto'
+    });
+};
+var _section_description__callback = function(){
+    const ShortDescription = _section_description__properties.ShortDescription;
+    const AssumptionDescriptions = _section_description__properties.AssumptionDescriptions;
+    $('.heading-description').show();
+    if(typeof(ShortDescription) == 'string' && ShortDescription.length){
+        // If the Short Description is a string, it should be in HTML format, so we can render it directly
+        var descriptionSection = $('.modal-description');
+        var appendDescription = '<span class="short-description">' + ShortDescription + '</span>';
+        descriptionSection.append(appendDescription);
     }
-    var caller_line = err.stack;
-    var index = caller_line.indexOf("eval:") + 5;
-    var end = caller_line.slice(index).indexOf(':');
-    var clean = caller_line.slice(index, index + end);
-    console.error(message+"\nValuation Code Line:"+clean);
-    alertify.notify(message+"\nValuation Code Line:"+clean, 'error', 0);
+    // AssumptionDescriptions Requires Katex + Tippy -> _function_tippy_katex_init__callback
+    if(AssumptionDescriptions && !_section_description__properties.assumptions_descriptions_set){
+        _section_description__properties.assumptions_descriptions_set = true;
+        _function_tippy_katex_init(_function_tippy_katex_init__callback);
+    }
+};
+function Description(ShortDescription, AssumptionDescriptions={}){
+    _section_description__properties.ShortDescription = ShortDescription;
+    _section_description__properties.AssumptionDescriptions = AssumptionDescriptions;
+    _section_description__properties.init();
+    // Enable after the init in order for it to work for rerun valuation
+    _section_description__properties.enabled = true;
 }
 
-function throwWarning(message){
-    var err = new Error();
-    var caller_line = err.stack;
-    var index = caller_line.indexOf("eval:") + 5;
-    var end = caller_line.slice(index).indexOf(':');
-    var clean = caller_line.slice(index, index + end);
-    console.warn(message+"\nValuation Code Line:"+clean);
-    alertify.notify(message, 'warning', 0);
+// Assumptions
+var inputDescriptionHasBeenSet = false;
+function appendInputRow(key, value, parentsChildren=[], editedParams=[]){
+    var $inputSection = $('.modal-inputs');
+    var childOrParent = 'parent-input';
+    var childOf = '';
+    var arrow = '';
+    for(var i in parentsChildren){
+        if('children' in parentsChildren[i] && parentsChildren[i].children.includes(key)){
+            childOrParent = 'child-input';
+            childOf = parentsChildren[i].parent;
+            arrow = '↳ ';
+        }
+        if(key == parentsChildren[i].parent && !inputDescriptionHasBeenSet){
+            /*$('.modal-inputs-description').append(
+                parentsChildren[i].description
+            );*/
+            inputDescriptionHasBeenSet = true;
+            break;
+        }
+    }
+
+    var iteration = 0;
+    iteration += 1;
+
+    var step = '';
+    var $inputFieldDiv = $('<div/>').append(
+                $('<input/>').attr('step', step).attr('type', 'number').css(
+                    {}//{"margin-bottom": "2px", "margin-top": "2px"}
+                ).addClass(
+                    textColor
+                ).addClass(
+                    'input-assumption text-end form-control text-dark'
+                ).addClass(key).attr('value', value).attr('name', key).attr('id', key)
+            ).addClass('input-container input-group input-group-sm input-group-joined border');
+    var percentage = '#';
+    if(key.charAt(0) == '_'){
+        percentage = '%';
+        /*$inputFieldDiv.append(
+                $('<div/>').append(
+                    $('<span/>').text('%').addClass('input-group-text')
+                ).addClass('input-group-append')
+            );*/
+        step = 0.1;
+        if ( $.isNumeric(_INPUT_GLOBAL[key]) ){
+            // affects returned dict
+            _INPUT_GLOBAL[key] /= 100;
+        }
+    }
+    $inputFieldDiv.append(
+                $('<div/>').append(
+                    $('<span/>').text(percentage).addClass('input-group-text bg-light text-center p-2').css({'width': '29', 'height': '100%'})
+                ).addClass('input-group-append')
+            );
+    var textColor = '';
+    if(editedParams.includes(key)){
+        textColor = 'text-primary';
+    }
+    var appendInput = $('<div/>').append(
+        $('<div/>').append(
+            $('<label/>').text(
+                arrow + formatInputKey(key)
+            ).attr('for', key).addClass('my-auto p-0 text-capitalize assumption-label')
+        ).addClass('col align-self-center')
+    ).append(
+        $('<div/>').append(
+            $inputFieldDiv
+        ).addClass('col-auto d-flex align-items-center')
+    ).addClass('dynamic-size-row row form-group').addClass(childOrParent).attr('id', key);
+    // see where you need to append it
+    if(childOf){
+        $('#'+childOf).after(appendInput);
+    }
+    else{
+        $inputSection.append(appendInput);
+    }
+}
+var _section_assumptions__properties = {
+    enabled: false,
+    appended: false,
+};
+var _section_assumptions__callback = function(){
+    if(_section_assumptions__properties.enabled){
+        $('.heading-inputs').show();
+    }
+    if(!_section_assumptions__properties.appended){
+        // append only once
+        $.each(_INPUT_GLOBAL, function(key, value) {
+            // ! is reserved for charting values
+            if(key.charAt(0) == '!'){
+                return true; // skip iteration
+            }
+            appendInputRow(
+                key,
+                value,
+                _section_assumptions__properties.ParentsChildren,
+                _section_assumptions__properties.editedParams
+            );
+
+            function RerunModel(obj){
+                resetChartData(); // function in valuation-functions.js that resets x values
+                var topPos = document.documentElement.scrollTop || document.body.scrollTop || 0;
+                var thisValue = obj.val();
+
+                if(key.charAt(0) == '_' && $.isNumeric(thisValue)){
+                    thisValue /= 100;
+                }
+                if(_INPUT_GLOBAL[key] != thisValue || thisValue == ''){
+                    // 'if' just for the hash parameters. we put unadjusted params (not /100 for rates)
+                    if($.isNumeric(thisValue)){
+                        if (location.hash){
+                            // if there is at least 1 param
+                            var inputFound = false;
+                            var hashParams = window.location.hash.substr(1).split('&'); // substr(1) to remove the `#`
+                            var buildHash = '';
+                            for(var i = 0; i < hashParams.length; i++){
+                                var p = hashParams[i].split('=');
+                                if(p[0] == obj.attr('name')){
+                                    // if the input is found, update its value
+                                    p[1] = obj.val();
+                                    inputFound = true;
+                                }
+                                if(buildHash){
+                                    buildHash += '&' + p[0] + '=' + p[1];
+                                }
+                                else{
+                                    buildHash = p[0] + '=' + p[1];
+                                }
+                            }
+                            if(inputFound){
+                                location.hash = buildHash;
+                            }
+                            else{
+                                // unadjusted $(this).val() value (can be adjusted for rate /100)
+                                location.hash += '&' + obj.attr('name') + '=' + obj.val();
+                            }
+                        }
+                        else{
+                            // if there are 0 params in the hash (no # present in url)
+                            location.hash = obj.attr('name') + '=' + obj.val();
+                        }
+                        modifiedInput(key);
+                        // put adjusted value in input dict. this will be returned in user code
+                        _INPUT_GLOBAL[key] = Number(thisValue);
+                    }
+                    else{
+                        _INPUT_GLOBAL[key] = thisValue;
+                    }
+                    // re-eval the code
+                    rerunWithInput();
+                }
+                document.documentElement.scrollTop = topPos;
+            }
+
+            // copy paste
+            var timer = 0;
+            $('.' + key).on("keyup change", function(e){
+                e.preventDefault();
+                if (timer) {
+                    clearTimeout(timer);
+                }
+                var obj = $(this);
+                // check if only tab was pressed, don't set anything because the value did not change
+                var code = e.keyCode || e.which;
+                if((obj.val() || obj.val() === 0) && code && code != '9'){
+                    timer = setTimeout(function(){
+                        if(obj.val() || obj.val() === 0){
+                            RerunModel(obj);
+                            timer=0;
+                        }
+                    }, 500);
+                }
+            });
+            $('.' + key).on("focusout", function(e){
+                e.preventDefault();
+                if($(this).val() === '' || $(this).val() === '-'){
+                    resetInput(key);
+                    timer = 0;
+                    RerunModel($(this));
+                }
+                else if(timer){
+                    RerunModel($(this));
+                }
+            });
+        });
+    }
+};
+function Input(OriginalInput, ParentsChildren=[]){
+    _section_assumptions__properties.ParentsChildren = ParentsChildren;
+    if(!_section_assumptions__properties.enabled){
+        _section_assumptions__properties.enabled = true;
+        var editedParams = [];
+        if (location.hash){
+            // if there are params in hash
+            var hashParams = window.location.hash.substr(1).split('&'); // substr(1) to remove the `#`
+            for(var i = 0; i < hashParams.length; i++){
+                var p = hashParams[i].split('=');
+                editedParams.push(p[0]);
+                if(isValidNumber(p[1])){
+                    OriginalInput[p[0]] = Number(p[1]);
+                }
+                else{
+                    // Prevent string hacks
+                    OriginalInput[p[0]] = '';
+                }
+                modifiedInput(p[0]);
+            }
+        }
+        _INPUT_GLOBAL = OriginalInput;
+        _section_assumptions__properties.editedParams = editedParams;
+    }
+    else{
+        $.each(OriginalInput, function(key, value) {
+            if(_INPUT_GLOBAL[key] === '' || _INPUT_GLOBAL[key] === '-'){
+                if(key.charAt(0) == '_'){
+                    if ( $.isNumeric(value) ){
+                        _INPUT_GLOBAL[key] = value / 100;
+                    }
+                }
+                else{
+                    _INPUT_GLOBAL[key] = value;
+                }
+                // Set the input value
+                $('.' + key).val(value);
+            }
+        });
+    }
+    return _INPUT_GLOBAL;
 }
 
-function console_warning(text){
-    console.warn(text);
-}
+$(function(){
+    // On ready, show all visible sections
+    _section_assumptions__callback();
+    _section_description__properties.init();
+    /*
+        README:
+        Have a callback function
+            '.heading-description'
+            '.heading-inputs'
+
+        Should be initialized as the valuation code executes
+            '.section-estimated-value'
+            '.heading-values'
+            '.heading-tables'
+            '.heading-charts'
+    */
+    $('#chart-table').on("keyup change", '.chart-table-value', function(){
+        keyupChangeHandler($(this), 'value');
+    });
+    $('#chart-table').on("focusout", '.chart-table-value', function(){
+        focusoutHandler($(this), 'value');
+    });
+    $('#chart-table').on("keyup change", '.chart-table-percentage', function(){
+        keyupChangeHandler($(this), 'growth');
+    });
+    $('#chart-table').on("focusout", '.chart-table-percentage', function(){
+        focusoutHandler($(this), 'growth');
+    });
+
+    $("#export-tables").click(function() {
+        var tables = $('.modal-tables').find('.table').not('.sticky-thead');
+        var wb = TableToExcel.initWorkBook();
+        for(var i = 0; i<tables.length; i++){
+            var opt = {
+               sheet: {
+                  name: $(tables[i]).attr('header').slice(0, 30) // sheetName cannot exceed 30 chars
+               }
+            };
+            TableToExcel.tableToSheet(wb, tables[i], opt);
+        }
+        TableToExcel.save(wb, nameExcelExportFile());
+    });
+});
 
 // New utility functions go into new-valuation-functions.js!
