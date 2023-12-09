@@ -1,7 +1,10 @@
-// +------------------------------------------------------------+
-//   Model: Annual Margin Report				
-//   © Copyright: https://discountingcashflows.com
-// +------------------------------------------------------------+
+/*
+    Model: Annual Margin Report
+    
+    © Copyright: 
+        Discounting Cash Flows Inc. (discountingcashflows.com)
+        8 The Green, Dover, DE 19901
+*/
 
 Input(
   {
