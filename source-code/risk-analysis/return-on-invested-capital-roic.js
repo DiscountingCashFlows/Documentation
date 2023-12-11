@@ -127,12 +127,15 @@ Description(`
 `,
     {	
     ROIC_FORMULA: [
-    	'{Equation} \\text{Return on Capital (ROIC)} = \\frac{\\text{After-tax Operating Income}}{\\text{Invested Capital}}',
+    	'{Equation} \\text{Return on Invested Capital (ROIC)} = \\frac{\\text{After-tax Operating Income}}{\\text{Invested Capital}}',
         '{Link} https://pages.stern.nyu.edu/~adamodar/pdfiles/papers/returnmeasures.pdf {LinkText} Aswath Damodaran - Return Measures PDF',
+    	'{Title} After-tax Operating Income',
     	'{Paragraph} After-tax Operating Income or sometimes called Net Operating Profit After Tax (NOPAT) is calculated using the reported Earnings Before Interest and Taxes (EBIT) or Operating Income on the income statement adjusted for the tax liability.',
     	'{Equation} \\text{After-tax Operating Income} = \\text{Operating Income} * (1 - \\text{Income Tax Rate})',
+    	'{Title} Invested Capital',
     	'{Paragraph} There are two ways to calculate invested capital: One looks at the company\'s assets, and another looks at its financing from debt and equity. In this model, we are using the Asset based approach.',
     	'{Equation} \\text{Invested Capital} = \\text{Total Non-Current Assets} + \\text{Total Current Assets} - \\text{Total Current Liabilities} - \\text{Cash and Equivalents}',
+    	'{Equation} = \\text{Total Assets} - \\text{Total Current Liabilities} - \\text{Cash and Equivalents}',
     ],
     HISTORICAL_YEARS: 'Number of historical years used to calculate historical averages.',
 });
