@@ -1,7 +1,10 @@
-// +------------------------------------------------------------+
-//   Model: Simple Dividend Discount Model
-//   © Copyright: https://discountingcashflows.com
-// +------------------------------------------------------------+
+/*
+    Model: Simple Dividend Discount Model
+    
+    © Copyright: 
+        Discounting Cash Flows Inc. (discountingcashflows.com)
+        8 The Green, Dover, DE 19901
+*/
 
 Input(
   {

@@ -1,7 +1,10 @@
-// +------------------------------------------------------------+
-//   Model: Discounted Future Market Cap	
-//   © Copyright: https://discountingcashflows.com
-// +------------------------------------------------------------+
+/*
+    Model: Discounted Future Market Cap
+    
+    © Copyright: 
+        Discounting Cash Flows Inc. (discountingcashflows.com)
+        8 The Green, Dover, DE 19901
+*/
 
 Input(
   {
@@ -24,21 +27,27 @@ Input(
 $.when(
   get_income_statement(),
   get_income_statement_ltm(),
+  get_balance_sheet_statement(),
+  get_balance_sheet_statement_quarterly(2),
   get_quote(),
   get_profile(),
   get_treasury(),
   get_fx(),
   get_risk_premium()).done(
-  function($income, $income_ltm, $quote, $profile, $treasury, $fx, $risk_premium){
+  function($income, $income_ltm, $balance, $balance_quarterly, $quote, $profile, $treasury, $fx, $risk_premium){
   try{
     var response = new Response({
-      income: $income,
-      income_ltm: $income_ltm,
-      quote: $quote,
-      profile: $profile,
-      treasury: $treasury,
-      risk_premium: $risk_premium,
+        income: $income,
+        income_ltm: $income_ltm,
+        balance: $balance,
+        balance_quarterly: $balance_quarterly,
+        balance_ltm: 'balance_quarterly:0',
+        quote: $quote,
+        profile: $profile,
+        treasury: $treasury,
+        risk_premium: $risk_premium,
     }).toOneCurrency('income', $fx).merge('_ltm');
+    response.balance[0]['date'] = 'LTM';
     
     // +---------------- ASSUMPTIONS SECTION -----------------+ 
 	setAssumption('PE_RATIO', response.quote.pe);
@@ -57,12 +66,20 @@ $.when(
     
      // Setup Original Data
     var original_data = new DateValueData({
-      'revenue': new DateValueList(response.income, 'revenue'),
-      'costOfRevenue': new DateValueList(response.income, 'costOfRevenue'),
-      'grossProfit': new DateValueList(response.income, 'grossProfit'),
-      'operatingIncome': new DateValueList(response.income, 'operatingIncome'),
-      'netIncome': new DateValueList(response.income, 'netIncome'),
-      'weightedAverageShsOut': new DateValueList(response.income, 'weightedAverageShsOut'),
+        revenue: new DateValueList(response.income, 'revenue'),
+        costOfRevenue: new DateValueList(response.income, 'costOfRevenue'),
+        grossProfit: new DateValueList(response.income, 'grossProfit'),
+        netIncome: new DateValueList(response.income, 'netIncome'),
+        weightedAverageShsOut: new DateValueList(response.income, 'weightedAverageShsOut'),
+        operatingIncome: new DateValueList(response.income, 'operatingIncome'),
+        incomeBeforeTax: new DateValueList(response.income, 'incomeBeforeTax'),
+        incomeTaxExpense: new DateValueList(response.income, 'incomeTaxExpense'),
+        
+        totalNonCurrentAssets: new DateValueList(response.balance, 'totalNonCurrentAssets'),
+        totalCurrentAssets: new DateValueList(response.balance, 'totalCurrentAssets'),
+        totalCurrentLiabilities: new DateValueList(response.balance, 'totalCurrentLiabilities'),
+        cashAndCashEquivalents: new DateValueList(response.balance, 'cashAndCashEquivalents'),
+        totalStockholdersEquity: new DateValueList(response.balance, 'totalStockholdersEquity'),
     });
     
     var currentDate = original_data.lastDate();
@@ -72,10 +89,24 @@ $.when(
     
     // Compute historical values and ratios
     var historical_computed_data = original_data.setFormula({
-      '_grossMargin': ['grossProfit:0', '/', 'revenue:0'],
-      '_operatingMargin': ['operatingIncome:0', '/', 'revenue:0'],
-      '_netMargin': ['netIncome:0', '/', 'revenue:0'],
-      '_revenueGrowthRate': ['function:growth_rate', 'revenue'],
+        _grossMargin: ['grossProfit:0', '/', 'revenue:0'],
+        _operatingMargin: ['operatingIncome:0', '/', 'revenue:0'],
+        _netMargin: ['netIncome:0', '/', 'revenue:0'],
+        _revenueGrowthRate: ['function:growth_rate', 'revenue'],
+        _netIncomeGrowthRate: ['function:growth_rate', 'netIncome'],
+        _totalStockholdersEquityGrowthRate: ['function:growth_rate', 'totalStockholdersEquity'],
+        
+        // Calculating NOPAT (Net Operating Profit After Taxes)
+        _taxRate: ['incomeTaxExpense', '/', 'incomeBeforeTax'],
+        incomeTax: ['operatingIncome', '*', '_taxRate'],
+        nopat: ['operatingIncome', '-', 'incomeTax'],
+        
+        // Calculating Invested Capital
+        investedCapital: ['function:sum', {'keys': [
+            ['totalNonCurrentAssets', '-', 'cashAndCashEquivalents'],
+            ['totalCurrentAssets', '-', 'totalCurrentLiabilities'],
+        ]}],
+        _roic: ['nopat', '/', 'investedCapital'],
     }).compute();
     
 	setAssumption('_NET_INCOME_MARGIN', toP(historical_computed_data.get('_netMargin').sublist(startDate).average()));
@@ -83,10 +114,11 @@ $.when(
     
     // Compute forecasted values and ratios
     var forecasted_data = historical_computed_data.removeDate('LTM').setFormula({
-      'linearRegressionRevenue': ['function:linear_regression', 'revenue', {slope: 1, start_date: startDate}],
-      'revenue': ['function:compound', 'linearRegressionRevenue:start_date', {rate: getAssumption('_REVENUE_GROWTH_RATE'), start_date: nextYearDate}],
-      '_revenueGrowthRate': ['function:growth_rate', 'revenue'],
-      'netIncome': ['revenue:0', '*', getAssumption('_NET_INCOME_MARGIN')],
+      linearRegressionRevenue: ['function:linear_regression', 'revenue', {slope: 1, start_date: startDate}],
+      revenue: ['function:compound', 'linearRegressionRevenue:start_date', {rate: getAssumption('_REVENUE_GROWTH_RATE'), start_date: nextYearDate}],
+      _revenueGrowthRate: ['function:growth_rate', 'revenue'],
+      netIncome: ['revenue:0', '*', getAssumption('_NET_INCOME_MARGIN')],
+      totalStockholdersEquity: ['totalStockholdersEquity:-1', '*', 1 + getAssumption('_REVENUE_GROWTH_RATE')],
     }).setEditable(_edit(), {
       start_date: nextYearDate,
       keys: ['revenue', 'netIncome'],
@@ -119,7 +151,7 @@ $.when(
     // +------------------- CHARTS SECTION -------------------+
     forecasted_data.renderChart({
       start_date: startDate,
-      keys: ['revenue', 'netIncome', 'linearRegressionRevenue'],
+      keys: ['revenue', 'netIncome', 'totalStockholdersEquity', 'linearRegressionRevenue'],
       properties: {
         title: 'Historical and forecasted data',
         currency: currency,
@@ -133,25 +165,60 @@ $.when(
     // Estimated Future Data
     forecasted_data.renderTable({
       start_date: currentDate,
-      keys: ['revenue', '_revenueGrowthRate', 'netIncome'],
-      rows: ['Revenue', '{%} Revenue Growth Rate', 'Net Income'],
+      data: {
+          'Revenue': 'revenue',
+          '{%} Revenue Growth Rate': '_revenueGrowthRate',
+          'Net Income': 'netIncome',
+      },
       properties: {
-        'title': 'Estimated Future Data',
+        'title': 'Estimated Future Values',
         'currency': currency,
         'column_order': 'ascending',
       	'number_format': 'M',
       }
     });
     
-    // Historical Table
+    // Historical values table
     historical_computed_data.renderTable({
       start_date: startDate,
-      keys: ['revenue', '_revenueGrowthRate', 'costOfRevenue', 'grossProfit', '_grossMargin',
-             'operatingIncome', '_operatingMargin', 'netIncome', '_netMargin'],
-      rows: ['Revenue', '{%} Revenue Growth Rate', 'Cost of Revenue', 'Gross Profit', '{%} Gross Margin', 
-                'Operating Income', '{%} Operating Margin', 'Net Income', '{%} Net Margin'],
+      data: {
+          'Revenue': 'revenue',
+          '{%} Revenue Growth Rate': '_revenueGrowthRate',
+          'Cost of Revenue': 'costOfRevenue',
+          'Gross Profit': 'grossProfit',
+          '{%} Gross Margin': '_grossMargin',
+          'Operating Income': 'operatingIncome',
+          '{%} Operating Margin': '_operatingMargin',
+          'Net Income': 'netIncome',
+          '{%} Net Margin': '_netMargin',
+      },
       properties: {
-        'title': 'Historical data',
+        'title': 'Historical Values',
+        'currency': currency,
+        'number_format': 'M',
+        'display_averages': true,
+        'column_order': 'descending',
+      },
+    });
+    
+    // Historical growth rates table
+    historical_computed_data.renderTable({
+      start_date: startDate,
+      data: {
+          'Revenue': 'revenue',
+          '{%} Revenue Growth Rate': '_revenueGrowthRate',
+          'Net Income': 'netIncome',
+          '{%} Net Margin': '_netMargin',
+          '{%} Net Income Growth Rate': '_netIncomeGrowthRate',
+          'Stockholders Equity': 'totalStockholdersEquity',
+          '{%} Equity Growth Rate': '_totalStockholdersEquityGrowthRate',
+          '{%} Return on Invested Capital (ROIC)': '_roic',
+          'After-tax Operating Income': 'nopat',
+          '{%} Income Tax Rate': '_taxRate',
+          'Invested Capital': 'investedCapital',
+      },
+      properties: {
+        'title': 'Historical Growth Rates',
         'currency': currency,
         'number_format': 'M',
         'display_averages': true,

@@ -1,6 +1,6 @@
 /*
     README:
-    This code is the Valuation Framework for the Discounting Cash Flows Website (discountingcashflows.com)
+    This is the Valuation Framework for the Discounting Cash Flows Website (discountingcashflows.com)
     All code needs to be compatible with EcmaScript 5.1 (ES5.1).
     Warning! Features from ES6 do not work and need to be avoided.
     https://www.w3schools.com/js/js_es5.asp
@@ -8,12 +8,14 @@
     Read the Docs: https://discounting-cash-flows.readthedocs.io/en/latest/index.html
     Discounting Cash Flows Website link: https://discountingcashflows.com/
 
-    © Copyright: Discounting Cash Flows Website
+    © Copyright:
+        Discounting Cash Flows Inc.
+        8 The Green, Dover, DE 19901
 */
 
 /*
     Recommended framework practices (for devs):
-        - Use for(var i=0; i<list.length; i++) instead of for(var i in list)
+        - For lists [], use for(var i=0; i<list.length; i++) instead of for(var i in list)
             as i's value will sometimes jump randomly when executed by the sequencer.
         - Do not use continue in switch as it causes the sequencer to loop forever.
         - Do not use .includes(':')
@@ -101,7 +103,8 @@ Response.prototype.toOneCurrency = function(report_key, fx) {
                                   'avgVolume',
                                   'volume',
                                   'changesPercentage',
-                                  'timestamp'];
+                                  'timestamp',
+                                  'year'];
         fx = getDataFromResponse(fx);
 
         this.currency = getReportCurrency(this.data[report_key]);
@@ -118,7 +121,14 @@ Response.prototype.toOneCurrency = function(report_key, fx) {
                     for(var item_report_key in report){
                         if(do_not_convert_key.includes(item_report_key)){continue;}
                         var value = report[item_report_key];
-                        if(isValidNumber(value)){
+                        if(typeof(value) === 'object'){
+                            for(var k in value){
+                                if(!do_not_convert_key.includes(k) && isValidNumber(value[k])){
+                                    report[item_report_key][k] = Number(value[k]) * ccyRate;
+                                }
+                            }
+                        }
+                        else if(isValidNumber(value)){
                             report[item_report_key] = Number(value) * ccyRate;
                         }
                     }
@@ -149,7 +159,7 @@ Response.prototype.get = function(report_key) {
         if(typeof(this.data[report_key]) == 'string'){
             return this.data[report_key];
         }
-        else if('report' in this.data[report_key]){
+        else if(typeof(this.data[report_key]) == 'object' && 'report' in this.data[report_key]){
             return_obj = this.data[report_key].report;
         }
         else{
@@ -281,6 +291,42 @@ DateValueData.prototype.editable = function(object) {
     }
     return null;
 }
+
+
+/*
+ * @param {String} / {Number or String} / {Number} retrieves:
+    - corresponding value key + year
+    - ltm_reference_year is required when year == 'LTM'
+    key example: 'eps:0'
+*/
+DateValueData.prototype.getValueAtYear = function(key, year, ltm_reference_year) {
+    if( typeof(key) == 'string' && year){
+        var operand_key = key;
+        var operand_index = 0;
+        if(stringIncludesToken(operand_key, ':')){
+            var splitIndex = operand_key.indexOf(':');
+            operand_index = operand_key.substring(splitIndex + 1);
+            if(!isValidNumber(operand_index)){
+                throwError("Key error in '" + operand_key + "'. Operand index " + operand_index + " has to be a number.")
+            }
+            operand_key = operand_key.substring(0, splitIndex);
+        }
+        var operand_value = 0;
+        if(this.exists(operand_key)){
+            if(isValidNumber(year)){
+                // If year is not 'LTM', adjust to operand_index (eps:operand_index)
+                year = Number(year) + Number(operand_index);
+            }
+            else if(isValidNumber(ltm_reference_year) && Number(operand_index) != 0){
+                // If year is LTM and operand_index != 0, then adjust ltm_reference_year to operand_index
+                // If operand_index == 0, then we leave year be 'LTM'
+                year = Number(ltm_reference_year) + Number(operand_index);
+            }
+            return this.get(operand_key).valueAtDate(year);
+        }
+    }
+    return null;
+};
 
 /*
  * @param {String} / {[String1, String2]} retrieves:
@@ -442,24 +488,145 @@ DateValueData.prototype.removeDateMutable = function(date) {
     return this;
 }
 
-DateValueData.prototype.functionsComputeOrderAppend = function(functions_compute_order, key, parameters, required) {
-    if(parameters && key in parameters){
-        if(typeof(parameters[key]) == 'string'){
-            // make sure this is not a constant
-            if( !functions_compute_order.includes(parameters[key]) && !this.constants().includes(parameters[key]) ){
-                functions_compute_order.push(parameters[key]);
+// This function unshifts (inserts into the first position) the specified key
+function unshiftFunctionParameterKey(key, parameters, function_keys){
+    if(parameters.hasOwnProperty(key)){
+        var parameters_key = parameters[key];
+        if(typeof(parameters_key) == 'string' || !parameters_key.length){
+            parameters_key = [parameters_key];
+        }
+        var extracted_keys = extractIndexedKeys(parameters_key).zeroIndex;
+        if(extracted_keys.length){
+            for(var i=0; i<extracted_keys.length; i++){
+                function_keys.unshift(extracted_keys[i]);
             }
         }
     }
-    else if(typeof(key) == 'string'){
-        if( !functions_compute_order.includes(key) && !this.constants().includes(key) ){
-            functions_compute_order.push(key);
+    return function_keys;
+}
+
+function extractIndexedKeys(keys, extracted_keys){
+    if(!extracted_keys){
+        extracted_keys = {
+            zeroIndex: [],
+            negativeIndex: []
+        };
+    }
+    for(var i=0; i<keys.length; i++){
+        if(isValidNumber(keys[i])){/* Do nothing */}
+        else if(typeof(keys[i]) == 'string'){
+            // Case when key is just a string
+            // keys = ['key1', 'key2:0']
+            var operand_key = getOperandKey(keys[i]);
+            var operand_index = getOperandIndex(keys[i]);
+            if(operand_index === 0){
+                extracted_keys.zeroIndex.push(operand_key);
+            }
+            else if(isValidNumber(operand_index)){
+                // Should be negative index keys 'eps:-1', which should be appended last
+                extracted_keys.negativeIndex.push(operand_key);
+            }
+        }
+        else if(typeof(keys[i]) == 'object'){
+            // Case when key is an object
+            // keys = [['key1', '*', 'key2'], ...]
+            // keys = [['key1', '*', 2], ...]
+            if(keys[i].length == 3){
+                var key1 = keys[i][0];
+                var key2 = keys[i][2];
+                // Recursive calls until keys are string
+                extracted_keys = extractIndexedKeys([key1, key2], extracted_keys);
+            }
         }
     }
-    else if(required == 'required'){
-        throwError("Computed function requires parameter '"+key+"'."); // '"+function_name+"'
-        return;
+    return extracted_keys;
+}
+
+DateValueData.prototype.processRawComputeOrder = function(raw_compute_order) {
+    var compute_order = this.compute_order();
+    // Extract all keys
+    for(var i=0; i<raw_compute_order.length; i++){
+        raw_compute_order[i] = extractIndexedKeys(raw_compute_order[i]).zeroIndex;
     }
+    var original_compute_order = JSON.parse(JSON.stringify(raw_compute_order));
+
+    // Safety loop break
+    var break_loop_at = 100;
+    while(raw_compute_order.length >= 2 && break_loop_at > 0){
+        var was_found = false;
+        for(var i=0; i<raw_compute_order.length; i++){
+            var base_row = raw_compute_order[i];
+            var last_key = base_row[base_row.length - 1];
+            // Find a row that contains last_key
+            for(var j=0; j<raw_compute_order.length; j++){
+                if(i == j){continue;}
+                var key_row = raw_compute_order[j];
+                if(key_row.includes(last_key)) {
+                    // Merge the two rows into one
+                    // var key_index = key_row.indexOf(last_key);
+                    var base_index = base_row.indexOf(last_key);
+                    var diff = listOrderedDifference(key_row, base_row);
+                    raw_compute_order[i] = base_row.concat(
+                        diff
+                    );
+
+                    raw_compute_order.splice(j, 1);
+                    // Reset raw_compute_order loop
+                    i = -1;
+                    // Break out of extracted_keys loop
+                    j = raw_compute_order.length;
+                    was_found = true;
+                }
+            }
+        }
+        if(!was_found){
+            break;
+        }
+        break_loop_at -= 1;
+    }
+    if(break_loop_at <= 0){
+        throwError('Max iterations reached while processing compute order. Please have a look at the compute formula and make sure it is correct.');
+    }
+
+    // Concatenate all rows left into on row in raw_compute_order
+    for(var i=0; i<raw_compute_order.length; i++) {
+        compute_order = compute_order.concat(listOrderedDifference(raw_compute_order[i], compute_order));
+    }
+
+    // Important! These adjustments are made in order to make sure that the compute_order is in order
+    // It is similar to a bubble sort
+    var adjustment_was_made = true;
+    // Safety loop break
+    var break_loop_at = 500;
+    while(adjustment_was_made && break_loop_at > 0){
+        adjustment_was_made = false;
+        for(var i=0; i<original_compute_order.length; i++){
+            var key_row = original_compute_order[i];
+            var last_key = key_row[key_row.length - 1];
+            var index_of_last_key = compute_order.indexOf(last_key);
+            // We need to make sure that last_key is behind all other keys
+            for(var j=0; j<key_row.length-1; j++){
+                var current_key = key_row[j];
+                var index_of_current_key = compute_order.indexOf(current_key);
+                if(index_of_current_key > index_of_last_key){
+                    compute_order = compute_order.slice(0, index_of_last_key
+                    ).concat(
+                        [current_key]
+                    ).concat(
+                        compute_order.slice(index_of_last_key, index_of_current_key)
+                    ).concat(
+                        compute_order.slice(index_of_current_key + 1)
+                    );
+                    adjustment_was_made = true;
+                }
+            }
+        }
+        break_loop_at -= 1;
+    }
+    if(break_loop_at <= 0){
+        throwError('Max iterations reached. Please have a look at the compute formula and make sure it is correct.');
+    }
+    this.compute_order(compute_order);
 }
 
 DateValueData.prototype.functionDiscountCompound = function(properties) {
@@ -491,6 +658,7 @@ DateValueData.prototype.functionDiscountCompound = function(properties) {
     if(data_index){
         if(!isValidNumber(data_index) && typeof(data_index) == 'string'){
             // 'start_date'
+            // 'function:compound', 'revenue:start_date', {rate: ..., start_date: ...}
             if(data_index in this.formula()[key][2]){
                 future_value = this.get(data_key).valueAtDate(
                     this.formula()[key][2][data_index]
@@ -498,14 +666,19 @@ DateValueData.prototype.functionDiscountCompound = function(properties) {
             }
         }
         else{
-            throwError('Numbered index is not yet supported for this function.');
+            // 'function:discount', 'freeCashFlow:0', {rate: ..., start_date: ...}
+            // get the value at year + Number(data_index)
+            var data_index_date = year + Number(data_index);
+            future_value = this.get(data_key).valueAtDate(data_index_date);
         }
     }
     else{
         if(isValidNumber(data_key)){
+            // 'function:discount', 1234, {rate: ..., start_date: ...}
             future_value = Number(data_key);
         }
         else{
+            // 'function:discount', 'freeCashFlow', {rate: ..., start_date: ...}
             future_value = this.get(data_key).valueAtDate(year);
         }
     }
@@ -544,6 +717,23 @@ function getOrderedKeyList(object) {
     return_list.sort();
     return return_list;
 };
+
+function getOperandKey(operand_formula){
+    if( typeof(operand_formula) == 'string' && stringIncludesToken(operand_formula, ':')){
+        return operand_formula.substring(0, operand_formula.indexOf(':'));
+    }
+    return operand_formula;
+}
+
+function getOperandIndex(operand_formula){
+    if( typeof(operand_formula) == 'string' ){
+        if(stringIncludesToken(operand_formula, ':')){
+            return parseInt(operand_formula.substring(operand_formula.indexOf(':') + 1));
+        }
+        return 0;
+    }
+    return null;
+}
 
 /*
     * @param {Object} properties:
@@ -599,19 +789,13 @@ DateValueData.prototype.computeMutable = function(properties) {
         else if(properties  && 'forecast_end_date' in properties){
             forecast_years = properties.forecast_end_date - this.lastDate();
         }
-        /*
-            This for loop fills the computed.components:
-            computed.components = {
-                'result1': ['key1', 'key2'],
-                'result2': ['key3'],
-            }
-        */
-        var negative_indexes = [];
+
+        var raw_compute_order = [];
         // need to call getOrderedKeyList to order the keys inside formula by name
         var ordered_formula_keys = getOrderedKeyList(this.formula());
         for(var ordered_formula_keys_index=0; ordered_formula_keys_index<ordered_formula_keys.length; ordered_formula_keys_index++){
             var key = ordered_formula_keys[ordered_formula_keys_index];
-            var operand_formula='';
+            var keys = [key];
             var break_loop = false;
             for(var i in this.formula()[key]){
                 if(i % 2 == 1 || break_loop){continue;}
@@ -623,134 +807,22 @@ DateValueData.prototype.computeMutable = function(properties) {
                         break_loop = true;
                         continue;
                     }
-                    // 'eps:0' this.computed
-                    operand_formula = this.formula()[key][i];
-                    // if no index is specified, then assign operand_formula as the key "eps"
-                    var operand_key = operand_formula;
-                    // if no operand is specified, the default is 0 "eps" = "eps:0"
-                    var operand_index = 0;
-                    if(stringIncludesToken(operand_formula, ':')){
-                        operand_key = operand_formula.substring(0, operand_formula.indexOf(':'));
-                        operand_index = parseInt(operand_formula.substring(operand_formula.indexOf(':') + 1));
-                    }
-                    if(operand_index == 0){
-                        this.appendComponent(key, operand_key);
-                    }
-                    else{
-                        // depending on the index, we need to add it to the compute_order
-                        var negative_index_list = reportKeyToList(negative_indexes, 'index');
-                        if(negative_index_list.includes(operand_index)){
-                            var i = negative_index_list.indexOf(operand_index);
-                            if(!negative_indexes[i].list.includes(operand_key)){
-                                negative_indexes[i].list.push(operand_key);
-                            }
-                            if(!negative_indexes[i].list.includes(key)){
-                                negative_indexes[i].list.push(key);
-                            }
-                        }
-                        else{
-                            negative_indexes.push({
-                                index: operand_index,
-                                list: [operand_key],
-                            });
-                        }
-                    }
-                }
-                else{
-                    // should be a constant value
-                    // check if it is the only operand
-                    if(this.formula()[key].length == 1){
-                        this.constants().push(key);
-                        this.data[key] = new DateValueList();
-                        this.get(key).listFill({
-                            fill_ltm: this.ltmColumnExists(), // true only if 'LTM' is found in any of this.data keys
-                            start_date: this.firstDate(),
-                            last_date: this.lastDate() + forecast_years,
-                            value: this.formula()[key][i],
-                        });
-                    }
+                    keys.unshift(this.formula()[key][i]);
                 }
             }
-        }
-        // get the order in which the keys need to be computed
-        var compute_order = [];
-        /*
-            This for loop fills the computed.compute_order from computed.components
-            computed.compute_order = ['key1', 'key2', ...]
-        */
-        var components = this.components();
-        // We call getOrderedKeyList because we need to make sure the order is
-        // the same between js and sequencer
-        var ordered_components_keys = getOrderedKeyList(this.components());
-        var max_iterations = 50;
-        var break_main_loop = false;
-        while(max_iterations > 0 && !break_main_loop){
-            break_main_loop = true;
-            max_iterations -= 1;
-            for(var ordered_components_keys_index=0; ordered_components_keys_index<ordered_components_keys.length; ordered_components_keys_index++){
-                var key = ordered_components_keys[ordered_components_keys_index];
-                var difference = listOrderedDifference(components[key], compute_order);
-                if(compute_order.includes(key)){
-                    var indexOfKey = compute_order.indexOf(key);
-                    // check the difference to match the elements in compute_order
-                    for(var i in components[key]){
-                        if(compute_order.includes(components[key][i])){
-                            if(compute_order.indexOf(components[key][i]) > indexOfKey){
-                                break_main_loop = false;
-                                var indexOfComponent = compute_order.indexOf(components[key][i]);
-                                // insert the component behind the key
-                                compute_order = compute_order.slice(0, indexOfKey
-                                ).concat(
-                                    [components[key][i]]
-                                ).concat(
-                                    compute_order.slice(indexOfKey, indexOfComponent)
-                                ).concat(
-                                    compute_order.slice(indexOfComponent + 1)
-                                );
-                            }
-                        }
-                        else{
-                            break_main_loop = false;
-                            // insert behind the key
-                            compute_order = compute_order.slice(0, indexOfKey
-                            ).concat(
-                                [components[key][i]]
-                            ).concat(
-                                compute_order.slice(indexOfKey)
-                            );
-                        }
-                    }
-                }
-                else{
-                    break_main_loop = false;
-                    compute_order = compute_order.concat(
-                        listOrderedDifference(difference, [key])
-                    ).concat(
-                        [key]
-                    );
-                }
+            if(!break_loop){
+                // If the keys are not those of a function
+                // Functions are processed separately
+                raw_compute_order.push(keys);
             }
         }
-        if(max_iterations <= 0){
-            throwError('Max iterations reached. Please have a look at the compute formula and make sure it is correct.');
-        }
-        // append the negative index to compute_order
-        // negative indexes are -1, -2 ... (revenue:-1)
-        for(var i=0; i<negative_indexes.length; i++){
-            var negative_list = negative_indexes[i].list;
-            // diff are the items that are in negative_list and are not in compute_order
-            var diff = listOrderedDifference(negative_list, compute_order);
-            compute_order = compute_order.concat(diff);
-        }
-        // listOrderedDifference eliminates constants from compute order
-        // since they are already calculated and stored in this.data
-        compute_order = listOrderedDifference(compute_order, this.constants());
         // if there are any functions, let's see the compute order for them
         if(this.functions().length){
             var functions_compute_order = [];
             // let's check if the input of a function is another's output
             for(var function_index=0; function_index<this.functions().length; function_index++){
                 var key = this.functions()[function_index];
+                var function_keys = [key];
                 // get the function name, this is the first argument of the formula
                 // ['function:discount', 'freeCashFlow', {'rate': '_discountRate', 'start_date': nextYear}]
                 var function_name = this.formula()[key][0].replace('function:', '');
@@ -770,30 +842,61 @@ DateValueData.prototype.computeMutable = function(properties) {
                     case 'compound':
                         // {'rate': '_discountRate', 'start_date': nextYear}
                         // 'rate' is a required parameter
-                        this.functionsComputeOrderAppend(functions_compute_order, 'rate', parameters, 'required');
+                        function_keys.unshift(first_key);
+                        unshiftFunctionParameterKey('rate', parameters, function_keys);
                         break;
+
                     case 'linear_regression':
-                        // {'slope': getAssumption('REVENUE_REGRESSION_SLOPE'), 'start_date': nextYear - getAssumption('HISTORIC_YEARS')}
-                        // all parameters are optional
-                        this.functionsComputeOrderAppend(functions_compute_order, 'slope', parameters);
+                        // linear_regression: { slope: <constant>, start_date: <constant> } (Required)
+                        // Do not add any other keys. Otherwise will result in conflicting order.
+                        // 'linearRegressionRevenue': ['function:linear_regression', 'revenue', {...}],
+                        // 'revenue': ['linearRegressionRevenue:0'],
                         break;
+
+                    case 'log_n':
+                    case 'nth_root':
+                    case 'nth_power':
+                    case 'exponential':
+                        // nth_power == exponential
+                        // {'n': <key>}
+                        function_keys.unshift(first_key);
+                        unshiftFunctionParameterKey('n', parameters, function_keys);
+                        break;
+
                     case 'growth_rate':
+                    case 'square_root':
+                    case 'average':
+                        // growth_rate: { period: <constant> } (Optional)
+                        // square_root: no parameters
+                        // average: { period: <constant> } (Optional)
                         // no parameters required
-                        this.functionsComputeOrderAppend(functions_compute_order, first_key);
+                        function_keys.unshift(first_key);
                         break;
+
+                    case 'sum':
+                    case 'add':
+                    case 'maximum':
+                    case 'max':
+                    case 'minimum':
+                    case 'min':
+                    case 'multiply':
+                        // These functions do not have a first_key
+                        parameters = first_key;
+                        unshiftFunctionParameterKey('keys', parameters, function_keys);
+                        break;
+
                     default:
                         throwError("'function:" + function_name + "' is not a valid function. Please check the documentation for available functions.")
                 }
+                raw_compute_order.push(function_keys);
             }
-            var diff = listOrderedDifference(this.functions(), functions_compute_order);
-            functions_compute_order = functions_compute_order.concat(diff);
-            diff = listOrderedDifference(functions_compute_order, compute_order);
-            compute_order = compute_order.concat(diff);
         }
+
+        this.processRawComputeOrder(raw_compute_order);
+
         // Up until now, we've decided the compute_order
-        this.compute_order(compute_order);
         // Now we need to compute the keys one by one
-        var forecast_start_date = this.lastDate();
+        var forecast_start_date = this.lastDate();  // Do not use lastDate('maximum')
         var start_date = this.firstDate();
         for(var year = start_date + 1; year <= forecast_start_date + forecast_years; year++){
             for(var compute_index=0; compute_index < this.compute_order().length; compute_index++){
@@ -868,6 +971,7 @@ DateValueData.prototype.computeMutable = function(properties) {
                                         // else store the result
                                         result = properties.result;
                                         break;
+
                                     case 'linear_regression':
                                         // this.formula()[key] =
                                         // ['function:linear_regression', 'revenue', {'slope': getAssumption('REVENUE_REGRESSION_SLOPE'), 'start_date': nextYear - getAssumption('HISTORIC_YEARS')}]
@@ -893,6 +997,7 @@ DateValueData.prototype.computeMutable = function(properties) {
                                         // skip adding any values and continue
                                         _continue = true;
                                         break;
+
                                     case 'growth_rate':
                                         // no parameters required
                                         // need at least 1 year in advance
@@ -904,6 +1009,138 @@ DateValueData.prototype.computeMutable = function(properties) {
                                         var current_value = this.get(data_key).valueAtDate(year);
                                         if(previous_value){
                                             result = (current_value - previous_value) / previous_value;
+                                        }
+                                        break;
+
+                                    case 'square_root':
+                                        // no parameters required
+                                        if(year < start_date){
+                                            _continue = true;
+                                            break;
+                                        }
+                                        // Math.sqrt should return 0 for negative numbers
+                                        var value = this.get(data_key).valueAtDate(year);
+                                        if(value < 0){
+                                            result = 0;
+                                        }
+                                        else{
+                                            result = Math.sqrt(value);
+                                        }
+                                        break;
+
+                                    case 'log_n':
+                                    case 'nth_root':
+                                    case 'nth_power':
+                                    case 'exponential':
+                                        if(year < start_date){
+                                            _continue = true;
+                                            break;
+                                        }
+                                        var n = 2;
+                                        if(this.formula()[key].length == 3){
+                                            var parameters = this.formula()[key][2];
+                                            if('n' in parameters){
+                                                n = parameters.n;
+                                            }
+                                        }
+                                        if(function_name == 'nth_root'){
+                                            // Math.pow should return 0 for negative numbers
+                                            var value = this.get(data_key).valueAtDate(year);
+                                            if(value < 0 && n > 1){
+                                                result = 0;
+                                            }
+                                            else{
+                                                result = Math.pow(value, 1/n);
+                                            }
+                                        }
+                                        else if(function_name == 'nth_power' || function_name == 'exponential'){
+                                            // Math.pow should return 0 for negative numbers
+                                            var value = this.get(data_key).valueAtDate(year);
+                                            if(value < 0 && n < 1){
+                                                result = 0;
+                                            }
+                                            else{
+                                                result = Math.pow(value, n);
+                                            }
+                                        }
+                                        else if(function_name == 'log_n'){
+                                            result = Math.log(this.get(data_key).valueAtDate(year)) / Math.log(n);
+                                        }
+                                        break;
+
+                                    case 'sum':
+                                    case 'add':
+                                    case 'maximum':
+                                    case 'max':
+                                    case 'minimum':
+                                    case 'min':
+                                    case 'multiply':
+                                        if(year < start_date){
+                                            _continue = true;
+                                            break;
+                                        }
+                                        var keys = [];
+                                        // This function does not have a first_key
+                                        if(this.formula()[key].length == 2){
+                                            var parameters = this.formula()[key][1];
+                                            if('keys' in parameters){
+                                                keys = parameters.keys;
+                                            }
+                                        }
+
+                                        result = null;
+                                        // Add up all keys
+                                        for(var i=0; i<keys.length; i++){
+                                            if(isValidNumber(keys[i])){
+                                                // Case when key is a constant number
+                                                // keys = [123, ...]
+                                                result = function_specific_operation(function_name, result, Number(keys[i]));
+                                            }
+                                            else if(typeof(keys[i]) == 'string'){
+                                                // Case when key is just a string
+                                                // keys = ['key1', ...]
+                                                result = function_specific_operation(function_name, result, this.getValueAtYear(keys[i], year));
+                                            }
+                                            else if(typeof(keys[i]) == 'object'){
+                                                // Case when key is just an object
+                                                // keys = [['key1', '*', 'key2'], ...]
+                                                // keys = [['key1', '*', 2], ...]
+                                                if(keys[i].length == 3){
+                                                    var key1 = keys[i][0];
+                                                    var operator = keys[i][1];
+                                                    var key2 = keys[i][2];
+                                                    if(!isValidNumber(key1)){
+                                                        key1 = this.getValueAtYear(key1, year);
+                                                    }
+                                                    if(!isValidNumber(key2)){
+                                                        key2 = this.getValueAtYear(key2, year);
+                                                    }
+                                                    // Perform the operation
+                                                    if(isValidNumber(key1) && isValidNumber(key2)){
+                                                        result = function_specific_operation(function_name, result, operation(key1, operator, key2));
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        break;
+
+                                    case 'average':
+                                        var period = 2;
+                                        if(this.formula()[key].length == 3){
+                                            var parameters = this.formula()[key][2];
+                                            if('period' in parameters){
+                                                period = parameters.period;
+                                            }
+                                        }
+                                        // We need at least 'period' years ahead of the start date
+                                        if(year < start_date + period){
+                                            _continue = true;
+                                            break;
+                                        }
+                                        result = 0;
+                                        // Average from year - period to year
+                                        if(this.exists(data_key)){
+                                            result = this.get(data_key).sublist(year - period + 1, year).average();
                                         }
                                         break;
                                 }
@@ -923,20 +1160,7 @@ DateValueData.prototype.computeMutable = function(properties) {
                             for(var i=0; i<this.formula()[key].length; i++){
                                 if(i % 2 == 1){operator=this.formula()[key][i];continue;}
                                 if( typeof(this.formula()[key][i]) == 'string' ){
-                                    // 'eps:0' this.computed
-                                    var operand_key = this.formula()[key][i];
-                                    var operand_index = 0;
-                                    if(stringIncludesToken(operand_key, ':')){
-                                        var splitIndex = operand_key.indexOf(':');
-                                        operand_index = operand_key.substring(splitIndex + 1);
-                                        if(!isValidNumber(operand_index)){
-                                            throwError("Key error in '" + operand_key + "'. Operand index " + operand_index + " has to be a number.")
-                                        }
-                                        operand_key = operand_key.substring(0, splitIndex);
-                                    }
-                                    // get the value of the key
-                                    var operand_value = this.get(operand_key).valueAtDate(year+Number(operand_index));
-                                    values_list.push(operand_value);
+                                    values_list.push(this.getValueAtYear(this.formula()[key][i], year));
                                 }
                                 else if(isValidNumber(this.formula()[key][i])){
                                     values_list.push(this.formula()[key][i]);
@@ -961,7 +1185,7 @@ DateValueData.prototype.computeMutable = function(properties) {
                 }
             }
         }
-        // TODO: Replace duplicate code
+
         // special case for LTM column (mostly copy paste from above)
         if(this.ltmColumnExists()){
             // we will be using forecast_start_date as previous year of ltm
@@ -971,8 +1195,10 @@ DateValueData.prototype.computeMutable = function(properties) {
                 for(var formula_key in this.formula()){
                     // make sure that keys match
                     if(formula_key != key){continue;}
-                    // check if date already exists in this.data[key]
+                    // check if date and value already exist in this.data[key]
                     if( this.exists(key) && this.get(key).dateExists(ltm)){continue;}
+
+                    var result = null;
                     if(this.functions().includes(key)){
                         // get the function name, this is the first argument of the formula
                         // ['function:discount', 'freeCashFlow', {'rate': '_discountRate', 'start_date': nextYear}]
@@ -984,14 +1210,133 @@ DateValueData.prototype.computeMutable = function(properties) {
                         switch (function_name) {
                             case 'discount':
                             case 'compound':
-                                break;
                             case 'linear_regression':
+                                // Copy paste latest year into LTM
+                                result = this.get(key).valueAtDate(forecast_start_date);
                                 break;
+
+                            case 'average':
+                                var period = 2;
+                                if(this.formula()[key].length == 3){
+                                    var parameters = this.formula()[key][2];
+                                    if('period' in parameters){
+                                        period = parameters.period;
+                                    }
+                                }
+                                // Average from year - period to year
+                                if(this.exists(data_key)){
+                                    result = this.get(data_key).sublist(forecast_start_date - period + 2).average();
+                                }
+                                break;
+
                             case 'growth_rate':
+                                var ltm_value = this.get(data_key).valueAtDate(ltm);
+                                var previous_value = this.get(data_key).valueAtDate(forecast_start_date);
+                                if(isValidNumber(ltm_value) && isValidNumber(previous_value)){
+                                    result = (ltm_value - previous_value) / previous_value;
+                                }
+                                break;
+
+                            case 'square_root':
+                                var value = this.get(data_key).valueAtDate(ltm);
+                                if(value < 0){
+                                    result = 0;
+                                }
+                                else{
+                                    result = Math.sqrt(value);
+                                }
+                                break;
+
+                            case 'log_n':
+                            case 'nth_root':
+                            case 'nth_power':
+                            case 'exponential':
+                                var n = 2;
+                                if(this.formula()[key].length == 3){
+                                    var parameters = this.formula()[key][2];
+                                    if('n' in parameters){
+                                        n = parameters.n;
+                                    }
+                                }
+                                if(function_name == 'nth_root'){
+                                    var value = this.get(data_key).valueAtDate(ltm);
+                                    if(value < 0 && n > 1){
+                                        result = 0;
+                                    }
+                                    else{
+                                        result = Math.pow(value, 1/n);
+                                    }
+                                }
+                                else if(function_name == 'nth_power' || function_name == 'exponential'){
+                                    var value = this.get(data_key).valueAtDate(ltm);
+                                    if(value < 0 && n < 1){
+                                        result = 0;
+                                    }
+                                    else{
+                                        result = Math.pow(value, n);
+                                    }
+                                }
+                                else if(function_name == 'log_n'){
+                                    result = Math.log(this.get(data_key).valueAtDate(ltm)) / Math.log(n);
+                                }
+                                break;
+
+                            case 'sum':
+                            case 'add':
+                            case 'maximum':
+                            case 'max':
+                            case 'minimum':
+                            case 'min':
+                            case 'multiply':
+                                var keys = [];
+                                // This function does not have a first_key
+                                if(this.formula()[key].length == 2){
+                                    var parameters = this.formula()[key][1];
+                                    if('keys' in parameters){
+                                        keys = parameters.keys;
+                                    }
+                                }
+
+                                result = null;
+                                // Remove duplicate code
+                                for(var i=0; i<keys.length; i++){
+                                    if(isValidNumber(keys[i])){
+                                        // Case when key is a constant number
+                                        // keys = [123, ...]
+                                        result = function_specific_operation(function_name, result, Number(keys[i]));
+                                    }
+                                    else if(typeof(keys[i]) == 'string'){
+                                        // Case when key is just a string
+                                        // keys = ['key1', ...]
+                                        result = function_specific_operation(function_name, result, this.getValueAtYear(keys[i], ltm, forecast_start_date));
+                                    }
+                                    else if(typeof(keys[i]) == 'object'){
+                                        // Case when key is just an object
+                                        // keys = [['key1', '*', 'key2'], ...]
+                                        // keys = [['key1', '*', 2], ...]
+                                        if(keys[i].length == 3){
+                                            var key1 = keys[i][0];
+                                            var operator = keys[i][1];
+                                            var key2 = keys[i][2];
+                                            if(!isValidNumber(key1)){
+                                                key1 = this.getValueAtYear(key1, ltm, forecast_start_date);
+                                            }
+                                            if(!isValidNumber(key2)){
+                                                key2 = this.getValueAtYear(key2, ltm, forecast_start_date);
+                                            }
+                                            // Perform the operation
+                                            if(isValidNumber(key1) && isValidNumber(key2)){
+                                                result = function_specific_operation(function_name, result, operation(key1, operator, key2));
+                                            }
+                                        }
+                                    }
+                                }
                                 break;
                         }
-                        var latest_value = this.get(key).valueAtDate(forecast_start_date);
-                        this.get(key).append(newDateValueItem(ltm, latest_value));
+                        this.append({
+                            key: key,
+                            item: newDateValueItem(ltm, result),
+                        });
                         continue;
                     }
                     var values_list = [];
@@ -999,32 +1344,12 @@ DateValueData.prototype.computeMutable = function(properties) {
                     for(var i=0; i<this.formula()[key].length; i++){
                         if(i % 2 == 1){operator=this.formula()[key][i];continue;}
                         if( typeof(this.formula()[key][i]) == 'string' ){
-                            // 'eps:0' this.computed
-                            var operand_key = this.formula()[key][i];
-                            var operand_index = 0;
-                            if(stringIncludesToken(operand_key, ':')){
-                                var splitIndex = operand_key.indexOf(':');
-                                operand_index = operand_key.substring(splitIndex + 1);
-                                if(!isValidNumber(operand_index)){
-                                    throwError("Key error in '" + operand_key + "'. Operand index " + operand_index + " has to be a number.")
-                                }
-                                operand_key = operand_key.substring(0, splitIndex);
-                            }
-                            // get the value of the key
-                            var operand_value = '';
-                            if(Number(operand_index) == 0){
-                                operand_value = this.get(operand_key).valueAtDate(ltm);
-                            }
-                            else{
-                                operand_value = this.get(operand_key).valueAtDate(forecast_start_date+Number(operand_index));
-                            }
-                            values_list.push(operand_value);
+                            values_list.push(this.getValueAtYear(this.formula()[key][i], ltm, forecast_start_date));
                         }
                         else if(isValidNumber(this.formula()[key][i])){
                             values_list.push(this.formula()[key][i]);
                         }
                     }
-                    var result = null;
                     if(values_list.length == 2){
                         if(isValidNumber(values_list[0]) && isValidNumber(values_list[1])){
                             result = operation(values_list[0], operator, values_list[1]);
@@ -1035,12 +1360,6 @@ DateValueData.prototype.computeMutable = function(properties) {
                     }
                     // append the result to the key at date:ltm
                     // if ltm already exists in DateValueList object, then it will not be appended
-                    /*
-                    if(!(key in this.data)){
-                        this.data[key] = new DateValueList();
-                    }
-                    this.get(key).append(newDateValueItem(ltm, result));
-                    */
                     this.append({
                         key: key,
                         item: new DateValueList(ltm, result),
@@ -1112,6 +1431,7 @@ function getNumberFormatFromHash(edited_parameters){
     }
     return result;
 }
+
 /*
 object = {
             key: 'netIncome',
@@ -1212,10 +1532,24 @@ DateValueData.prototype.renderTable = function(object) {
         else{
             columns = this_obj.columns();
         }
-        // append each key's DateValueList list to the data object
-        for(var i=0; i<object.keys.length; i++){
-            var key = object.keys[i];
-            data.push(this_obj.getList(key));
+
+        // object can have either rows + keys OR a data property (data: {'Title 1': 'key1'})
+        if(object.hasOwnProperty('data')){
+            // If object has data, transform it into rows + keys properties
+            object.rows = [];
+            object.keys = [];
+            for(var title in object.data){
+                object.rows.push(title);
+                object.keys.push(object.data[title]);
+            }
+        }
+
+        if(object.hasOwnProperty('keys')){
+            // append each key's DateValueList list to the data object
+            for(var i=0; i<object.keys.length; i++){
+                var key = object.keys[i];
+                data.push(this_obj.getList(key));
+            }
         }
     }
     renderTable({
@@ -1332,7 +1666,7 @@ function DateValueList() {
             this.list = reportKeyToTableRow(arguments[0], arguments[1]);
         }
         else{
-            console_warning(arguments[1] + ' is not a valid number at ' + arguments[0]);
+            // console_warning(arguments[1] + ' is not a valid number at ' + arguments[0]);
             this.list = newDateValueItem(arguments[0], null);
         }
     }
@@ -1418,6 +1752,14 @@ DateValueList.prototype.average = function() {
     return getListAverage(reportKeyToList(this.getList(), 'value'));
 };
 
+DateValueList.prototype.minimum = function() {
+    return minimum(reportKeyToList(this.getList(), 'value'));
+};
+
+DateValueList.prototype.maximum = function() {
+    return maximum(reportKeyToList(this.getList(), 'value'));
+};
+
 DateValueList.prototype.sum = function() {
     return getArraySum(reportKeyToList(this.getList(), 'value'));
 };
@@ -1442,15 +1784,18 @@ DateValueList.prototype.sublist = function(start_date, end_date) {
     var return_obj = [];
     for(var i=0; i<this.list.length; i++){
         if(!end_date){
+            // Case when only start_date is specified
             if( start_date && (this.list[i].year >= start_date || this.list[i].year == 'LTM') ){
                 return_obj.push(this.list[i]);
             }
         }
         else{
+            // We have both start_date and end_date
             if( start_date && this.list[i].year >= start_date && this.list[i].year <= end_date ){
+                // If year is between start_date and end_date
                 return_obj.push(this.list[i]);
             }
-            else if(end_date && this.list[i].year <= end_date){
+            else if(start_date == 0 && end_date && this.list[i].year <= end_date){
                 // start_date == 0 and we only have end_date
                 return_obj.push(this.list[i]);
             }
@@ -1694,7 +2039,10 @@ function listIntersection(list1, list2){
 }
 
 function getSign(value){
-    if(typeof(value) == 'number'){
+    if(isValidNumber(value)){
+        if(typeof(value) != 'number'){
+            value = Number(value);
+        }
         if (value > 0){return 1;}
         else if (value < 0){return -1;}
     }
@@ -1704,6 +2052,9 @@ function getSign(value){
 function roundValueItem(value, type){
     if(!isValidNumber(value)){
         return '';
+    }
+    if(typeof(value) != 'number'){
+        value = Number(value);
     }
     var sign = getSign(value);
     value = Math.abs(value);
@@ -1727,10 +2078,13 @@ function roundValueItem(value, type){
             roundDigits = 10; // 1 decimal
         }
     }
-    return Math.round(sign * value*roundDigits)/roundDigits;
+    return Math.round(sign * value * roundDigits)/roundDigits;
 }
 
 function roundValue(obj, type){
+    if(obj == null){
+        return null;
+    }
     if(typeof(obj) == 'object'){
         var newObj = [];
         // case it is a list
@@ -1740,12 +2094,6 @@ function roundValue(obj, type){
         return newObj;
     }
     return roundValueItem(obj, type);
-}
-
-function prettyNumber(number){
-    var nf = Intl.NumberFormat();
-    var df = Intl.DateTimeFormat('en');
-    return nf.format(number);
 }
 
 function toM(obj){
@@ -1777,6 +2125,9 @@ function rateToNumber(obj){
 }
 
 function toFormat(obj, format){
+    if(obj == null){
+        return null;
+    }
     if(isValidNumber(format)){
         if(typeof(obj) == 'object' && isObjectInYearValueFormat(obj)){
             for(var i=0; i<obj.length; i++){
@@ -1787,7 +2138,9 @@ function toFormat(obj, format){
             // if obj is a list
             if(obj.length){
                 for(var i=0; i<obj.length; i++){
-                    obj[i] *= format;
+                    if(isValidNumber(obj[i])){
+                        obj[i] *= format;
+                    }
                 }
             }
             else if('y' in obj){
@@ -2106,6 +2459,7 @@ function getListAverage(list){
         // if an item is blank, then don't count it ''
         if( isValidNumber(list[i]) ){listLength++;}
     }
+    if(listLength == 0){return null;}
     return getArraySum(list)/listLength;
 }
 
@@ -2331,25 +2685,62 @@ function removeYear(object, year){
     return return_obj;
 }
 
+function function_specific_operation(function_name, result, value){
+    if(result == null){
+        return value;
+    }
+
+	if(function_name == 'multiply') {
+		return result * value;
+	}
+	else if(function_name == 'add' || function_name == 'sum'){
+		return result + value;
+	}
+	else if(function_name == 'minimum' || function_name == 'min'){
+		    return Math.min(result, value);
+    }
+    else if(function_name == 'maximum' || function_name == 'max'){
+        return Math.max(result, value);
+    }
+}
+
 function operation(object1, operation_type, object2){
     var return_obj = [];
     if(object1 == null || object2 == null){return null;}
     // if objects are just numbers
     if(isValidNumber(object1) && isValidNumber(object2)){
+        object1 = Number(object1);
+        object2 = Number(object2);
         if(operation_type == '+'){
-            return Number(object1) + Number(object2);
+            return object1 + object2;
         }
         else if(operation_type == '-'){
-            return Number(object1) - Number(object2);
+            return object1 - object2;
         }
         else if(operation_type == '/'){
-            return Number(object1) / Number(object2);
+            return object1 / object2;
         }
         else if(operation_type == '*'){
-            return Number(object1) * Number(object2);
+            return object1 * object2;
         }
         else if(operation_type == '^'){
-            return Math.pow(Number(object1), Number(object2));
+            return Math.pow(object1, object2);
+        }
+        else if(operation_type == '<'){
+            // 1 if true, 0 if false
+            return Number(object1 < object2);
+        }
+        else if(operation_type == '<='){
+            return Number(object1 <= object2);
+        }
+        else if(operation_type == '>'){
+            return Number(object1 > object2);
+        }
+        else if(operation_type == '>='){
+            return Number(object1 >= object2);
+        }
+        else if(operation_type == '=='){
+            return Number(object1 == object2);
         }
         return null;
     }
