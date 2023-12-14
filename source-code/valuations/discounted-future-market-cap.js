@@ -118,7 +118,6 @@ $.when(
       revenue: ['function:compound', 'linearRegressionRevenue:start_date', {rate: getAssumption('_REVENUE_GROWTH_RATE'), start_date: nextYearDate}],
       _revenueGrowthRate: ['function:growth_rate', 'revenue'],
       netIncome: ['revenue:0', '*', getAssumption('_NET_INCOME_MARGIN')],
-      totalStockholdersEquity: ['totalStockholdersEquity:-1', '*', 1 + getAssumption('_REVENUE_GROWTH_RATE')],
     }).setEditable(_edit(), {
       start_date: nextYearDate,
       keys: ['revenue', 'netIncome'],
@@ -151,7 +150,7 @@ $.when(
     // +------------------- CHARTS SECTION -------------------+
     forecasted_data.renderChart({
       start_date: startDate,
-      keys: ['revenue', 'netIncome', 'totalStockholdersEquity', 'linearRegressionRevenue'],
+      keys: ['revenue', 'netIncome', 'linearRegressionRevenue'],
       properties: {
         title: 'Historical and forecasted data',
         currency: currency,
