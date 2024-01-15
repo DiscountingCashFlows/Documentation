@@ -1,17 +1,19 @@
-## Documentation and Source Code
-The source code and documentation behind our website's valuation models, functions and more.
+# Discounting Cash Flows Documentation
 
-[API & Functions (readthedocs)](https://discounting-cash-flows.readthedocs.io/en/latest/index.html)
- - Developer's guide to writing code for the valuation models.
+Welcome to the documentation and source code repository for Discounting Cash Flows. Here, you'll find information about our website's valuation models, functions, and more.
 
-[Source Code](https://github.com/DiscountingCashFlows/Documentation/tree/main/source-code)
- - The source code for all our valuation models.
- 
-[Valuation Models Documentation](https://github.com/DiscountingCashFlows/Documentation/tree/main/models-documentation)
- - Descriptions of all our valuation models and how they are calculated.
- 
-## Code Editor Tutorial Series
- 
-[![CODE EDITOR TUTORIAL](https://i.ytimg.com/vi/WoZpjxFbZO0/hqdefault.jpg)](https://www.youtube.com/watch?v=WoZpjxFbZO0&list=PLYtAU4aYbpMbA7rXL5FLySHcnWKvzFmHp "Code Editor Tutorial Series")
+## Valuation Framework
 
-Open sourcing our models supports our committment to full transparency and allows our users to fully understand the logic behind the selection of the metrics used and edit those base models or create new ones.
+- [Developer's Guide (readthedocs)](https://discounting-cash-flows.readthedocs.io/en/latest/index.html): Explore the developer's guide for writing code related to our valuation models.
+
+- The source code for the valuation framework is located in [valuation-framework.js](https://github.com/DiscountingCashFlows/Documentation/blob/main/valuation-framework.js)
+
+#### Valuation Models Documentation
+
+- [Valuation Models Source Code](https://github.com/DiscountingCashFlows/Documentation/tree/main/source-code): Browse the source code for all our valuation models.
+
+- [Valuation Models Descriptions](https://github.com/DiscountingCashFlows/Documentation/tree/main/models-documentation): Detailed descriptions of all our valuation models and understand how they are calculated.
+
+## Help & Feedback
+
+We are here to assist you. Reach out to us at our [Support Page](https://discountingcashflows.com/help/) or drop us an email at support@discountingcashflows.com.
