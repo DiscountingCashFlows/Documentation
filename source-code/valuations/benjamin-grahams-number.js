@@ -35,7 +35,6 @@ $.when(
         prices: $prices,
     }).toOneCurrency('income', $fx).merge('_ltm');
     response.balance[0]['date'] = response.prices[0]['date'] = 'LTM';
-    console.log('first');
     
     // +---------------- ASSUMPTIONS SECTION -----------------+
     var original_data = new DateValueData({
@@ -46,7 +45,6 @@ $.when(
       marketPrice: new DateValueList(response.prices, 'close'),
       adjDividend: new DateValueList(response.dividends, 'adjDividend'),
     });
-    console.log('second');
     var current_year = original_data.lastDate();
     var next_year = current_year + 1;
     
@@ -58,14 +56,12 @@ $.when(
       grahamNumber: ['function:square_root', 'var_2'],
       _revenueGrowthRate: ['function:growth_rate', 'revenue'],
     }).compute();
-    console.log('third');
     
     setAssumption('EARNINGS_PER_SHARE', response.income_ltm.eps);
     setAssumption('BOOK_VALUE_PER_SHARE', response.balance_quarterly[0].totalStockholdersEquity / response.income_ltm.weightedAverageShsOut);
     // +------------- END OF ASSUMPTIONS SECTION -------------+
     
     // +---------------- MODEL VALUES SECTION ----------------+
-    console.log('four');
     var number = Math.sqrt(getAssumption('GRAHAM_MULTIPLIER') * getAssumption('BOOK_VALUE_PER_SHARE') * getAssumption('EARNINGS_PER_SHARE'));
     // If we are calculating the value per share for a watch, we can stop right here.
     if(_StopIfWatch(number, response.currency)){
