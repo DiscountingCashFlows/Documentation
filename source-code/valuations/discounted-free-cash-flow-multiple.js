@@ -282,11 +282,11 @@ Description(`<p>Discounted Free Cash Flow calculates the value of a share based 
       'The margin used to project future Capital Expedinture as a % from future Revenue, which is then used to calculate the Free Cash Flow.',
     ],	
     HISTORICAL_YEARS: 'Number of historical years used to calculate historical averages.',
-    REVENUE_REGRESSION_SLOPE: `Future revenues are projected using a linear regression curve of past revenues.
-      Set the slope:
-      '>1' for a steeper revenue regression curve
-      '0' for flat
-      '<0' for inverse slope`,
+    _REVENUE_GROWTH_RATE: `The annual revenue growth rate is applied to projected revenue starting from the second projection year onward.`,
+    EXIT_EBITDA_MULTIPLE: `The exit EV/EBITDA multiple used to calculate the terminal value.`,
+    _EBITDA_MARGIN: `EBITDA expressed as a percentage of Revenue.`,
+    _CAPITAL_EXPENDITURE_TO_EBITDA: `Capital expenditure expressed as a percentage of EBITDA.`,
+    _OPERATING_CASH_FLOW_TO_EBITDA: `Operating cash flow expressed as a percentage of EBITDA.`,
     _RISK_FREE_RATE: 'The risk-free rate represents the interest an investor would expect from an absolutely risk-free investment over a specified period of time.'+
     ' By default, it is equal to the current yield of the U.S. 10 Year Treasury Bond.',
     _MARKET_PREMIUM: 'Market risk premium represents the excess returns over the risk-free rate that investors expect for taking on the incremental risks connected to the equities market.',

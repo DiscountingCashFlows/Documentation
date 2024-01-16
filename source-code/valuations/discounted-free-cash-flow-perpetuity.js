@@ -12,7 +12,7 @@ Input(
     _GROWTH_IN_PERPETUITY: '',
     PROJECTION_YEARS: 5, 			
     HISTORICAL_YEARS: 10,
-    REVENUE_REGRESSION_SLOPE: 1,
+    _REVENUE_GROWTH_RATE: '',
     _OPERATING_CASH_FLOW_MARGIN: '',
     _CAPITAL_EXPENDITURE_MARGIN: '',
     BETA:'',
@@ -118,11 +118,13 @@ $.when(
     // Is negative by default, se we need to make it positive
     const capitalExpenditureMargin = -historical_computed_data.get('_capitalExpenditureMargin').sublist(nextYear - getAssumption('HISTORICAL_YEARS')).average(); 
     setAssumption('_CAPITAL_EXPENDITURE_MARGIN', toP(capitalExpenditureMargin));
+    const averageRevenueGrowthRate = historical_computed_data.get('_revenueGrowthRate').sublist(nextYear - getAssumption('HISTORICAL_YEARS')).average();
+    setAssumption('_REVENUE_GROWTH_RATE',  toP(averageRevenueGrowthRate));
     
     // Compute forecasted values and ratios
     var forecasted_data = historical_computed_data.removeDate('LTM').setFormula({
-      'linearRegressionRevenue': ['function:linear_regression', 'revenue', {slope: getAssumption('REVENUE_REGRESSION_SLOPE'), start_date: nextYear - getAssumption('HISTORICAL_YEARS')}],
-      'revenue': ['linearRegressionRevenue:0'],
+      'linearRegressionRevenue': ['function:linear_regression', 'revenue', {slope: 1, start_date: nextYear - getAssumption('HISTORICAL_YEARS')}],
+      'revenue': ['function:compound', 'linearRegressionRevenue:start_date', {rate: getAssumption('_REVENUE_GROWTH_RATE'), start_date: nextYear}],
       '_revenueGrowthRate': ['function:growth_rate', 'revenue'],
       'operatingCashFlow': ['revenue:0', '*', getAssumption('_OPERATING_CASH_FLOW_MARGIN')],
       'computedCapitalExpenditure': ['revenue:0', '*', getAssumption('_CAPITAL_EXPENDITURE_MARGIN')],
@@ -273,11 +275,7 @@ Description(`<h5>Discounted Free Cash Flow Model</h5>
       'The margin used to project future Capital Expedinture as a % from future Revenue, which is then used to calculate the Free Cash Flow.',
     ],	
     HISTORICAL_YEARS: 'Number of historical years used to calculate historical averages.',
-    REVENUE_REGRESSION_SLOPE: `Future revenues are projected using a linear regression curve of past revenues.
-      Set the slope:
-      '>1' for a steeper revenue regression curve
-      '0' for flat
-      '<0' for inverse slope`,
+    _REVENUE_GROWTH_RATE: `The annual revenue growth rate is applied to projected revenue starting from the second projection year onward.`,
     _RISK_FREE_RATE: 'The risk-free rate represents the interest an investor would expect from an absolutely risk-free investment over a specified period of time.'+
     ' By default, it is equal to the current yield of the U.S. 10 Year Treasury Bond.',
     _MARKET_PREMIUM: 'Market risk premium represents the excess returns over the risk-free rate that investors expect for taking on the incremental risks connected to the equities market.',
