@@ -273,15 +273,8 @@ Description(`<p>Discounted Free Cash Flow calculates the value of a share based 
       '{Paragraph} The overall tax rate paid by the company on its earned income.',
     ],
     _GROWTH_IN_PERPETUITY: 'The rate at which the company\'s free cash flow is assumed to grow in perpetuity. By default, this is equal to the yield of the U.S. 10 Year Treasury Bond.',
-    _OPERATING_CASH_FLOW_MARGIN: [
-      '{Equation} \\text{Projected Operating Cash Flow} = \\text{Projected Revenue} * \\text{Operating Cash Flow Margin}',
-      'The margin used to project future Operating Cash Flow as a % from future Revenue.',
-    ],
-    _CAPITAL_EXPENDITURE_MARGIN: [
-      '{Equation} \\text{Projected Free Cash Flow} = \\text{Projected Operating Cash Flow} - \\text{Projected Revenue} * \\text{Capital Expedinture Margin}',
-      'The margin used to project future Capital Expedinture as a % from future Revenue, which is then used to calculate the Free Cash Flow.',
-    ],	
-    HISTORICAL_YEARS: 'Number of historical years used to calculate historical averages.',
+    HISTORICAL_YEARS: 'The number of historical years used to calculate averages for historical data.',
+    PROJECTION_YEARS: 'The number of years for projecting the analysis into the future.',
     _REVENUE_GROWTH_RATE: `The annual revenue growth rate is applied to projected revenue starting from the second projection year onward.`,
     EXIT_EBITDA_MULTIPLE: `The exit EV/EBITDA multiple used to calculate the terminal value.`,
     _EBITDA_MARGIN: `EBITDA expressed as a percentage of Revenue.`,

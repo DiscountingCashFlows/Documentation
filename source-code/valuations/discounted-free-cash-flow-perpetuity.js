@@ -274,7 +274,8 @@ Description(`<h5>Discounted Free Cash Flow Model</h5>
       '{Equation} \\text{Projected Free Cash Flow} = \\text{Projected Operating Cash Flow} - \\text{Projected Revenue} * \\text{Capital Expedinture Margin}',
       'The margin used to project future Capital Expedinture as a % from future Revenue, which is then used to calculate the Free Cash Flow.',
     ],	
-    HISTORICAL_YEARS: 'Number of historical years used to calculate historical averages.',
+    HISTORICAL_YEARS: 'The number of historical years used to calculate averages for historical data.',
+    PROJECTION_YEARS: 'The number of years for projecting the analysis into the future.',
     _REVENUE_GROWTH_RATE: `The annual revenue growth rate is applied to projected revenue starting from the second projection year onward.`,
     _RISK_FREE_RATE: 'The risk-free rate represents the interest an investor would expect from an absolutely risk-free investment over a specified period of time.'+
     ' By default, it is equal to the current yield of the U.S. 10 Year Treasury Bond.',

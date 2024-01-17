@@ -210,43 +210,13 @@ Description(`
 `,
   {
     _DISCOUNT_RATE: [
-      '{Equation} \\text{Discount Rate} = \\text{Equity Weight} * \\text{Cost of Equity} + \\text{Debt Weight} * \\text{Cost of Debt} * (1 - \\text{Tax Rate})',
-      '{Paragraph} Calculated using Weighted Average Cost of Capital (WACC) formula. It represents a firm’s average after-tax cost of capital from all sources, including common stock, preferred stock, bonds, and other forms of debt.',
-      '{Link} https://www.investopedia.com/terms/w/wacc.asp',
-      
-      '{Title} Cost of Equity',
-      '{Equation} \\text{Cost of Equity} = \\text{Risk Free Rate} + \\text{Beta} * \\text{Market Premium}',
+      '{Equation} \\text{Discount Rate} = \\text{Cost of Equity} = \\text{Risk Free Rate} + \\text{Beta} * \\text{Market Premium}',
       '{Paragraph} The cost of equity is the theoretical rate of return that an equity investment should generate. It is calculated using the CAPM formula.',
       '{Link} https://www.investopedia.com/terms/c/costofequity.asp#mntl-sc-block_1-0-20',
-      
-      '{Title} Cost of Debt',
-      '{Equation} \\text{Cost of Debt} = \\frac{\\text{Interest Expense}}{\\text{Total Debt}}',
-      '{Paragraph} The cost of debt is the effective rate that a company pays on its debt, such as bonds and loans.',
-      '{Link} https://www.investopedia.com/terms/c/costofdebt.asp',
-      
-      '{Title} Equity & Debt Weights',
-      '{Equation} \\text{Debt Weight} = \\frac{\\text{Total Debt}}{\\text{Market Capitalization} + \\text{Total Debt}} = 1 - \\text{Equity Weight}',
-      '{Paragraph} The Equity Weight represents the proportion of equity-based financing (Market Capitalization), while the Debt Weight represents the proportion of debt-based financing (Total Debt).',
-      
-      '{Title} Tax Rate',
-      '{Equation} \\text{Tax Rate} = \\frac{\\text{Income Tax Expense}}{\\text{Income Before Tax}}',
-      '{Paragraph} The overall tax rate paid by the company on its earned income.',
     ],
     _GROWTH_IN_PERPETUITY: 'The rate at which the company\'s free cash flow is assumed to grow in perpetuity. By default, this is equal to the yield of the U.S. 10 Year Treasury Bond.',
-    _OPERATING_CASH_FLOW_MARGIN: [
-      '{Equation} \\text{Projected Operating Cash Flow} = \\text{Projected Revenue} * \\text{Operating Cash Flow Margin}',
-      'The margin used to project future Operating Cash Flow as a % from future Revenue.',
-    ],
-    _CAPITAL_EXPENDITURE_MARGIN: [
-      '{Equation} \\text{Projected Free Cash Flow} = \\text{Projected Operating Cash Flow} - \\text{Projected Revenue} * \\text{Capital Expedinture Margin}',
-      'The margin used to project future Capital Expedinture as a % from future Revenue, which is then used to calculate the Free Cash Flow.',
-    ],	
-    HISTORICAL_YEARS: 'Number of historical years used to calculate historical averages.',
-    REVENUE_REGRESSION_SLOPE: `Future revenues are projected using a linear regression curve of past revenues.
-      Set the slope:
-      '>1' for a steeper revenue regression curve
-      '0' for flat
-      '<0' for inverse slope`,
+    EXPECTED_DIVIDEND: 'The estimated annual dividend per share for the next year.',
+    HISTORICAL_YEARS: 'The number of historical years used to calculate averages for historical data.',
     _RISK_FREE_RATE: 'The risk-free rate represents the interest an investor would expect from an absolutely risk-free investment over a specified period of time.'+
     ' By default, it is equal to the current yield of the U.S. 10 Year Treasury Bond.',
     _MARKET_PREMIUM: 'Market risk premium represents the excess returns over the risk-free rate that investors expect for taking on the incremental risks connected to the equities market.',
