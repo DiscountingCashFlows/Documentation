@@ -6,8 +6,8 @@ See [Valuing financial service firms](https://github.com/DiscountingCashFlows/Do
 
 > These models were inspired by Prof. Aswath Damodaran's spreadsheet [⬇️eqexret.xls](https://pages.stern.nyu.edu/~adamodar/pc/eqexret.xls)
 
-* For stable and mature companies, use [Simple Excess Return Model](#simple-excess-return-model-source-code)
-* For high-growth companies, use the [Two-Stage Excess Return Model](#two-stage-excess-return-model-source-code)
+* For stable and mature companies, use [Simple Excess Return Model](#simple-excess-return-model)
+* For high-growth companies, use the [Two-Stage Excess Return Model](#two-stage-excess-return-model)
 * Discount-rate calculation: [Discount Rate (Cost of Equity)](#discount-rate-cost-of-equity)
 * Table-value calculation: [Calculating table values](#calculating-historical-table-values)
 
