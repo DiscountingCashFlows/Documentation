@@ -1,163 +1,159 @@
-# Excess Return Models 
-Used to predict the value of a company's stock based on the future excess returns (Net Income - Equity Cost) that the company is able to generate. 
+# Excess Return Models
+Excess return models are used to estimate the value of a company's stock based on the future excess returns (net income − equity cost) the company can generate.
 
-Excess Returns are better suited for financial companies, rather than an enterprise valuation model (such as the Discounted Free Cash Flow Model). 
+Excess return valuation is more appropriate for financial companies than enterprise valuation models such as the discounted free-cash-flow model.  
 See [Valuing financial service firms](https://github.com/DiscountingCashFlows/Documentation/blob/main/models-documentation/valuing-financial-firms.md#valuing-financial-service-firms-banks-insurance-companies-and-investment-banks)
 
-> These models were inspired by prof. Aswath Damodaran's spreadsheet [⬇️eqexret.xls](https://pages.stern.nyu.edu/~adamodar/pc/eqexret.xls) 
+> These models were inspired by Prof. Aswath Damodaran's spreadsheet [⬇️eqexret.xls](https://pages.stern.nyu.edu/~adamodar/pc/eqexret.xls)
 
 * For stable and mature companies, use [Simple Excess Return Model](#simple-excess-return-model-source-code)
-* For high growth companies, use the [Two-Stage Excess Return Model](#two-stage-excess-return-model-source-code)
-* Discount rate calculation [Discount Rate (Cost of Equity)](#discount-rate-cost-of-equity)
-* Table values calculation [Calculating table values](#calculating-historic-table-values)
+* For high-growth companies, use the [Two-Stage Excess Return Model](#two-stage-excess-return-model-source-code)
+* Discount-rate calculation: [Discount Rate (Cost of Equity)](#discount-rate-cost-of-equity)
+* Table-value calculation: [Calculating table values](#calculating-historical-table-values)
 
-## Simple Excess Return Model ([Source Code](https://github.com/DiscountingCashFlows/Documentation/blob/main/source-code/valuations/simple-excess-return-model.js))
+## Simple Excess Return Model
 
-Used to estimate the value of companies that have reached maturity and earn stable excess returns with little to no high growth chance.
+Used to estimate the value of companies that have reached maturity and earn stable excess returns with little or no remaining high-growth potential.
 
-          [Estimated Value] = [Present value of future excess returns] + [Book value of equity invested]
+> `Estimated Value` = `Present value of future excess returns` + `Book value of equity invested`
 
-### Calculating the [Present value of future excess returns] using the Gordon Growth Model
+### Calculating the `Present value of future excess returns` using the Gordon Growth Model
 
-By using the Gordon Growth Model, we assume that the excess return will grow steadily at exactly the `[Growth In Perpetuity]` rate and we will discount them using the `[Cost of Equity (the discount rate)]`.
+By using the Gordon Growth Model, we assume that excess returns will grow steadily at the `Growth in Perpetuity` rate, and we discount them using the `Cost of Equity` (the discount rate).
 
-`[Present value of future excess returns] = [Excess Return per share] * ([Cost of Equity (the discount rate)] - [Growth In Perpetuity])`
+`Present value of future excess returns` = `Excess Return per share` / (`Cost of Equity (the discount rate)` − `Growth in Perpetuity`)
 
-![image](https://user-images.githubusercontent.com/46221053/198673930-2fe454e9-a72d-4594-ab2c-cb9c0fbccc76.png)
+![image](https://github.com/user-attachments/assets/85662c23-8b8b-4bef-ae00-a693954ae947)
 
-### Calculating the [Excess Return per share]
+### Calculating the `Excess Return per share`
 
-The `[Excess Return]` is the difference between the `[Net Income]` and the `[Equity Cost]`.
+The `Excess Return` is the difference between `Net Income` and `Equity Cost`.
 
-```
-[Net Income] = [Total Equity] * [Return on Equity]
-[Equity Cost] = [Total Equity] * [Cost of Equity]
-```
+`Net Income` = `Total Equity` * `Return on Equity`
 
-Calculating the excess return per share:
-`[Excess Return per share] = [Next year's estimated book value] * ([Return on Equity] - [Cost of Equity])`
+`Equity Cost` = `Total Equity` * `Cost of Equity`
 
-![image](https://user-images.githubusercontent.com/46221053/198674549-715977c1-ffaa-4a42-96ac-077709df4c20.png)
+### Calculating the excess return per share:  
 
-### Getting the [Book value of equity invested]
+> `Excess Return per share` = `Next year's estimated book value` * (`Average historical Return on Equity` − `Cost of Equity`)
 
-This is the total equity in the last quarter's balance sheet divided by the common shares outstanding in the same quarter (also displayed in the LTM column).
+![image](https://github.com/user-attachments/assets/9035444e-2a22-4cc7-a4bc-fe2a89279f0e)
 
-`[Book value of equity invested] = [Total Equity](LTM) / [Common shares outstanding](LTM)`
+### Getting the `Book value of equity invested`
 
-![image](https://user-images.githubusercontent.com/46221053/198676668-c853239b-0c6c-4e62-bbe0-51b67feb65b5.png)
+This is the total equity in the most recent quarter's balance sheet divided by the common shares outstanding in the same quarter (also shown in the LTM column).
 
-### Description of Assumptions
-`[Discount Rate]:`
+> `Book value of equity invested` = `Total Equity(LTM)` / `Common shares outstanding(LTM)`
+
+![image](https://github.com/user-attachments/assets/393420a5-2fb4-4f63-8396-702ad04641e8)
+![image](https://github.com/user-attachments/assets/a9518342-5fe8-4b09-a583-98789d45dfa9)
+
+### Description of assumptions
+
+#### `Discount Rate`
 
 See [Discount Rate (Cost of Equity)](#discount-rate-cost-of-equity)
 
-`[Return On Equity]:`
+#### `Return on Equity`
 
-- This is equal by default to the `[Average historic Return on Equity]`, which represents the `[Net Income]` as a percentage of `[Total Equity]`.
+- By default, this equals the `Average historical Return on Equity`, which represents `Net Income` as a percentage of `Total Equity`.
 
-`[Return on Equity](t) = [Net Income](t) / [Total Equity](t)`
+> `Return on Equity(t)` = `Net Income(t)` / `Total Equity(t)`
 
-`[Growth In Perpetuity]:`
-- This is the expected growth rate in perpetuity of future excess returns.
-- By default, this is equal to the current `[Yield of the U.S. 10 Year Treasury Bond]`.
+#### `Growth in Perpetuity`  
+- The expected perpetual growth rate of future excess returns.  
+- By default, equal to the current `Yield of the U.S. 10-Year Treasury Bond`.
 
-`[Historic Years]:`
-- Number of historic years used to calculate averages. (such as the `[Average historic Return on Equity]` and the `[Average historic Payout Ratio]`)
-- 10 years by default
+#### `Historical Years`  
+- Number of historical years used to calculate averages (such as the `Average historical Return on Equity` and the `Average historical Payout Ratio`).  
+- Ten years by default.
 
-## Two-Stage Excess Return Model ([Source Code](https://github.com/DiscountingCashFlows/Documentation/blob/main/source-code/valuations/two-stage-excess-return-model.js))
-Used to estimate the value of companies based on two stages of growth. An initial period of high growth, represented by `[Sum of discounted excess returns in Growth Stage]`, followed by a period of stable growth, represented by `[Discounted excess return in terminal stage]`.
+## Two-Stage Excess Return Model
 
-    [Estimated Value] = [Sum of Discounted excess returns in Growth Stage] + [Discounted excess return in terminal stage] + [Book value of equity invested]
+Used to estimate the value of companies based on two stages of growth: an initial period of high growth, represented by `Sum of discounted excess returns in Growth Stage`, followed by a period of stable growth, represented by `Discounted excess return in terminal stage`.
+
+> `Estimated Value` = `Sum of discounted excess returns in Growth Stage` + `Discounted excess return in terminal stage` + `Book value of equity invested`
     
-### The first stage (High growth phase):
+### The first stage (high-growth phase)
 
-In the first stage, we estimate the future excess returns for the next number of [High Growth Years] (the number of years of expected high growth), and then discount them to present value (using the `[Cost of equity](t)`).
+In the first stage we estimate the future excess returns for the next number of `High-Growth Years` (the expected duration of high growth) and then discount them to present value using `Cost of equity(t)`.
 
-Each period's excess return is calculated by subtracting the Equity cost from the Net Income. Values in the estimates table from the example image below are calculated on a per share basis:
+Each period's excess return is calculated by subtracting the equity cost from net income. The values in the estimates table in the example below are calculated on a per-share basis:
 
-```
-[Excess return per share](t) = [EPS available to common shareholders](t) - [Equity cost per share](t) =
-= [Beginning book value of equity per share](t) * ([Return on equity](t) - [Cost of equity](t))
-```
+> `Excess return per share(t)` = `EPS available to common shareholders(t)` - `Equity cost per share(t)` = `Beginning book value of equity per share(t)` * (`Return on equity(t)` - `Cost of equity(t)`)
 
-![image](https://user-images.githubusercontent.com/46221053/198632102-92acf191-840f-4c26-a865-46e3395cda68.png)
+![image](https://github.com/user-attachments/assets/98dac7f2-065d-446e-9b88-ec2a07fa6b7d)
 
-All excess returns are then discounted at the `[Cost of Equity](t)` that can be defined in the forecast table:
+All excess returns are then discounted at `Cost of Equity(t)`, which can be defined in the forecast table:
 
-![image](https://user-images.githubusercontent.com/46221053/198597829-c3d3fa66-83fa-46d6-988b-bf723568085e.png)
+![image](https://github.com/user-attachments/assets/1b0ecf1b-ef75-4be3-bf5f-374e664f256d)
 
-Then we sum up all these `[Discounted excess return per share]` to get the `[Sum of Discounted excess returns in Growth Stage]`.
+We then sum all these `Discounted excess return per share` values to obtain the `Sum of discounted excess returns in Growth Stage`.
 
-#### Calculating the table values:
+#### Calculating the table values
 
-```
-[Beginning book value of equity per share](t) = [Beginning book value of equity per share](t-1) + [Retained earnings](t-1)
-[EPS available to common shareholders](t) = [Beginning book value of equity per share](t) * [Return on equity](t)
-```
-We estimate a `[Payout Ratio in stable stage]` in the stable phase using the following formula:
+> `Beginning book value of equity per share(t)` = `Beginning book value of equity per share(t-1)` + `Retained earnings(t-1)` `EPS available to common shareholders(t)` = `Beginning book value of equity per share(t)` * `Return on equity(t)`
 
-`[Payout Ratio in stable stage] =  1 - ([Stable Growth In Perpetuity] / [Stable Return On Equity])`
+We estimate a `Payout Ratio in stable stage` using the following formula:
 
-The payout ratio is then gradually adjusted up to the stable payout ratio as such:
+> `Payout Ratio in stable stage` = 1 − (`Stable Growth in Perpetuity` / `Stable Return on Equity`)
 
-`[Payout Ratio](t) = [Payout Ratio in stable stage] + (([High Growth Years] - t - 1) * ([Average historic Payout Ratio] - [Payout Ratio in stable stage]) / ([High Growth Years] - 1) )`
+The payout ratio is then gradually adjusted upward to the stable payout ratio:
 
-### The second stage (Stable phase):
-In the second stage, we estimate the `[Excess Returns in the Terminal Stage]` term at the end of the growth phase (just like in the [Simple Excess Return Model](#simple-excess-return-model-source-code)) and discount it to present value using the `[Discount Rate]` (See Calculation [Discount Rate (Cost of Equity)](#discount-rate-cost-of-equity)).
+> `Payout Ratio(t)` = `Payout Ratio in stable stage` + ((`High-Growth Years` − t − 1) × (`Average historical Payout Ratio` − `Payout Ratio in stable stage`) / (`High-Growth Years` − 1))
 
-```
-[Discounted excess return in terminal stage] = [Excess Returns in the Terminal Stage] / (1 + [Discount Rate]^[High Growth Years])
-[Excess Returns in the Terminal Stage] = [Terminal year's excess return] * ([Discount Rate] - [Stable Growth In Perpetuity])
-[Terminal year's excess return] = [Beginning book value of equity per share](Terminal Year) * ([Stable Return On Equity] - [Discount Rate])
-```
+### The second stage (stable phase)
 
-This following example show the values of interest for the stable period highlighted in purple.
-![image](https://user-images.githubusercontent.com/46221053/198622321-eda7e820-7700-47fa-aba7-a20b22a3a021.png)
+In the second stage we estimate the `Excess Returns in the Terminal Stage` at the end of the growth phase (similar to the Simple Excess Return Model) and discount it to present value using the `Discount Rate` (see [Discount Rate (Cost of Equity)](#discount-rate-cost-of-equity)).
 
-`[Stable Return On Equity]:`
+`Discounted excess return in terminal stage` = `Excess Returns in the Terminal Stage` / (1 + `Discount Rate`)^`High Growth Years` 
 
+`Excess Returns in the Terminal Stage` = `Terminal year's excess return` * (`Discount Rate` - `Stable Growth in Perpetuity`) 
+
+`Terminal year's excess return` = `Beginning book value of equity per share(Terminal Year)` * (`Stable Return on Equity` - `Discount Rate`)
+
+The following example shows the values of interest for the stable period, highlighted in green.
+
+![image](https://github.com/user-attachments/assets/0be5e6f3-3844-45ef-8ff8-6502492d93c1)
+
+#### `Stable Return on Equity`  
 - The return on equity in the stable phase.
 
-`[Stable Growth In Perpetuity]:`
-
-- This is the expected growth rate of excess returns in perpetuity.
-- By default, this is equal to the current `[Yield of the U.S. 10 Year Treasury Bond]`.
+#### `Stable Growth in Perpetuity`  
+- The expected perpetual growth rate of excess returns.  
+- By default, equal to the current `Yield of the U.S. 10-Year Treasury Bond`.
 
 ## Discount Rate (Cost of Equity)
 
-`[Discount Rate]:`
+#### `Discount Rate`
 
-- The discount rate is used to discount all future `[Excess return per share]` during the high growth period as well as the `[Excess Returns in the Terminal Stage]`, in the stable phase.
-- This is calculated by default using the cost of equity formula:
+- The discount rate is used to discount all future `Excess return per share` values during the high-growth period, as well as the `Excess Returns in the Terminal Stage` in the stable phase.  
+- By default, it is calculated using the cost-of-equity formula:
 
-> `[Discount Rate] = [Risk Free Rate] + [Beta] * [Market Premium]`
+> `Discount Rate` = `Risk-Free Rate` + `Beta` × `Market Premium`
 
-`[Beta]:`
+#### `Beta`  
+- A numerical value that measures how much a stock's returns fluctuate relative to movements in the overall stock market.
 
-- Beta is a numeric value that measures the fluctuations of a stock to changes in the overall stock market.
+#### `Risk-Free Rate`  
+- By default, equal to the current yield of the U.S. 10-Year Treasury Bond.
 
-`[Risk Free Rate]:`
+#### `Market Premium`  
+- The average U.S. market premium of 5.5 %, i.e., the average return of the U.S. market minus the average risk-free rate.
 
-- By default, it is equal to the current yield of the U.S. 10 Year Treasury Bond.
+## Calculating historical table values
 
-`[Market Premium]:`
+Because some companies have preferred shares outstanding that receive dividends, we need to account for them when calculating net income and dividends available to common shareholders.
 
-- Using the average U.S. market premium of 5.5%. 
-- This is the average return of the U.S. market - average risk free rate.
+`Calculated preferred stock dividends & premiums(t)` = `Net income(t)` - `Net income available to common shareholders(t)` 
 
-## Calculating historic table values
+`Net income available to common shareholders(t)` = `EPS available to Common shareholders(t)` * `Common shares outstanding(t)` 
 
-Because some companies have preferred shares outstanding that receive dividends, we need to take them into account when calculating the common shareholders net income and dividends.
+`Return on equity(t)` = `Net income(t)` / `Equity(t-1)` 
 
-```
-[Calculated preferred stock dividends & premiums](t) = [Net income](t) - [Net income available to common shareholders](t)
-[Net income available to common shareholders](t) = [EPS available to Common shareholders](t) * [Common shares outstanding](t)
-[Return on equity](t) = [Net income](t) / [Equity](t-1)
-[Dividends paid to common shareholders](t) = [Dividends per common share](t) * [Common shares outstanding](t)
-[Payout ratio (common)](t) = [Dividends paid to common shareholders](t) / [Net income available to common shareholders](t)
-[Ending Book Value per share](t) = [Equity](t) / [Common shares outstanding](t)
-```
+`Dividends paid to common shareholders(t)` = `Dividends per common share(t)` * `Common shares outstanding(t)` 
 
-![image](https://user-images.githubusercontent.com/46221053/198636256-af5efd9e-60ec-47c0-b6c0-fdd7d4c225ce.png)
+`Payout ratio (common)(t)` = `Dividends paid to common shareholders(t)` / `Net income available to common shareholders(t)` 
+
+`Ending Book Value per share(t)` = `Equity(t)` / `Common shares outstanding(t)`
+
