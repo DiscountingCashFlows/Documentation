@@ -96,14 +96,10 @@ Here, ``Stable Growth In Perpetuity * Equity`` gives a rough estimate of the min
 
 Some companies have preferred shares that receive dividends, so they must be accounted for when calculating net income and dividends available to common shareholders.
 
-`Calculated Preferred Stock Dividends & Premiums (t)` = `Total Dividends Paid (t)` - `Dividends Paid to Common Shareholders (t)`
-
-`Dividends Paid to Common Shareholders (t)` = `Dividends per Common Share (t)` * `Common Shares Outstanding (t)`
-
-`Net Income Available to Common Shareholders (t)` = `Net Income (t)` - `Calculated Preferred Stock Dividends & Premiums (t)`
+`Common Dividends (t)` = `Dividends per share (t)` * `Shares Outstanding (t)`
 
 `Return on Equity (t)` = `Net Income (t)` / `Equity (t-1)`
 
-`Payout Ratio (Common) (t)` = `Dividends Paid to Common Shareholders (t)` / `Net Income Available to Common Shareholders (t)`
+`Payout Ratio (t)` = `Common Dividends (t)` / `Net Income (t)`
 
-`Dividend Yield (t)` = `Dividends per Common Share (t)` / `Reference Market Share Price (t)`
+`Dividend Yield (t)` = `Dividends per share (t)` / `Reference market price (t)`
