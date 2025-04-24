@@ -145,15 +145,11 @@ The following example shows the values of interest for the stable period, highli
 
 Because some companies have preferred shares outstanding that receive dividends, we need to account for them when calculating net income and dividends available to common shareholders.
 
-`Calculated preferred stock dividends & premiums(t)` = `Net income(t)` - `Net income available to common shareholders(t)` 
+`Return on equity(t)` = `Net Income (t)` / `Total Stockholders Equity (t-1)` 
 
-`Net income available to common shareholders(t)` = `EPS available to Common shareholders(t)` * `Common shares outstanding(t)` 
+`Dividends Paid to Common Shareholders(t)` = `Dividend per Share (t)` * `Shares Outstanding (t)` 
 
-`Return on equity(t)` = `Net income(t)` / `Equity(t-1)` 
+`Payout ratio (t)` = `Dividends Paid to Common Shareholders (t)` / `Net Income (t)` 
 
-`Dividends paid to common shareholders(t)` = `Dividends per common share(t)` * `Common shares outstanding(t)` 
-
-`Payout ratio (common)(t)` = `Dividends paid to common shareholders(t)` / `Net income available to common shareholders(t)` 
-
-`Ending Book Value per share(t)` = `Equity(t)` / `Common shares outstanding(t)`
+`Book Value (t)` = `Total Stockholders Equity (t)` / `Shares Outstanding (t)`
 
