@@ -81,14 +81,24 @@ average_dividend_growth_rate = data.average(f"%adjDividendGrowth:{-assumptions.g
 assumptions.set("%high_growth_rate", average_dividend_growth_rate)
 
 data.compute({
-    "#linearRegressionEps": f"function:linear_regression:income:eps start:{-assumptions.get('historical_years')}"
+    "#linearRegressionEps": f"""
+        function:linear_regression:income:eps 
+        start:{-assumptions.get('historical_years')}
+    """
 }, forecast=assumptions.get("high_growth_years"))
 
 # Compute 5 years of forecasted values and ratios
 data.compute({
-    "income:eps": f"function:compound:{data.get('#linearRegressionEps')} rate:{assumptions.get('%high_growth_rate')} offset:-1",
+    "income:eps": f"""
+        function:compound:{data.get('#linearRegressionEps:1')} 
+        rate:{assumptions.get('%high_growth_rate')} 
+        offset:-1
+    """,
     "dividend:adjDividend": f"income:eps * {assumptions.get('%high_growth_payout')}",
-    "#discountedAdjDividend": f"function:discount:dividend:adjDividend rate:{assumptions.get('%discount_rate')}",
+    "#discountedAdjDividend": f"""
+        function:discount:dividend:adjDividend 
+        rate:{assumptions.get('%discount_rate')}
+    """,
     "%adjDividendGrowth": "function:growth:dividend:adjDividend",
 }, forecast=assumptions.get("high_growth_years"))
 
@@ -154,7 +164,7 @@ model.render_table({
     "start": -1,
     "properties": {
         "title": "Projected data",
-        "column_order": "ascending",
+        "order": "ascending",
     },
 })
 
@@ -186,10 +196,7 @@ assumptions.set_description({
     "%discount_rate": r"""
         ## Discount Rate
 
-        $
-        \text{Discount Rate} = \text{Cost of Equity}
-          = \text{Risk Free Rate} + \text{Beta} \times \text{Market Premium}
-        $
+        `Discount Rate` = `Cost of Equity` = `Risk Free Rate` + `Beta` * `Market Premium`
 
         The cost of equity is the theoretical rate of return that an equity investment should generate. It is calculated using the CAPM formula.
 
