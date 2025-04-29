@@ -129,7 +129,7 @@ model.render_table({
     "end": "*",
     "properties": {
         "title": "Projected Data",
-        "column_order": "ascending",
+        "order": "ascending",
     }
 })
 
@@ -162,11 +162,8 @@ assumptions.set_description({
     "%discount_rate": r"""
         ## Discount Rate
 
-        $
-        \text{Discount Rate} = \text{Cost of Equity}
-          = \text{Risk Free Rate} + \text{Beta} \times \text{Market Premium}
-        $
-        
+        `Discount Rate` = `Cost of Equity` = `Risk Free Rate` + `Beta` * `Market Premium`
+
         The cost of equity is the theoretical rate of return that an equity investment should generate. It is calculated using the CAPM formula.
 
         [Read More](https://www.investopedia.com/terms/c/costofequity.asp#mntl-sc-block_1-0-20)
