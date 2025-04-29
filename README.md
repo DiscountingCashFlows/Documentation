@@ -6,8 +6,6 @@ Welcome to the documentation and source code repository for Discounting Cash Flo
 
 - [Developer's Guide (readthedocs)](https://discounting-cash-flows.readthedocs.io/en/latest/index.html): Explore the developer's guide for writing code related to our valuation models.
 
-- The source code for the valuation framework is located in [valuation-framework.js](https://github.com/DiscountingCashFlows/Documentation/blob/main/valuation-framework.js)
-
 #### Valuation Models Documentation
 
 - [Valuation Models Source Code](https://github.com/DiscountingCashFlows/Documentation/tree/main/source-code): Browse the source code for all our valuation models.
