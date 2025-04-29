@@ -116,7 +116,7 @@ model.render_table({
     "properties": {
         "title": "Historical data",
         "display_averages": True,
-        "column_order": "descending",
+        "order": "descending",
     },
 })
 
@@ -132,18 +132,14 @@ assumptions.set_description({
 
         A company's book value is the total shareholders' equity from the balance sheet. We use the book value per share.
         
-        $
-        \text{Book Value Per Share} = \frac{\text{Total Equity}}{\text{Shares Outstanding}}
-        $
+        `Book Value Per Share` = `Total Equity` / `Shares Outstanding`
     """,
     "graham_multiplier": r"""
         ## Graham Multiplier
 
         According to Benjamin Graham, the current price should not be more than 1.5 times the book value last reported. However, a multiplier of earnings below 15 could justify a correspondingly higher multiplier of assets. As a rule of thumb, the product of the multiplier times the ratio of price to book value should not exceed 22.5
         
-        $
-        \text{Graham's Number} = \sqrt{15 * 1.5 * \text{EPS} * \text{Book Value}} = \sqrt{\text{Graham Multiplier} * \text{EPS} * \text{Book Value}}
-        $
+        `Graham's Number` = `square_root`(15 * 1.5 * `EPS` * `Book Value`) = `square_root`(`Graham Multiplier` * `EPS` * `Book Value`)
     """,
     "historical_years": r"""
         ## Historical Years
