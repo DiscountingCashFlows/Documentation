@@ -113,20 +113,19 @@ model.render_table({
     "data": {
         "dividend:adjDividend": "Dividend per Share",
         "%adjDividendGrowth": "Dividend Growth Rate",
-        "#linearRegression": "Linear Regression of Dividends",
     },
     "start": -1,
     "end": "*",
     "properties": {
         "title": "Future Estimations",
-        "column_order": "ascending",
+        "order": "ascending",
     },
 })
 
 # Historical Values
 model.render_table({
     "data": {
-        "income:revenue": "Revenue",
+        "income:netIncome": "Net Income",
         "balance:totalStockholdersEquity": "Equity",
         "%returnOnEquity": "Return on Equity",
         "dividendsPaidToCommon": "Common Dividends",
@@ -142,7 +141,7 @@ model.render_table({
     "end": 0,
     "properties": {
         "title": "Historical Values",
-        "column_order": "descending",
+        "order": "descending",
         "display_averages": True,
         "number_format": "M"
     },
@@ -152,9 +151,7 @@ assumptions.set_description({
     "%discount_rate": r"""
         ## Discount Rate
 
-        $
-        \text{Discount Rate} = \text{Cost of Equity} = \text{Risk Free Rate} + \text{Beta} \times \text{Market Premium}
-        $
+        `Discount Rate` = `Cost of Equity` = `Risk Free Rate` + `Beta` * `Market Premium`
 
         The cost of equity is the theoretical rate of return that an equity investment should generate. It is calculated using the CAPM formula.
 
