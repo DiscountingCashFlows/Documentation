@@ -1,131 +1,105 @@
 # Dividend Discount Models
-Used to predict the value of a company's stock based on the theory that its present-day value is worth the sum of all of its future dividend payments when discounted back to their present value.
+Used to predict the value of a company's stock based on the theory that its present-day value is the sum of all its future dividend payments, discounted back to their present value.
 
-* For stable and mature companies, use [Simple Dividend Discount Model](#simple-dividend-discount-model-source-code)
-* For high growth companies, use the [Two-Stage Dividend Discount Model](#two-stage-dividend-discount-model-source-code)
-* Discount rate calculation [Discount Rate (Cost of Equity)](#discount-rate-cost-of-equity)
-* Table values calculation [Calculating historic table values](#calculating-historic-table-values)
+* For stable and mature companies, use the [`Simple Dividend Discount Model`](#simple-dividend-discount-model)
+* For high-growth companies, use the [`Two-Stage Dividend Discount Model`](#two-stage-dividend-discount-model)
+* Discount rate calculation: [`Discount Rate (Cost of Equity)`](#discount-rate-cost-of-equity)
+* Table values calculation: [`Calculating historical table values`](#calculating-historical-table-values)
 
-## Simple Dividend Discount Model ([Source Code](https://github.com/DiscountingCashFlows/Documentation/blob/main/source-code/valuations/simple-dividend-discount-model.js))
+## Simple Dividend Discount Model
 
-Used to estimate the value of companies that have reached maturity and pay stable dividends as a significant percentage of their Free Cashflow to Equity with little to no high growth chance.
+Used to estimate the value of companies that have reached maturity and pay stable dividends as a significant percentage of their Free Cash Flow to Equity, with little to no high-growth potential.
 
-                        [Estimated Value] = [Expected Dividend] / ([Discount Rate(%)] - [Growth In Perpetuity(%)])
+``Estimated Value = Expected Dividend / (Discount Rate (%) - Growth In Perpetuity (%))``
 
-This is also known as the Gordon Growth formula, which assumes that the expected growth rate in perpetuity in dividends is constant forever.
+This is also known as the Gordon Growth formula, which assumes that the expected dividend growth rate in perpetuity is constant.
 
-> This model was inspired by prof. Aswath Damodaran's spreadsheet [ddmst.xls](https://pages.stern.nyu.edu/~adamodar/pc/ddmst.xls)
+> This model was inspired by Prof. Aswath Damodaran's spreadsheet [ddmst.xls](https://pages.stern.nyu.edu/~adamodar/pc/ddmst.xls)
 
-`[Expected Dividend]:`
-- The expected dividend for next year. 
-- It is calculated weighing the next year's linear regression of historical dividends `[Next Linear Regression Dividend]` and the last twelve months dividents `[LTM Dividend]`.
+``Expected Dividend:``  
+- The expected dividend for the next year.  
+- It is calculated by taking the average between `Next Linear Regression Dividend` and the last twelve months of dividends `LTM Dividend`.
 
-> `[Expected Dividend] = [Linear Regression Weight(%)] * [Next Linear Regression Dividend] + (1 - [Linear Regression Weight(%)]) * [LTM Dividend]`
+> ``Expected Dividend = (Next Linear Regression Dividend + LTM Dividend) / 2``
 
-`[Growth In Perpetuity(%)]:`
+``Growth In Perpetuity (%):``  
+- This is the expected perpetual growth rate of dividends.  
+- By default, it equals the current yield of the U.S. 10-Year Treasury Bond.
 
-- This is the expected growth rate in perpetuity of dividends.
-- By default, this is equal to the current yield of the U.S. 10 Year Treasury Bond.
+## Two-Stage Dividend Discount Model
 
-`[Linear Regression Weight(%)]:`
+Used to estimate the value of companies experiencing two growth stages: an initial `High Growth Period` represented by ``Sum of Discounted Dividends``, followed by a `Stable Growth Period` represented by ``Discounted Terminal Value``.
 
-This rate represents how much will the `[Expected Dividend]` be affected by the `[Next Linear Regression Dividend]`. 
-* 100% means the `[Expected Dividend]` will be equal to the `[Next Linear Regression Dividend]`.
-* 0% means the `[Expected Dividend]` will be equal to the `[LTM Dividend]`.
-* By default it is set to 50%.
+``Estimated Value = Sum of Discounted Dividends + Discounted Terminal Value``
 
-## Two-Stage Dividend Discount Model ([Source Code](https://github.com/DiscountingCashFlows/Documentation/blob/main/source-code/valuations/two-stage-dividend-discount-model.js))
+> This model was inspired by Prof. Aswath Damodaran's spreadsheet [ddm2st.xls](https://pages.stern.nyu.edu/~adamodar/pc/ddm2st.xls)
 
-Used to estimate the value of companies based on two stages of growth. An initial [period of high growth](#the-first-stage-high-growth-period), represented by `[Sum of Discounted Dividends]`, followed by a [period of stable growth](#the-second-stage-stable-period), represented by `[Discounted Terminal Value]`.
+### The First Stage (High Growth Period)
+In this stage, we estimate future dividends during the high-growth period, calculated as a percentage of forecasted EPS (Earnings Per Share), then discount them to present value.  
+EPS is projected using a linear regression of past EPS and the ``Average Historical Dividend Growth Rate``.  
+We use dividend growth over EPS growth because dividends tend to grow more consistently.
 
-                           [Estimated Value] = [Sum of Discounted Dividends] + [Discounted Terminal Value]
+> ``Sum of Discounted Dividends = Dividend(t+1)/(1 + Discount Rate (%)) + Dividend(t+2)/(1 + Discount Rate (%))^2 + ... + Dividend(t+High Growth Years)/(1 + Discount Rate (%))^High Growth Years``
 
-> This model was inspired by prof. Aswath Damodaran's spreadsheet [ddm2st.xls](https://pages.stern.nyu.edu/~adamodar/pc/ddm2st.xls)
+``High Growth Years:``  
+- The number of years expected to experience high growth.
 
-### The first stage (High growth period):
-In the first stage, we estimate the future high growth period dividends, calculated as a percentage of future EPS(Earnings Per Share), and then discount them to present value.
-The future EPS is forecasted using linear regression of past EPS and the `[Average historic Dividend Growth Rate]`.
-We use the Dividend growth rate instead of the EPS growth rate because the dividends tend to grow more consistently than EPS.
+``High Growth Rate (%):``  
+- The expected EPS growth rate during the high-growth period.  
+- By default, this equals the `Average Historical Dividend Growth Rate`.
 
-> `[Sum of discounted dividends] = Dividend(t+1)/(1 + [Discount Rate(%)]) + Dividend(t+2)/(1 + [Discount Rate(%)])^2 + ... + Dividend(t+[High Growth Years])/(1 + [Discount Rate(%)])^[High Growth Years]`
+``High Growth Payout (%):``  
+- The expected dividend payout ratio during the high-growth phase.
 
-`[High Growth Years]:` 
+### The Second Stage (Stable Period)
+In this stage, we estimate a terminal value at the end of the high-growth phase and discount it to present value.
 
-- The number of years of expected high growth.
+> ``Terminal Value = EPS in Stable Phase * Stable Payout / (Discount Rate - Stable Growth In Perpetuity)``  
+> ``Discounted Terminal Value = Terminal Value / (1 + Discount Rate)^High Growth Years``
 
-`[High Growth Rate(%)]:` 
+``Stable Growth In Perpetuity (%):``  
+- The expected perpetual growth rate of dividends and EPS.  
+- By default, this equals the current yield of the U.S. 10-Year Treasury Bond.
 
-- The expected EPS growth rate during the high growth period.
-- It is equal to `[Average historic Dividend Growth Rate]` by default.
+``Stable Payout:``  
+- The dividend payout ratio in the stable phase, expressed as a percentage of EPS.
 
-`[High Growth Payout(%)]:`
+> ``Stable Payout = 1 - Stable Growth In Perpetuity / Average Historical Return on Equity``
 
-- The expected payout ratio of dividends to common shareholders during the high growth period.
+Return on equity is calculated as: ``Net Income / Equity``
 
-### The second stage (Stable period):
-In the second stage, we estimate a Terminal Value at the end of the growth period and discount it to present value.
+Expanded:
 
-> `[Terminal value] = [Eps in stable phase] * [Stable Payout] / ([Discount Rate] - [Stable Growth In Perpetuity])`
+``Stable Payout = (Net Income - Stable Growth In Perpetuity * Equity) / Net Income``
 
-
-> `[Discounted terminal value] = [Terminal value] / (1 + [Discount Rate])^[High Growth Years]`
-
-`[Stable Growth In Perpetuity(%)]:`
-
-- This is the expected growth rate in perpetuity of dividends and EPS. 
-- By default, this is equal to the current yield of the U.S. 10 Year Treasury Bond.
-
-`[Stable Payout]:`
-
-- The dividend payout in the stable phase as a percentage of EPS.
-
-> `[Stable Payout] = 1 - [Stable Growth In Perpetuity] / [Average historic Return on Equity]`
-
-The return on equity is calculated as: `[Net Income] / [Equity]`
-
-If we expand the formula, it becomes:
-                
-                [Stable Payout] = ([Net Income] - [Stable Growth In Perpetuity] * [Equity]) / [Net Income],
-
-where `[Stable Growth In Perpetuity] * [Equity]` gives us a rough estimation of the minimum retention of earnings during this stable phase.
+Here, ``Stable Growth In Perpetuity * Equity`` gives a rough estimate of the minimum retained earnings during the stable phase.
 
 ## Discount Rate (Cost of Equity)
 
-`[Discount Rate]:`
+``Discount Rate:``  
+- Used to discount all future dividends during the high-growth period and the terminal value in the stable phase.  
+- By default, it is calculated using the cost of equity formula:
 
-- The discount rate is used to discount all future dividends during the high growth period as well as the terminal value, in the stable phase. 
-- This is calculated by default using the cost of equity formula:
+> ``Discount Rate = Risk Free Rate + Beta * Market Premium``
 
-> `[Discount Rate] = [Risk Free Rate] + [Beta] * [Market Premium]`
+``Beta:``  
+- A numeric value that measures the stock's volatility relative to the overall market.
 
-`[Beta]:`
+``Risk Free Rate (%):``  
+- By default, this is equal to the current yield of the U.S. 10-Year Treasury Bond.
 
-- Beta is a numeric value that measures the fluctuations of a stock to changes in the overall stock market.
+``Market Premium (%):``  
+- Typically uses the U.S. market average of 5.5%.  
+- Defined as the average market return minus the average risk-free rate.
 
-`[Risk Free Rate(%)]:`
+## Calculating Historical Table Values
 
-- By default, it is equal to the current yield of the U.S. 10 Year Treasury Bond.
+Some companies have preferred shares that receive dividends, so they must be accounted for when calculating net income and dividends available to common shareholders.
 
-`[Market Premium(%)]:`
+`Common Dividends (t)` = `Dividends per share (t)` * `Shares Outstanding (t)`
 
-- Using the average U.S. market premium of 5.5%. 
-- This is the average return of the U.S. market - average risk free rate.
+`Return on Equity (t)` = `Net Income (t)` / `Equity (t-1)`
 
-## Calculating historic table values
+`Payout Ratio (t)` = `Common Dividends (t)` / `Net Income (t)`
 
-
-Because some companies have preferred shares outstanding that receive dividends, we need to take them into account when calculating the common shareholders net income and dividends.
-
-```
-[Calculated preferred stock dividends & premiums](t) = [Total dividends paid](t) - [Dividends paid to common shareholders](t)
-
-[Dividends paid to common shareholders](t) = [Dividends per common share](t) * [Common shares outstanding](t)
-
-[Net income available to common shareholders](t) = [Net income](t) - [Calculated preferred stock dividends & premiums](t)
-
-[Return on equity](t) = [Net income](t) / [Equity](t-1)
-
-[Payout ratio (common)](t) = [Dividends paid to common shareholders](t) / [Net income available to common shareholders](t)
-
-[Dividend yield](t) = [Dividends per common share](t) / [Reference market share price](t)
-```
+`Dividend Yield (t)` = `Dividends per share (t)` / `Reference market price (t)`
