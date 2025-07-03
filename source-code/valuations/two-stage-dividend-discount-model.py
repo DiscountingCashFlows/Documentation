@@ -68,6 +68,9 @@ data.compute({
 average_return_on_equity = data.average(f"%returnOnEquity:{-assumptions.get('historical_years')}->0")
 stable_payout = 1 - assumptions.get("%stable_growth_in_perpetuity") / average_return_on_equity
 assumptions.set("%stable_payout", stable_payout)
+assumptions.set_bounds(
+    "%stable_payout", low="0%", high="90%"
+)
 
 # Calculate the average payout ratio
 average_payout_ratio = data.average(f"%payoutRatio:{-assumptions.get('historical_years')}->0")
