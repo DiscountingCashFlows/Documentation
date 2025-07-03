@@ -16,7 +16,7 @@ This analysis provides a report of the company's key margins, which could be fur
 # Initialize assumptions
 assumptions.init({
     "data": {
-        "historical_years": 10,
+        "historical_years": 5,
     }
 })
 
@@ -47,6 +47,12 @@ model.render_chart({
     "end": "*",
     "properties": {
         "title": "Margin Analysis (% of Revenue)",
+        "hidden_keys": [
+            "%revenueMargin",
+            "%capitalExpenditureMargin"
+        ],
+        "bar_keys": "*",
+        "include_ltm": True
     }
 })
 
