@@ -56,10 +56,17 @@ data.compute({
     "%roic": "nopat / investedCapital",
 })
 
-assumptions.set("%net_income_margin",
-                data.average(f"%netMargin:{-assumptions.get('historical_years')}->0"))  # Historical average
-assumptions.set("%revenue_growth_rate",
-                data.average(f"%revenueGrowthRate:{-assumptions.get('historical_years')}->0"))  # Historical average
+data.set_default_range(f"{-assumptions.get('historical_years')}->0")
+
+assumptions.set("%net_income_margin", data.average(f"%netMargin"))
+assumptions.set_bounds(
+    "%net_income_margin", low=0, high="100%"
+)
+
+assumptions.set("%revenue_growth_rate", data.average(f"%revenueGrowthRate"))
+assumptions.set_bounds(
+    "%revenue_growth_rate", low=0, high="25%"
+)
 
 # Calculate a linear regression for forecasting revenues
 data.compute({
@@ -112,7 +119,6 @@ model.render_chart({
     "end": "*",
     "properties": {
         "title": "Historical and forecasted data",
-        "number_format": "M",
         "set_editable": [
             "income:revenue",
             "income:netIncome"

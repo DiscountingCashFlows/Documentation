@@ -50,10 +50,15 @@ data.compute({
     '%adjDividendGrowth': "function:growth:dividend:adjDividend",
 })
 
+data.set_default_range(f"{-assumptions.get('historical_years')}->0")
+
 # Calculate average payout ratio and return on equity
-average_payout_ratio = data.average(f"%payoutRatio:{-assumptions.get('historical_years')}->0")
-average_return_on_equity = data.average(f"%returnOnEquity:{-assumptions.get('historical_years')}->0")
+average_payout_ratio = data.average("%payoutRatio", 0)
+average_return_on_equity = data.average("%returnOnEquity")
 assumptions.set("%stable_return_on_equity", average_return_on_equity)
+assumptions.set_bounds(
+    "%stable_return_on_equity", low="0%", high="100%"
+)
 stable_payout_ratio = 1 - assumptions.get("%stable_growth_in_perpetuity") / assumptions.get("%stable_return_on_equity")
 
 payout_increase = (stable_payout_ratio - average_payout_ratio) / assumptions.get('high_growth_years')

@@ -51,6 +51,9 @@ data.compute({
 average_return_on_equity = data.average(f"%returnOnEquity:{-assumptions.get('historical_years')}->0")
 
 assumptions.set("%return_on_equity", average_return_on_equity)
+assumptions.set_bounds(
+    "%return_on_equity", low="0%", high="100%"
+)
 
 # Calculate stable payout ratio
 stable_payout_ratio = 1 - (assumptions.get("%growth_in_perpetuity") / assumptions.get("%return_on_equity"))
@@ -108,7 +111,8 @@ model.render_chart({
     "start": -assumptions.get("historical_years"),
     "end": "*",
     "properties": {
-        "title": "Historical and Forecasted Data"
+        "title": "Historical and Forecasted Data",
+        "hidden_keys": ["#retainedEarnings"]
     }
 })
 

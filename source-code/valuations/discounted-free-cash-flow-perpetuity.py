@@ -63,14 +63,30 @@ data.compute({
     "%revenueGrowthRate": "function:growth:income:revenue",
 })
 
-average_revenue_growth_rate = data.average(f"%revenueGrowthRate:{-assumptions.get('historical_years')}->0")
-assumptions.set("%revenue_growth_rate", average_revenue_growth_rate)
+data.set_default_range(f"{-assumptions.get('historical_years')}->0")
 
-average_operating_cash_flow_margin = data.average(f"%operatingCashFlowMargin:{-assumptions.get('historical_years')}->0")
+assumptions.set("%revenue_growth_rate", data.average("%revenueGrowthRate"))
+# Limit revenue growth rate between 0% and 25%
+assumptions.set_bounds(
+    "%revenue_growth_rate", low=0, high="25%"
+)
+
+average_operating_cash_flow_margin = data.average("%operatingCashFlowMargin")
 assumptions.set("%operating_cash_flow_margin", average_operating_cash_flow_margin)
+# Limit OCF range from 0 to 100% (all revenue converted to OCF)
+assumptions.set_bounds(
+    "%operating_cash_flow_margin", low=0, high="100%"
+)
 
-average_capital_expenditure_margin = data.average(f"%capitalExpenditureMargin:{-assumptions.get('historical_years')}->0")
+average_capital_expenditure_margin = -data.average("%capitalExpenditureMargin")
 assumptions.set("%capital_expenditure_margin", average_capital_expenditure_margin)
+
+# Limit CapEx range from 0 to 90% of OCF Margin
+assumptions.set_bounds(
+    "%capital_expenditure_margin",
+    low=0,
+    high=assumptions.get("%operating_cash_flow_margin")*.9
+)
 
 data.compute({
     "linearRegressionRevenue": f"""
@@ -88,7 +104,7 @@ data.compute({
     "%revenueGrowthRate": "function:growth:income:revenue",
     "flow:operatingCashFlow": f"income:revenue * {assumptions.get('%operating_cash_flow_margin')}",
     "computedCapitalExpenditure": f"income:revenue * {assumptions.get('%capital_expenditure_margin')}",
-    "flow:freeCashFlow": "flow:operatingCashFlow + computedCapitalExpenditure",
+    "flow:freeCashFlow": "flow:operatingCashFlow - computedCapitalExpenditure",
     "flow:capitalExpenditure": "flow:freeCashFlow - flow:operatingCashFlow",
     "discountedFreeCashFlow": f"""
         function:discount:flow:freeCashFlow 
@@ -178,7 +194,6 @@ model.render_chart({
             "linearRegressionRevenue",
             "discountedFreeCashFlow"
         ],
-        "number_format": "M",
         "width": "full"
     },
 })

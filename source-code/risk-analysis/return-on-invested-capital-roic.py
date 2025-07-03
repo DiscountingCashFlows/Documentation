@@ -50,6 +50,7 @@ model.render_chart({
     "end": "*",
     "properties": {
         "title": "Historical ROIC Values",
+        "include_ltm": True
     }
 })
 
