@@ -66,18 +66,31 @@ data.compute({
     "%revenueGrowthRate": "function:growth:income:revenue",
 })
 
+data.set_default_range(f"{-assumptions.get('historical_years')}->0")
+
 # Calculate margins
-ebitda_margin = data.average(f"%ebitdaMargin:{-assumptions.get('historical_years')}->0")
-assumptions.set("%ebitda_margin", ebitda_margin)
+assumptions.set("%ebitda_margin", data.average("%ebitdaMargin"))
+assumptions.set_bounds(
+    "%ebitda_margin", low=0, high="100%"
+)
 
-operating_cash_flow_margin = data.average(f"%operatingCashFlowToEbitda:{-assumptions.get('historical_years')}->0")
-assumptions.set("%operating_cash_flow_to_ebitda", operating_cash_flow_margin)
+assumptions.set("%operating_cash_flow_to_ebitda", data.average("%operatingCashFlowToEbitda"))
+# Limit OCF range
+assumptions.set_bounds(
+    "%operating_cash_flow_to_ebitda", low=0, high="100%"
+)
 
-capital_expenditure_margin = -data.average(f"%capitalExpenditureToEbitda:{-assumptions.get('historical_years')}->0")
-assumptions.set("%capital_expenditure_to_ebitda", capital_expenditure_margin)
+assumptions.set("%capital_expenditure_to_ebitda", -data.average("%capitalExpenditureToEbitda"))
+# Limit CapEx range
+assumptions.set_bounds(
+    "%capital_expenditure_to_ebitda", low=0, high="90%"
+)
 
-average_revenue_growth_rate = data.average(f"%revenueGrowthRate:{-assumptions.get('historical_years')}->0")
-assumptions.set("%revenue_growth_rate", average_revenue_growth_rate)
+assumptions.set("%revenue_growth_rate", data.average("%revenueGrowthRate"))
+# Limit revenue growth
+assumptions.set_bounds(
+    "%revenue_growth_rate", low=0, high="25%"
+)
 
 # Calculate the Enterprise Value and set the exit EBITDA multiple
 ev = data.get("profile:mktCap") + data.get("balance:totalDebt") - data.get("balance:cashAndShortTermInvestments")
@@ -177,7 +190,6 @@ model.render_chart({
     "end": "*",
     "properties": {
         "title": "Historical and Forecasted Data",
-        "number_format": "M",
         "set_editable": [
             "income:revenue",
             "flow:operatingCashFlow",
@@ -185,6 +197,7 @@ model.render_chart({
             "income:ebitda",
         ],
         "hidden_keys": [
+            "flow:capitalExpenditure",
             "linearRegressionRevenue",
             "discountedFreeCashFlow"
         ],
