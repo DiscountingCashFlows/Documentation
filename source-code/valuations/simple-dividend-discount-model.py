@@ -18,7 +18,7 @@ assumptions.init({
     "data": {
         "%discount_rate": None,
         "expected_dividend": None,
-        "%growth_in_perpetuity": data.get("treasury:year10"),
+        "%growth_in_perpetuity": "2.5%",
         "beta": data.get("profile:beta", default=1),
         "%risk_free_rate": data.get("treasury:year10"),
         "%market_premium": data.get("risk:totalEquityRiskPremium"),
