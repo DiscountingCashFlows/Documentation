@@ -24,7 +24,7 @@ assumptions.init({
         "historical_years": None,
         "%high_growth_rate": None,
         "%high_growth_payout": None,
-        "%stable_growth_in_perpetuity": data.get("treasury:year10"),
+        "%stable_growth_in_perpetuity": "2.5%",
         "%stable_payout": None,
     },
     "hierarchies": [{

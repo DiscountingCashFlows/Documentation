@@ -19,7 +19,7 @@ assumptions.init({
         "%discount_rate": None,
         "high_growth_years": 5,
         "%stable_return_on_equity": None,
-        "%stable_growth_in_perpetuity": data.get("treasury:year10"),
+        "%stable_growth_in_perpetuity": "2.5%",
         "%market_premium": data.get("risk:totalEquityRiskPremium"),
         "%risk_free_rate": data.get("treasury:year10"),
         "beta": data.get("profile:beta", default=1),
