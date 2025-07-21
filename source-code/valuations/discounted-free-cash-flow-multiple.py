@@ -97,19 +97,11 @@ ev = data.get("profile:mktCap") + data.get("balance:totalDebt") - data.get("bala
 exit_ebitda_multiple = ev / data.get("income:ebitda")
 assumptions.set("exit_ebitda_multiple", exit_ebitda_multiple)
 
-data.compute({
-    "linearRegressionRevenue": f"""
-        function:linear_regression:income:revenue 
-        start:{-assumptions.get('historical_years')}
-    """,
-}, forecast=assumptions.get("projection_years"))
-
 # Compute forecasted values and ratios
 data.compute({
     "income:revenue": f"""
-        function:compound:{data.get('linearRegressionRevenue:1')} 
-        rate:{assumptions.get('%revenue_growth_rate')} 
-        offset:-1
+        income:revenue:-1 * 
+        (1 + {assumptions.get('%revenue_growth_rate')})
     """,
     "income:ebitda": f"income:revenue * {assumptions.get('%ebitda_margin')}",
     "%revenueGrowthRate": "function:growth:income:revenue",
@@ -183,7 +175,6 @@ model.render_chart({
         "income:ebitda": "EBITDA",
         "flow:freeCashFlow": "Free Cash Flow",
         "flow:capitalExpenditure": "Capital Expenditure",
-        "linearRegressionRevenue": "Linear Regression Revenue",
         "discountedFreeCashFlow": "Discounted Free Cash Flow",
     },
     "start": -assumptions.get("historical_years"),
@@ -198,7 +189,6 @@ model.render_chart({
         ],
         "hidden_keys": [
             "flow:capitalExpenditure",
-            "linearRegressionRevenue",
             "discountedFreeCashFlow"
         ],
     }
