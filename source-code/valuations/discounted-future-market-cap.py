@@ -68,14 +68,12 @@ assumptions.set_bounds(
     "%revenue_growth_rate", low=0, high="25%"
 )
 
-# Calculate a linear regression for forecasting revenues
-data.compute({
-    "linearRegressionRevenue": f"function:linear_regression:income:revenue start:{-assumptions.get('historical_years')}",
-}, forecast=assumptions.get("projection_years"))
-
 # Compute forecasted values and ratios
 data.compute({
-    "income:revenue": f"function:compound:{data.get('linearRegressionRevenue:1')} rate:{assumptions.get('%revenue_growth_rate')} offset:-1",
+    "income:revenue": f"""
+        income:revenue:-1 * 
+        (1 + {assumptions.get('%revenue_growth_rate')})
+    """,
     "%revenueGrowthRate": "function:growth:income:revenue",
     "income:netIncome": f"income:revenue * {assumptions.get('%net_income_margin')}",
 }, forecast=assumptions.get("projection_years"))
@@ -112,8 +110,7 @@ model.render_results([
 model.render_chart({
     "data": {
         "income:revenue": "Revenue",
-        "income:netIncome": "Net Income",
-        "linearRegressionRevenue": "Linear Regression Revenue"
+        "income:netIncome": "Net Income"
     },
     "start": -assumptions.get("historical_years"),
     "end": "*",
@@ -122,8 +119,7 @@ model.render_chart({
         "set_editable": [
             "income:revenue",
             "income:netIncome"
-        ],
-        "hidden_keys": ["linearRegressionRevenue"]
+        ]
     }
 })
 
