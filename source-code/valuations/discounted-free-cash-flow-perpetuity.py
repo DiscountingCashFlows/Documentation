@@ -89,21 +89,19 @@ assumptions.set_bounds(
 )
 
 data.compute({
-    "linearRegressionRevenue": f"""
-        function:linear_regression:income:revenue 
-        start:{-assumptions.get('historical_years')}
-    """,
-}, forecast=assumptions.get("projection_years"))
-
-data.compute({
     "income:revenue": f"""
-        function:compound:{data.get('linearRegressionRevenue:1')} 
-        rate:{assumptions.get('%revenue_growth_rate')}
-        offset:-1
+        income:revenue:-1 * 
+        (1 + {assumptions.get('%revenue_growth_rate')})
     """,
     "%revenueGrowthRate": "function:growth:income:revenue",
-    "flow:operatingCashFlow": f"income:revenue * {assumptions.get('%operating_cash_flow_margin')}",
-    "computedCapitalExpenditure": f"income:revenue * {assumptions.get('%capital_expenditure_margin')}",
+    "flow:operatingCashFlow": f"""
+        income:revenue * 
+        {assumptions.get('%operating_cash_flow_margin')}
+    """,
+    "computedCapitalExpenditure": f"""
+        income:revenue * 
+        {assumptions.get('%capital_expenditure_margin')}
+    """,
     "flow:freeCashFlow": "flow:operatingCashFlow - computedCapitalExpenditure",
     "flow:capitalExpenditure": "flow:freeCashFlow - flow:operatingCashFlow",
     "discountedFreeCashFlow": f"""
@@ -177,7 +175,6 @@ model.render_chart({
         "flow:operatingCashFlow": "Operating Cash Flow",
         "flow:freeCashFlow": "Free Cash Flow",
         "flow:capitalExpenditure": "Capital Expenditure",
-        "linearRegressionRevenue": "Linear Regression Revenue Line",
         "discountedFreeCashFlow": "Discounted Free Cash Flow"
     },
     "start": -assumptions.get("historical_years"),
@@ -191,7 +188,6 @@ model.render_chart({
         ],
         "hidden_keys": [
             "flow:capitalExpenditure",
-            "linearRegressionRevenue",
             "discountedFreeCashFlow"
         ],
         "width": "full"

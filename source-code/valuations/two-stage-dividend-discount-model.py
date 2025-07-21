@@ -83,19 +83,11 @@ else:
 average_dividend_growth_rate = data.average(f"%adjDividendGrowth:{-assumptions.get('historical_years')}->0")
 assumptions.set("%high_growth_rate", average_dividend_growth_rate)
 
-data.compute({
-    "#linearRegressionEps": f"""
-        function:linear_regression:income:eps 
-        start:{-assumptions.get('historical_years')}
-    """
-}, forecast=assumptions.get("high_growth_years"))
-
 # Compute 5 years of forecasted values and ratios
 data.compute({
     "income:eps": f"""
-        function:compound:{data.get('#linearRegressionEps:1')} 
-        rate:{assumptions.get('%high_growth_rate')} 
-        offset:-1
+        income:eps:-1 * 
+        (1 + {assumptions.get('%high_growth_rate')})
     """,
     "dividend:adjDividend": f"income:eps * {assumptions.get('%high_growth_payout')}",
     "#discountedAdjDividend": f"""
@@ -139,7 +131,6 @@ model.render_chart({
     "data": {
         "income:eps": "Earnings Per Share",
         "dividend:adjDividend": "Dividend",
-        "#linearRegressionEps": "Linear Regression of EPS",
         "#discountedAdjDividend": "Discounted Dividends"
     },
     "start": -assumptions.get('historical_years'),
@@ -150,7 +141,6 @@ model.render_chart({
             "dividend:adjDividend"
         ],
         "hidden_keys": [
-            "#linearRegressionEps",
             "#discountedAdjDividend"
         ],
     }
