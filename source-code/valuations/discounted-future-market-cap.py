@@ -18,7 +18,7 @@ assumptions.init({
         "beta": data.get("profile:beta", default=1),
         "%risk_free_rate": data.get("treasury:year10"),
         "%market_premium": data.get("risk:totalEquityRiskPremium"),
-        "pe_ratio": data.get("quote:close") / data.get("income:eps"),
+        "pe_ratio": data.get("ratio:priceEarningsRatio"),
         "%revenue_growth_rate": None,
         "%net_income_margin": None,
         "historical_years": 10,
@@ -102,7 +102,7 @@ model.render_results([
     [discounted_future_market_cap, "Market capitalization discounted to present", "$"],
     [shares_outstanding, "Shares Outstanding", "#"],
     [data.get("income:eps"), "Earnings Per Share (EPS)", "$"],
-    [data.get("quote:close"), "Market Price", "$"],
+    [data.get("profile:price"), "Market Price", "$"],
     [data.get("ratio:priceEarningsRatio"), "Price to Earnings (PE) Ratio", "#"]
 ])
 
