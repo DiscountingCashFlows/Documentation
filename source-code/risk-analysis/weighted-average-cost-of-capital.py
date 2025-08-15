@@ -18,29 +18,33 @@ assumptions.init({
     "beta": data.get("profile:beta", default=1),
     "%risk_free_rate": data.get("treasury:year10"),
     "%market_premium": data.get("risk:totalEquityRiskPremium"),
+    "%tax_rate": None,
 })
 
-# Cost of Debt
-# Total Debt = Short Term Debt + Long Term Debt
-cost_of_debt = data.get("income:interestExpense") / data.get("balance:totalDebt")
+# WACC Calculation
+risk_free_rate = assumptions.get("%risk_free_rate")
+beta = assumptions.get("beta")
+market_premium = assumptions.get("%market_premium")
+cost_of_equity = risk_free_rate + beta * market_premium
+cost_of_debt = data.get("income:interestExpense / balance:totalDebt")
+if cost_of_debt is None:
+    # Use the 10-year Treasury yield instead
+    cost_of_debt = data.get("treasury:year10")
 
-# Tax Rate
-tax_rate = data.get("income:incomeTaxExpense") / data.get("income:incomeBeforeTax")
-if tax_rate < 0:
-    tax_rate = 0
+tax_rate = data.get("income:incomeTaxExpense / income:incomeBeforeTax")
+if tax_rate is None or tax_rate < 0:
+    # Fall back to the statutory corporate rate
+    tax_rate = data.get("risk:corporateTaxRate")
+assumptions.set("%tax_rate", tax_rate)
 
-# Cost of Equity
-cost_of_equity = assumptions.get("%risk_free_rate") + assumptions.get("beta") * assumptions.get("%market_premium")
+market_cap = data.get("profile:price * income:weightedAverageShsOut")
+debt_weight = data.get(f"balance:totalDebt / ({market_cap} + balance:totalDebt)")
+if debt_weight is None:
+    # Assume zero leverage if missing
+    debt_weight = 0
 
-# Weights
-total_debt = data.get("balance:shortTermDebt") + data.get("balance:longTermDebt")
-market_cap = data.get("profile:price") * data.get("income:weightedAverageShsOut")
-
-debt_weight = total_debt / (market_cap + total_debt)
-equity_weight = market_cap / (market_cap + total_debt)
-
-# Calculate WACC
-wacc = debt_weight * cost_of_debt * (1 - tax_rate) + equity_weight * cost_of_equity
+equity_weight = 1 - debt_weight
+wacc = debt_weight * cost_of_debt * (1 - assumptions.get("%tax_rate")) + equity_weight * cost_of_equity
 
 model.set_final_value({
     "value": wacc,
@@ -83,6 +87,22 @@ assumptions.set_description({
         ## Market Premium
 
         Market risk premium represents the excess returns over the risk-free rate that investors expect for taking on the incremental risks connected to the equities market.
+    """,
+
+    "%tax_rate": r"""
+        ## Tax Rate
+        
+        `Tax Rate` = `Income Tax Expense` / `Income Before Tax`
+        
+        This is the company’s **effective tax rate**, reflecting the average rate of tax actually paid on its pre-tax earnings (including all statutory, deferred, and non-recurring items).
+        
+        This rate is used to adjust the after-tax cost of debt, since interest expense is tax-deductible.
+        
+        ## Discount Rate
+        
+        `Discount Rate` =  
+        `Debt Weight` × `Cost of Debt` × (1 − `Tax Rate`)  
+        + `Equity Weight` × `Cost of Equity`
     """,
 })
 

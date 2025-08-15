@@ -8,7 +8,7 @@
 model.render_description(r"""
 ## Simple Dividend Discount Model
 
-This model is used to estimate the value of companies that have reached maturity and pay stable dividends as a significant percentage of their Free Cashflow to Equity, with little to no high growth chance.
+This model estimates the value of companies that have reached maturity and pay stable dividends as a significant percentage of their Free Cash Flow to Equity, with little to no high growth prospects.
 
 See our [GitHub Documentation](https://github.com/DiscountingCashFlows/Documentation/blob/main/models-documentation/dividend-discount-models.md#simple-dividend-discount-model-source-code)
 """)
@@ -31,7 +31,7 @@ assumptions.init({
     }]
 })
 
-# Set the discount rate to the cost of equity
+# Calculate the discount rate as the cost of equity
 risk_free_rate = assumptions.get("%risk_free_rate")
 beta = assumptions.get("beta")
 market_premium = assumptions.get("%market_premium")
@@ -39,7 +39,7 @@ cost_of_equity = risk_free_rate + beta * market_premium
 
 assumptions.set("%discount_rate", cost_of_equity)
 
-# Count all dividends excluding None and 0 values
+# Count all dividend payments excluding None and zero values
 dividend_count = data.count("dividend:adjDividend:*", properties={"except_values": [None, 0]})
 
 if dividend_count <= 0:
@@ -49,32 +49,50 @@ elif dividend_count > 10:
     assumptions.set("historical_years", 10)
 
 else:
-    # Set the default historical years to the number of historical dividends
+    # Set the historical years to the number of available dividend payments
     assumptions.set("historical_years", dividend_count)
 
-# Calculate additional values
+# Compute the average annual dividend growth rate
 data.compute({
-    # Predict the next 5 future dividends using a linear regression line
-    "#linearRegression": f"function:linear_regression:dividend:adjDividend start:{-assumptions.get('historical_years')}",
-}, forecast=assumptions.get("forecast_years"))
+    "%dividendGrowth": "function:growth:dividend:adjDividend"
+}, forecast=0)
 
-# By default, we want the next year's expected dividend to be the average
-# between the LTM dividend and the regression value of next year
-linear_regression_weight = 0.5
-expected_dividend = linear_regression_weight * data.get("#linearRegression:1") + (
-    1 - linear_regression_weight) * data.get("dividend:adjDividend")
-assumptions.set("expected_dividend", expected_dividend)
+# Define the averaging period for historical dividend growth
+averaging_period = f"-{assumptions.get('historical_years')}->0"
+average_growth_rate = data.average(f"%dividendGrowth:{averaging_period}")
 
+# Calculate next year's expected dividend by compounding the LTM dividend
+# at the average growth rate over the remaining fiscal period (using continuous compounding)
+ltm_dividend = data.get("dividend:adjDividend")
+if ltm_dividend is not None:
+    if average_growth_rate is not None:
+        data.compute({
+            "dividend:adjDividend": f"""
+                function:compound:{ltm_dividend}
+                rate:{average_growth_rate}
+                continuous:true
+            """
+        }, forecast=1)
+        expected_dividend = data.get(f"dividend:adjDividend:1")
+        assumptions.set("expected_dividend", expected_dividend)
+    else:
+        # Fallback to the ltm_dividend, if the average dividend
+        # growth rate could not be computed
+        assumptions.set("expected_dividend", ltm_dividend)
+else:
+    model.error("Zero dividend encountered")
+
+# Calculate the intrinsic stock value using the Dividend Discount Model formula
 stock_value = assumptions.get("expected_dividend") / (
     assumptions.get("%discount_rate") - assumptions.get("%growth_in_perpetuity"))
 
-# Set stock_value as the stock's estimated value
+# Set the calculated stock value as the model's final output
 model.set_final_value({
     "value": stock_value,
     "units": '$'
 })
 
-# Compute historical values
+# Compute additional historical metrics for analysis
 data.compute({
     "dividendsPaidToCommon": "dividend:adjDividend * income:weightedAverageShsOut",
     "%returnOnEquity": "income:netIncome / balance:totalStockholdersEquity:-1",
@@ -83,32 +101,39 @@ data.compute({
     "%adjDividendGrowth": "function:growth:dividend:adjDividend",
 })
 
+# Compute projected dividends and dividend growth for the forecast period
 data.compute({
-    "dividend:adjDividend": f"function:compound:{assumptions.get('expected_dividend')} rate:{assumptions.get('%growth_in_perpetuity')} offset:-1",
+    "dividend:adjDividend": f"""
+        function:compound:{assumptions.get('expected_dividend')} 
+        rate:{assumptions.get('%growth_in_perpetuity')}
+        continuous:true
+    """,
     "%adjDividendGrowth": "function:growth:dividend:adjDividend",
 }, forecast=assumptions.get("forecast_years"))
 
+# Render key results
 model.render_results([
-    [data.get("dividend:adjDividend:0"), "LTM dividend", "$"],  # Set currency
-    [assumptions.get("expected_dividend"), "Next year's expected dividend", "$"],  # Set currency
+    [data.get("dividend:adjDividend:0"), "LTM Dividend", "$"],
+    [average_growth_rate, "Average Dividend Growth Rate", "%"],
+    [assumptions.get("expected_dividend"), "Next Year's Expected Dividend", "$"],
     [assumptions.get("%discount_rate"), 'Cost of Equity', '%'],
     [assumptions.get("%growth_in_perpetuity"), 'Expected Growth Rate', '%'],
 ])
 
+# Render a chart showing historical and projected dividends
 model.render_chart({
     "data": {
         "dividend:adjDividend": "Dividends",
-        "#linearRegression": "Regression Line",
     },
     "start": -assumptions.get("historical_years"),
     "end": "*",
     "properties": {
         "title": 'Historical and Projected Dividends',
-        "disabled_keys": ['#linearRegression'],
+        "include_ltm": True
     }
 })
 
-# Future Estimations
+# Render a table for future dividend estimations
 model.render_table({
     "data": {
         "dividend:adjDividend": "Dividend per Share",
@@ -122,7 +147,7 @@ model.render_table({
     },
 })
 
-# Historical Values
+# Render a table of historical financial values and dividend metrics
 model.render_table({
     "data": {
         "income:netIncome": "Net Income",
@@ -147,6 +172,7 @@ model.render_table({
     },
 })
 
+# Set descriptions for assumptions
 assumptions.set_description({
     "%discount_rate": r"""
         ## Discount Rate

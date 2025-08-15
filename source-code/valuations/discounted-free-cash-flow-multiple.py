@@ -20,6 +20,7 @@ assumptions.init({
         "beta": data.get("profile:beta", default=1),
         "%risk_free_rate": data.get("treasury:year10"),
         "%market_premium": data.get("risk:totalEquityRiskPremium"),
+        "%tax_rate": None,
         "%revenue_growth_rate": None,
         "exit_ebitda_multiple": None,
         "%ebitda_margin": None,
@@ -30,7 +31,12 @@ assumptions.init({
     },
     "hierarchies": [{
         "parent": "%discount_rate",
-        "children": ["beta", "%risk_free_rate", "%market_premium"]
+        "children": [
+            "beta",
+            "%risk_free_rate",
+            "%market_premium",
+            "%tax_rate"
+        ]
     }]
 })
 
@@ -39,17 +45,25 @@ risk_free_rate = assumptions.get("%risk_free_rate")
 beta = assumptions.get("beta")
 market_premium = assumptions.get("%market_premium")
 cost_of_equity = risk_free_rate + beta * market_premium
-cost_of_debt = data.get("income:interestExpense") / data.get("balance:totalDebt")
+cost_of_debt = data.get("income:interestExpense / balance:totalDebt")
+if cost_of_debt is None:
+    # Use the 10-year Treasury yield instead
+    cost_of_debt = data.get("treasury:year10")
 
-tax_rate = data.get("income:incomeTaxExpense") / data.get("income:incomeBeforeTax")
+tax_rate = data.get("income:incomeTaxExpense / income:incomeBeforeTax")
+if tax_rate is None or tax_rate < 0:
+    # Fall back to the statutory corporate rate
+    tax_rate = data.get("risk:corporateTaxRate")
+assumptions.set("%tax_rate", tax_rate)
 
-if tax_rate < 0:
-    tax_rate = 0
+market_cap = data.get("profile:price * income:weightedAverageShsOut")
+debt_weight = data.get(f"balance:totalDebt / ({market_cap} + balance:totalDebt)")
+if debt_weight is None:
+    # Assume zero leverage if missing
+    debt_weight = 0
 
-market_cap = data.get("profile:price") * data.get("income:weightedAverageShsOut")
-debt_weight = data.get("balance:totalDebt") / (market_cap + data.get("balance:totalDebt"))
 equity_weight = 1 - debt_weight
-wacc = debt_weight * cost_of_debt * (1 - tax_rate) + equity_weight * cost_of_equity
+wacc = debt_weight * cost_of_debt * (1 - assumptions.get("%tax_rate")) + equity_weight * cost_of_equity
 
 # Set the discount rate to the WACC
 assumptions.set("%discount_rate", wacc)
@@ -57,7 +71,8 @@ assumptions.set("%discount_rate", wacc)
 # Compute ratios
 data.compute({
     "%operatingCashFlowToEbitda": "flow:operatingCashFlow / income:ebitda",
-    "%capitalExpenditureToEbitda": "flow:capitalExpenditure / income:ebitda",
+    "positiveCapitalExpenditure": "-1 * flow:capitalExpenditure",
+    "%capitalExpenditureToEbitda": "positiveCapitalExpenditure / income:ebitda",
     "%netIncomeToEbitda": "income:netIncome / income:ebitda",
     "%freeCashFlowToEbitda": "flow:freeCashFlow / income:ebitda",
     "%grossMargin": "income:grossProfit / income:revenue",
@@ -80,7 +95,7 @@ assumptions.set_bounds(
     "%operating_cash_flow_to_ebitda", low=0, high="100%"
 )
 
-assumptions.set("%capital_expenditure_to_ebitda", -data.average("%capitalExpenditureToEbitda"))
+assumptions.set("%capital_expenditure_to_ebitda", data.average("%capitalExpenditureToEbitda"))
 # Limit CapEx range
 assumptions.set_bounds(
     "%capital_expenditure_to_ebitda", low=0, high="90%"
@@ -93,8 +108,8 @@ assumptions.set_bounds(
 )
 
 # Calculate the Enterprise Value and set the exit EBITDA multiple
-ev = data.get("profile:mktCap") + data.get("balance:totalDebt") - data.get("balance:cashAndShortTermInvestments")
-exit_ebitda_multiple = ev / data.get("income:ebitda")
+ev = data.get("profile:mktCap + balance:totalDebt - balance:cashAndShortTermInvestments")
+exit_ebitda_multiple = data.get(f"{ev} / income:ebitda")
 assumptions.set("exit_ebitda_multiple", exit_ebitda_multiple)
 
 # Compute forecasted values and ratios
@@ -108,7 +123,7 @@ data.compute({
     "flow:operatingCashFlow": f"income:ebitda * {assumptions.get('%operating_cash_flow_to_ebitda')}",
     "computedCapitalExpenditure": f"income:ebitda * {assumptions.get('%capital_expenditure_to_ebitda')}",
     "flow:freeCashFlow": "flow:operatingCashFlow - computedCapitalExpenditure",
-    "flow:capitalExpenditure": "flow:freeCashFlow - flow:operatingCashFlow",
+    "positiveCapitalExpenditure": "flow:operatingCashFlow - flow:freeCashFlow",
     "discountedFreeCashFlow": f"""
         function:discount:flow:freeCashFlow 
         rate:{assumptions.get('%discount_rate')} 
@@ -116,7 +131,7 @@ data.compute({
     """,
     # Informational computations
     "%operatingCashFlowToEbitda": "flow:operatingCashFlow / income:ebitda",
-    "%capitalExpenditureToEbitda": "flow:capitalExpenditure / income:ebitda",
+    "%capitalExpenditureToEbitda": "positiveCapitalExpenditure / income:ebitda",
     "%freeCashFlowToEbitda": "flow:freeCashFlow / income:ebitda",
     "%ebitdaMargin": "income:ebitda / income:revenue",
     "#compoundedDiscountRate": f"""
@@ -128,7 +143,9 @@ data.compute({
 }, forecast=assumptions.get("projection_years"))
 
 # Calculate the terminal value
-terminal_value = assumptions.get("exit_ebitda_multiple") * data.get(f"income:ebitda:{assumptions.get('projection_years')}")
+exit_multiple = assumptions.get("exit_ebitda_multiple")
+end_year = assumptions.get("projection_years")
+terminal_value = data.get(f"{exit_multiple} * income:ebitda:{end_year}")
 
 # Discount the terminal value into the present
 discounted_terminal_value = terminal_value / ((1 + assumptions.get("%discount_rate")) ** assumptions.get("projection_years"))
@@ -145,6 +162,9 @@ model.set_final_value({
     "value": value_per_share,
     "units": "$"
 })
+
+fcf_5y_cagr = data.cagr(f"flow:freeCashFlow:-1->{assumptions.get('projection_years')}")
+revenue_5y_cagr = data.cagr(f"income:revenue:-1->{assumptions.get('projection_years')}")
 
 # Render results
 model.render_results([
@@ -164,7 +184,8 @@ model.render_results([
     [equity_weight, "Equity Weight", "%"],
     [cost_of_debt, "Cost of Debt", "%"],
     [debt_weight, "Debt Weight", "%"],
-    [tax_rate, "EBIT Tax Rate", "%"],
+    [revenue_5y_cagr, "Forecasted Revenue - 5 Year CAGR", "%"],
+    [fcf_5y_cagr, "Forecasted Free Cash Flow - 5 Year CAGR", "%"],
 ])
 
 # Render Chart
@@ -174,7 +195,7 @@ model.render_chart({
         "flow:operatingCashFlow": "Operating Cash Flow",
         "income:ebitda": "EBITDA",
         "flow:freeCashFlow": "Free Cash Flow",
-        "flow:capitalExpenditure": "Capital Expenditure",
+        "positiveCapitalExpenditure": "Capital Expenditure",
         "discountedFreeCashFlow": "Discounted Free Cash Flow",
     },
     "start": -assumptions.get("historical_years"),
@@ -188,7 +209,7 @@ model.render_chart({
             "income:ebitda",
         ],
         "hidden_keys": [
-            "flow:capitalExpenditure",
+            "positiveCapitalExpenditure",
             "discountedFreeCashFlow"
         ],
     }
@@ -203,7 +224,7 @@ model.render_table({
         "%ebitdaMargin": "EBITDA Margin",
         "flow:operatingCashFlow": "Operating Cash Flow",
         "%operatingCashFlowToEbitda": "Operating Cash Flow to EBITDA",
-        "flow:capitalExpenditure": "Capital Expenditure",
+        "positiveCapitalExpenditure": "Capital Expenditure",
         "%capitalExpenditureToEbitda": "Capital Expenditure to EBITDA",
         "flow:freeCashFlow": "Free Cash Flow",
         "%freeCashFlowToEbitda": "Free Cash Flow to EBITDA",
@@ -233,7 +254,7 @@ model.render_table({
         "%netIncomeToEbitda": "Net Income to EBITDA",
         "flow:operatingCashFlow": "Cash from Operating Activities",
         "%operatingCashFlowToEbitda": "Cash from Operating Activities to EBITDA",
-        "flow:capitalExpenditure": "Capital Expenditure",
+        "positiveCapitalExpenditure": "Capital Expenditure",
         "%capitalExpenditureToEbitda": "Capital Expenditure to EBITDA",
         "flow:freeCashFlow": "Free Cash Flow",
         "%freeCashFlowToEbitda": "Free Cash Flow to EBITDA",
@@ -305,6 +326,22 @@ assumptions.set_description({
         ## Risk-Free Rate
         
         The risk-free rate represents the return an investor expects from an absolutely risk-free investment over a specified time period. By default, it is set to the current yield of the U.S. 10-Year Treasury Bond.
+    """,
+
+    "%tax_rate": r"""
+        ## Tax Rate
+        
+        `Tax Rate` = `Income Tax Expense` / `Income Before Tax`
+        
+        This is the company’s **effective tax rate**, reflecting the average rate of tax actually paid on its pre-tax earnings (including all statutory, deferred, and non-recurring items).
+        
+        This rate is used to adjust the after-tax cost of debt, since interest expense is tax-deductible.
+        
+        ## Discount Rate
+        
+        `Discount Rate` =  
+        `Debt Weight` × `Cost of Debt` × (1 − `Tax Rate`)  
+        + `Equity Weight` × `Cost of Equity`
     """,
 
     "%market_premium": r"""

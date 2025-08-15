@@ -137,13 +137,6 @@ model.render_table({
     }
 })
 
-# Prepare properties for table rendering
-properties = {
-    "title": "Historical data",
-    "number_format": "M",
-    "display_averages": True
-}
-
 # Historical Table
 model.render_table({
     "data": {
@@ -159,7 +152,11 @@ model.render_table({
     },
     "start": -assumptions.get('historical_years'),
     "end": 0,
-    "properties": properties
+    "properties": {
+        "title": "Historical data",
+        "number_format": "M",
+        "display_averages": True
+    }
 })
 
 assumptions.set_description({

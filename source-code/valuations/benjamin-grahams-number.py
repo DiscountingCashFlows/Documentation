@@ -20,7 +20,7 @@ Read more: [Using The Graham Number Correctly](https://www.grahamvalue.com/artic
 assumptions.init({
     "data": {
         "earnings_per_share": data.get("income:eps"),
-        "book_value_per_share": data.get("balance:totalStockholdersEquity") / data.get("income:weightedAverageShsOut"),
+        "book_value_per_share": data.get("balance:totalStockholdersEquity / income:weightedAverageShsOut"),
         "graham_multiplier": 22.5,
         "historical_years": 10
     }
